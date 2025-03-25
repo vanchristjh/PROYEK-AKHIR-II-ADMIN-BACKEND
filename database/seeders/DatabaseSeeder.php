@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             StudentSeeder::class,
             TeacherSeeder::class,
+            AcademicCalendarSeeder::class,
         ]);
 
         // User::factory(10)->create();

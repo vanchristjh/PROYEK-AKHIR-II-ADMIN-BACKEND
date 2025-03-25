@@ -1,253 +1,151 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin SMA - Dashboard')</title>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- CSS Libraries -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <style>
-        :root {
-            --primary-color: #0066b3;
-            --secondary-color: #1e88e5;
-            --success-color: #4caf50;
-            --info-color: #00bcd4;
-            --warning-color: #ff9800;
-            --danger-color: #f44336;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-            --bs-body-bg: #f5f7fa;
-        }
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <title>{{ config('app.name', 'SMA Admin') }} - @yield('page-title', 'Dashboard')</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
+    
+    <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bs-body-bg);
-            color: #1e293b;
-            overflow-x: hidden;
+            background-color: #f5f8fa;
         }
-
-        /* Sidebar styling */
+        
         .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(to bottom, #0066b3, #1e88e5);
-            color: white;
-            transition: all 0.3s;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
+            width: 280px;
+            background: linear-gradient(135deg, #0066b3 0%, #004a80 100%);
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
         }
-
+        
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 0.85rem 1.2rem;
-            border-radius: 8px;
-            margin: 4px 8px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
             transition: all 0.3s ease;
         }
-
+        
         .sidebar .nav-link:hover {
             color: white;
             background-color: rgba(255, 255, 255, 0.15);
             transform: translateX(5px);
         }
-
+        
         .sidebar .nav-link.active {
             color: white;
-            background-color: rgba(255, 255, 255, 0.2);
-            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+            border-left: 3px solid white;
         }
-
+        
         .sidebar .nav-link i {
             margin-right: 10px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
         }
-
-        .sidebar-logo {
-            padding: 1.5rem;
+        
+        .sidebar .nav-link:hover i {
+            transform: translateY(-2px);
         }
-
-        /* Card styling */
+        
+        .sidebar-heading {
+            display: block;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        
+        .nav-section {
+            padding: 0 1rem;
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+        }
+        
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+        
         .card {
-            border-radius: 8px;
+            border-radius: 0.75rem;
             border: none;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-            transition: all 0.3s;
-            background-color: white;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
-
-        .card-header {
-            background-color: transparent;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            padding: 1.25rem 1.5rem;
-        }
-
-        .card-title {
+        
+        .page-title {
             font-weight: 600;
-            margin-bottom: 0;
+            color: #333;
         }
-
-        .dashboard-card {
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
+        
+        .breadcrumb-item.active {
+            color: #0066b3;
         }
-
-        .dashboard-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.06);
+        
+        .breadcrumb-item a {
+            color: #6c757d;
+            text-decoration: none;
         }
-
-        .dashboard-card .icon-box {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
+        
+        .animate__tada {
+            animation: tada 1s ease-in-out;
+        }
+        
+        .sidebar-logo {
+            padding: 20px 15px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
+        }
+        
+        .hover-shadow {
+            transition: all 0.3s ease;
+        }
+        .hover-shadow:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
-        /* Content area */
-        .content {
-            padding: 25px;
-            min-height: 100vh;
-        }
-
-        /* Button styling */
-        .btn {
-            border-radius: 6px;
-            padding: 0.5rem 1.25rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        /* Login page */
-        .login-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #607d8b 0%, #2d4059 100%);
-        }
-
-        .login-card {
-            max-width: 420px;
-            width: 100%;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            background-color: rgba(255, 255, 255, 0.95);
-        }
-
-        .login-card .form-control {
-            border-radius: 6px;
-            padding: 0.6rem 1rem;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .input-group-text {
-            border-radius: 6px 0 0 6px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-right: none;
-        }
-
-        /* Form controls */
-        .form-control {
-            border-radius: 6px;
-            padding: 0.6rem 1rem;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(45, 64, 89, 0.15);
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a1a1a1;
-        }
-
-        /* Table styling */
-        .table {
-            width: 100%;
-            margin-bottom: 1rem;
-            color: #212529;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .table thead th {
-            background-color: rgba(45, 64, 89, 0.05);
-            font-weight: 600;
-            border-bottom: none;
-        }
-
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @yield('styles')
     </style>
-    @yield('styles')
 </head>
 <body>
     @yield('content')
     
-    <!-- Scripts -->
+    <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
     <script>
-        // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+            if (tooltipTriggerList.length > 0) {
+                [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+            }
             
             // Initialize Select2
             if (typeof $.fn.select2 !== 'undefined') {
@@ -256,14 +154,23 @@
                 });
             }
             
-            // Initialize Flatpickr for date pickers
+            // Initialize date pickers
             if (typeof flatpickr !== 'undefined') {
                 flatpickr(".datepicker", {
+                    locale: "id",
                     dateFormat: "Y-m-d",
+                });
+                
+                flatpickr(".datetimepicker", {
+                    locale: "id",
+                    enableTime: true,
+                    dateFormat: "Y-m-d H:i",
                 });
             }
         });
     </script>
+    
+    <!-- Custom scripts -->
     @yield('scripts')
 </body>
-</html> 
+</html>

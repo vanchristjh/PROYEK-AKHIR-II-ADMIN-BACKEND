@@ -19,7 +19,25 @@ class Kernel extends ConsoleKernel
         FixMySQLDatabase::class,
         FixDatabaseConstraints::class,
         RecreateClassesTable::class,
+        \App\Console\Commands\FixAnnouncementsCommand::class,
     ];
 
-    // ...existing code...
+    /**
+     * Define the application's command schedule.
+     */
+    protected function schedule(Schedule $schedule): void
+    {
+        // Check for upcoming class schedules every minute to send notifications
+        $schedule->command('schedules:notify')->everyMinute();
+    }
+
+    /**
+     * Register the commands for the application.
+     */
+    protected function commands(): void
+    {
+        $this->load(__DIR__.'/Commands');
+
+        require base_path('routes/console.php');
+    }
 }

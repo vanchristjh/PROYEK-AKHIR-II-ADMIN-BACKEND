@@ -215,44 +215,60 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Kalender Akademik</h5>
-                <button class="btn btn-sm btn-outline-primary">Lihat Semua</button>
+                <a href="{{ route('academic-calendar.index') }}" class="btn btn-sm btn-outline-primary">Lihat Semua</a>
             </div>
             <div class="card-body p-4">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item px-0 py-3 d-flex border-top-0">
-                        <div class="me-3 text-center">
-                            <div class="badge bg-primary text-white fw-bold py-2 px-3">APR<br>20</div>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Ujian Akhir Semester</h6>
-                            <p class="mb-1 small text-muted">Ujian akan berlangsung untuk seluruh siswa kelas X-XII</p>
-                            <span class="badge bg-light text-dark">08:00 - 12:00</span>
-                        </div>
+                @if(isset($upcomingEvents) && $upcomingEvents->count() > 0)
+                    <div class="list-group list-group-flush">
+                        @foreach($upcomingEvents as $event)
+                            <div class="list-group-item px-0 py-3 d-flex border-top-0">
+                                <div class="me-3 text-center">
+                                    <div class="badge 
+                                        @if($event->event_type == 'exam') bg-danger
+                                        @elseif($event->event_type == 'holiday') bg-success
+                                        @elseif($event->event_type == 'meeting') bg-info
+                                        @elseif($event->event_type == 'extracurricular') bg-warning text-dark
+                                        @else bg-primary @endif
+                                        text-white fw-bold py-2 px-3">
+                                        {{ strtoupper($event->start_date->format('M')) }}<br>{{ $event->start_date->format('d') }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ $event->title }}
+                                        @if($event->is_important)
+                                            <i class="bx bxs-star text-danger"></i>
+                                        @endif
+                                    </h6>
+                                    <p class="mb-1 small text-muted">{{ Str::limit($event->description, 100) }}</p>
+                                    <div class="d-flex flex-wrap small text-muted">
+                                        <span class="me-3"><i class="bx bx-time me-1"></i>{{ $event->start_date->format('H:i') }} - {{ $event->end_date->format('H:i') }}</span>
+                                        @if($event->location)
+                                            <span class="badge bg-light text-dark"><i class="bx bx-map me-1"></i>{{ $event->location }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="list-group-item px-0 py-3 d-flex">
-                        <div class="me-3 text-center">
-                            <div class="badge bg-info text-white fw-bold py-2 px-3">MEI<br>2</div>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Rapat Orang Tua Siswa</h6>
-                            <p class="mb-1 small text-muted">Pembahasan hasil ujian dan persiapan kenaikan kelas</p>
-                            <span class="badge bg-light text-dark">09:00 - 11:00</span>
-                        </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ route('academic-calendar.index') }}" class="btn btn-sm btn-primary">
+                            <i class="bx bx-calendar me-1"></i> Lihat Semua Agenda
+                        </a>
                     </div>
-                    <div class="list-group-item px-0 py-3 d-flex">
-                        <div class="me-3 text-center">
-                            <div class="badge bg-success text-white fw-bold py-2 px-3">MEI<br>15</div>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Pengumuman Kelulusan</h6>
-                            <p class="mb-1 small text-muted">Pengumuman kelulusan untuk siswa kelas XII</p>
-                            <span class="badge bg-light text-dark">10:00 - 12:00</span>
-                        </div>
+                @else
+                    <div class="text-center py-5">
+                        <i class="bx bx-calendar text-muted" style="font-size: 4rem;"></i>
+                        <h5 class="mt-3">Tidak Ada Agenda Mendatang</h5>
+                        <p class="text-muted">Belum ada agenda yang dijadwalkan dalam waktu dekat</p>
+                        <a href="{{ route('academic-calendar.create') }}" class="btn btn-sm btn-primary">
+                            <i class="bx bx-plus me-1"></i> Tambah Agenda Baru
+                        </a>
                     </div>
-                </div>
+                @endif
             </div>
         </div>
     </div>
+    
     <div class="col-md-5">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">

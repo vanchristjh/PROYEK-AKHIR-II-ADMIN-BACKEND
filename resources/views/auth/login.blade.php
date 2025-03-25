@@ -7,12 +7,12 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-5 fade-in">
-                <div class="login-card">
+                <div class="login-card shadow-lg rounded-4 p-4 p-md-5">
                     <div class="text-center mb-4">
-                        <div class="mb-3 d-inline-block p-3 rounded-circle bg-white shadow-sm">
-                            <img src="https://ui-avatars.com/api/?name=SMA&background=4361ee&color=fff&bold=true&size=60" alt="Logo SMA" class="img-fluid rounded-circle" style="width: 60px;">
+                        <div class="mb-3 d-inline-block p-3 rounded-circle bg-white shadow">
+                            <img src="{{ asset('images/logo.jpg') }}" alt="Logo SMA" class="img-fluid" style="width: 80px; height: 80px;">
                         </div>
-                        <h2 class="fw-bold text-primary">Admin Dashboard</h2>
+                        <h2 class="fw-bold text-primary">SMA NEGERI 1 GIRSANG SIPANGAN BOLON</h2>
                         <p class="text-muted">Selamat datang kembali! Silakan masuk ke akun Anda.</p>
                     </div>
 
@@ -30,23 +30,20 @@
                         @csrf
                         <div class="mb-4">
                             <label for="email" class="form-label fw-semibold">Email</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bx bx-envelope"></i></span>
-                                <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" placeholder="nama@sma.sch.id" required autofocus>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light"><i class="bx bx-envelope text-primary"></i></span>
+                                <input type="email" class="form-control form-control-lg border-start-0" id="email" name="email" value="{{ old('email') }}" placeholder="nama@sma.sch.id" required autofocus>
                                 <div class="invalid-feedback">
                                     Silakan masukkan email yang valid.
                                 </div>
                             </div>
                         </div>
                         <div class="mb-4">
-                            <div class="d-flex justify-content-between">
-                                <label for="password" class="form-label fw-semibold">Password</label>
-                                <a href="#" class="text-decoration-none small text-primary">Lupa password?</a>
-                            </div>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bx bx-lock-alt"></i></span>
-                                <input type="password" class="form-control" id="password" name="password" placeholder="Masukkan password" required>
-                                <button class="btn btn-outline-secondary" type="button" id="toggle-password">
+                            <label for="password" class="form-label fw-semibold">Password</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light"><i class="bx bx-lock-alt text-primary"></i></span>
+                                <input type="password" class="form-control form-control-lg border-start-0" id="password" name="password" placeholder="Masukkan password" required>
+                                <button class="btn btn-light border" type="button" id="toggle-password">
                                     <i class="bx bx-hide"></i>
                                 </button>
                                 <div class="invalid-feedback">
@@ -59,7 +56,7 @@
                             <label class="form-check-label" for="remember">Ingat saya</label>
                         </div>
                         <div class="d-grid gap-2 mb-4">
-                            <button type="submit" class="btn btn-primary py-2 btn-login">
+                            <button type="submit" class="btn btn-primary btn-lg py-3 btn-login position-relative overflow-hidden">
                                 <span class="d-flex align-items-center justify-content-center">
                                     <i class="bx bx-log-in-circle me-2"></i>
                                     Masuk
@@ -67,14 +64,79 @@
                             </button>
                         </div>
                     </form>
-                    <div class="text-center">
-                        <small class="text-muted">© {{ date('Y') }} SMA - All Rights Reserved</small>
+                    <div class="text-center mt-4">
+                        <small class="text-muted">© {{ date('Y') }} SMA Negeri 1 Girsang Sipangan Bolon. All Rights Reserved</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+}
+
+.login-card {
+    background-color: #ffffff;
+    padding: 2.5rem;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.btn-login {
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-top: -10px;
+    margin-left: -10px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.input-group-text {
+    border-right: 0;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #4361ee;
+}
+</style>
 @endsection
 
 @section('scripts')
@@ -120,4 +182,4 @@
         this.classList.add('btn-loading');
     });
 </script>
-@endsection 
+@endsection
