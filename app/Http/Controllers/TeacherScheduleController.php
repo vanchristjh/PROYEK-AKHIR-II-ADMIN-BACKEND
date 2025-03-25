@@ -16,24 +16,35 @@ class TeacherScheduleController extends Controller
     public function index(Request $request)
     {
         // Get the teacher ID from the authenticated user or from the request
-        $teacherId = $request->input('teacher_id', Auth::id());
+        $teacherId = $request->input('teacher_id');
+        
+        // If no teacher is selected, get the first teacher
+        if (!$teacherId) {
+            $firstTeacher = User::where('role', 'teacher')->first();
+            $teacherId = $firstTeacher ? $firstTeacher->id : null;
+        }
         
         // Get the teacher
-        $teacher = User::where('role', 'teacher')->findOrFail($teacherId);
-        
-        // Get the teacher's schedules
-        $schedules = ClassSchedule::with(['class', 'teacher'])
-            ->where('teacher_id', $teacherId)
-            ->where('is_active', true)
-            ->orderBy('day_of_week')
-            ->orderBy('start_time')
-            ->get();
-        
-        // Group schedules by day for easier display
-        $schedulesByDay = $schedules->groupBy('day_of_week');
+        $teacher = User::where('role', 'teacher')->find($teacherId);
         
         // Get all teachers for the dropdown
         $teachers = User::where('role', 'teacher')->orderBy('name')->get();
+        
+        // Initialize variables
+        $schedules = collect([]);
+        $schedulesByDay = [];
+        
+        // If a teacher is selected, get their schedules
+        if ($teacher) {
+            $schedules = ClassSchedule::with(['class', 'teacher'])
+                ->where('teacher_id', $teacherId)
+                ->orderBy('day_of_week')
+                ->orderBy('start_time')
+                ->get();
+            
+            // Group schedules by day for easier display
+            $schedulesByDay = $schedules->groupBy('day_of_week');
+        }
         
         return view('dashboard.schedules.teacher', compact(
             'schedules', 

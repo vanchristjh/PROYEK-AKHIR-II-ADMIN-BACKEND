@@ -148,34 +148,71 @@
 
 @section('styles')
 <style>
+    .calendar-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .calendar-table th, 
     .calendar-table td {
-        height: 120px;
+        border: 1px solid #e9ecef;
+        width: 14.28%;
+    }
+    
+    .calendar-table th {
+        background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        font-weight: 500;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .calendar-table td {
+        height: 130px;
         vertical-align: top;
         padding: 0.5rem;
         position: relative;
+        background-color: #fff;
     }
     
     .calendar-date {
         font-weight: bold;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        font-size: 1.1rem;
     }
     
     .calendar-events {
         overflow-y: auto;
-        max-height: 80px;
+        max-height: 95px;
     }
     
     .calendar-event {
         text-decoration: none;
         font-size: 0.85rem;
+        padding: 0.5rem !important;
+        margin-bottom: 0.35rem !important;
+        display: block;
+        border-radius: 0.25rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s;
+    }
+    
+    .calendar-event:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     
     .today {
         position: relative;
+        background-color: #fff8e6 !important;
     }
     
     .today .calendar-date {
-        color: #0066b3;
+        color: #ff9800;
         font-weight: bold;
     }
     
@@ -186,8 +223,35 @@
         left: 0;
         width: 100%;
         height: 100%;
-        border: 2px solid #0066b3;
+        border: 2px solid #ff9800;
         pointer-events: none;
+    }
+    
+    /* Different styling for days not in current month */
+    .text-muted.bg-light .calendar-date {
+        opacity: 0.5;
+        font-weight: normal;
+    }
+    
+    /* Custom color for Sundays */
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    /* Event legend icons */
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .legend-color {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        margin-right: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 </style>
 @endsection

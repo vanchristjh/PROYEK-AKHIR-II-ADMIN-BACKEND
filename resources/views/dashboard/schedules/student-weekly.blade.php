@@ -24,7 +24,7 @@
                         <h6 class="card-title mb-3">Pilih Kelas</h6>
                         <form action="{{ route('student-schedules.weekly') }}" method="GET" class="row g-3">
                             <div class="col-md-6">
-                                <select class="form-select" id="class_id" name="class_id">
+                                <select class="form-select select2" id="class_id" name="class_id">
                                     @foreach($classes as $c)
                                         <option value="{{ $c->id }}" {{ $class && $class->id == $c->id ? 'selected' : '' }}>
                                             {{ $c->name }}
@@ -133,6 +133,30 @@
 <style>
     .schedule-table {
         table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .schedule-table th, 
+    .schedule-table td {
+        border: 1px solid #e9ecef;
+    }
+    
+    .schedule-table th {
+        background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        font-weight: 500;
+        text-align: center;
+        padding: 0.75rem;
+    }
+    
+    .schedule-table th:first-child {
+        background: #f8f9fa;
+        color: #444;
     }
     
     .schedule-cell {
@@ -140,17 +164,41 @@
         vertical-align: top;
         padding: 0.5rem;
         overflow-y: auto;
+        background-color: #fff;
+        transition: background-color 0.2s;
+    }
+    
+    .schedule-cell:hover {
+        background-color: #f8f9fa;
     }
     
     .schedule-item {
         font-size: 0.85rem;
+        background-color: rgba(40, 167, 69, 0.08);
+        border-left: 3px solid #28a745;
+        transition: all 0.3s ease;
+    }
+    
+    .schedule-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
     }
     
     .schedule-table th {
         position: sticky;
         top: 0;
-        background-color: #f8f9fa;
         z-index: 1;
+    }
+    
+    /* Time column styling */
+    .schedule-table td:first-child {
+        font-weight: 500;
+        text-align: center;
+        background-color: #f8f9fa;
+    }
+    
+    .badge.bg-success {
+        background-color: var(--success-color) !important;
     }
 </style>
 @endsection

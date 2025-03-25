@@ -206,10 +206,59 @@
     
     .announcement-list .list-group-item {
         transition: all 0.3s ease;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #e9ecef;
+        padding: 1.25rem;
     }
     
     .announcement-list .list-group-item:hover {
         background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .announcement-list .list-group-item.border-start.border-danger {
+        border-left-width: 5px !important;
+    }
+    
+    .icon-wrapper {
+        transition: all 0.3s ease;
+        width: 48px !important;
+        height: 48px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    
+    .announcement-list .list-group-item:hover .icon-wrapper {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    .announcement-body {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    .announcement-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+    }
+    
+    .announcement-date {
+        display: inline-block;
+        background-color: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+    }
+    
+    .badge {
+        padding: 0.35em 0.65em;
+        font-weight: 500;
     }
 </style>
 @endsection

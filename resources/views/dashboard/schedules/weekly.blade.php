@@ -193,25 +193,96 @@
 @section('styles')
 <style>
     .schedule-table {
-        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     }
     
-    .schedule-cell {
-        height: 140px;
-        vertical-align: top;
-        padding: 0.5rem;
-        overflow-y: auto;
-    }
-    
-    .schedule-item {
-        font-size: 0.85rem;
+    .schedule-table th, 
+    .schedule-table td {
+        border: 1px solid #e9ecef;
     }
     
     .schedule-table th {
-        position: sticky;
-        top: 0;
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 500;
+        text-align: center;
+        padding: 0.75rem;
+        border-bottom: 2px solid #0055a4;
+    }
+    
+    .schedule-table th:first-child {
         background-color: #f8f9fa;
-        z-index: 1;
+        color: #444;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .schedule-table td {
+        padding: 0.75rem;
+        vertical-align: top;
+        height: 120px;
+    }
+    
+    .schedule-table td:first-child {
+        background-color: #f8f9fa;
+        font-weight: 500;
+        text-align: center;
+        width: 100px;
+        vertical-align: middle;
+    }
+    
+    .schedule-item {
+        background-color: rgba(0, 102, 179, 0.08);
+        border-left: 3px solid var(--primary-color);
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        position: relative;
+    }
+    
+    .schedule-item:hover {
+        background-color: rgba(0, 102, 179, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .schedule-item h6 {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .actions-menu {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    
+    .schedule-item:hover .actions-menu {
+        opacity: 1;
+    }
+    
+    .empty-slot {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 992px) {
+        .schedule-table {
+            min-width: 992px;
+        }
     }
 </style>
 @endsection

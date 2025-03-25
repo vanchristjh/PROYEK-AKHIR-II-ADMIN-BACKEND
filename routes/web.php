@@ -12,6 +12,8 @@ use App\Http\Controllers\ClassScheduleController;
 use App\Http\Controllers\TeacherScheduleController;
 use App\Http\Controllers\StudentScheduleController;
 use App\Http\Controllers\AcademicCalendarController;
+use App\Http\Controllers\SubjectsController;
+use App\Http\Controllers\AttendanceController;
 
 Route::get('/', function () {
     return redirect('/login');
@@ -115,4 +117,20 @@ Route::middleware(['auth'])->prefix('teacher-schedules')->name('teacher-schedule
 Route::middleware(['auth'])->prefix('student-schedules')->name('student-schedules.')->group(function () {
     Route::get('/', [StudentScheduleController::class, 'index'])->name('index');
     Route::get('/weekly', [StudentScheduleController::class, 'weekly'])->name('weekly');
+});
+
+// Subjects Routes
+Route::resource('subjects', SubjectsController::class);
+
+// Attendance Routes
+Route::prefix('attendance')->middleware('auth')->name('attendance.')->group(function () {
+    Route::get('/', [AttendanceController::class, 'index'])->name('index');
+    Route::get('/create', [AttendanceController::class, 'create'])->name('create');
+    Route::post('/', [AttendanceController::class, 'store'])->name('store');
+    Route::get('/{attendance}', [AttendanceController::class, 'show'])->name('show');
+    Route::get('/{attendance}/edit', [AttendanceController::class, 'edit'])->name('edit');
+    Route::put('/{attendance}', [AttendanceController::class, 'update'])->name('update');
+    Route::delete('/{attendance}', [AttendanceController::class, 'destroy'])->name('destroy');
+    Route::get('/report/view', [AttendanceController::class, 'report'])->name('report');
+    Route::get('/{attendance}/export', [AttendanceController::class, 'export'])->name('export');
 });
