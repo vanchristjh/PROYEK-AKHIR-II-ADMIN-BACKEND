@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Models\ClassRoom;
 use Illuminate\Support\Facades\Hash;
 
 class StudentSeeder extends Seeder
@@ -13,6 +14,25 @@ class StudentSeeder extends Seeder
      */
     public function run(): void
     {
+        // First, we need to ensure we have at least one class
+        $classId = null;
+        
+        // Check if class_rooms table exists
+        if (ClassRoom::count() == 0) {
+            $class = ClassRoom::create([
+                'name' => 'X-A',
+                'level' => 'X',
+                'type' => 'IPA',
+                'capacity' => 30,
+                'room' => 'Ruang 101',
+                'academic_year' => '2023/2024',
+            ]);
+            $classId = $class->id;
+        } else {
+            // Use an existing class
+            $classId = ClassRoom::first()->id;
+        }
+        
         $students = [
             [
                 'name' => 'Budi Santoso',
@@ -25,79 +45,31 @@ class StudentSeeder extends Seeder
                 'gender' => 'L',
                 'nis' => '1001',
                 'nisn' => '9991001',
-                'class' => 'X-A',
+                'class_id' => $classId,
                 'academic_year' => '2023/2024',
-                'parent_name' => 'Ahmad Santoso',
-                'parent_phone' => '08567891234',
-            ],
-            [
-                'name' => 'Siti Nuraini',
-                'email' => 'siti.nuraini@example.com',
-                'password' => Hash::make('password'),
-                'role' => 'student',
-                'phone_number' => '08234567890',
-                'address' => 'Jl. Pahlawan No. 45, Jakarta',
-                'birth_date' => '2006-08-21',
-                'gender' => 'P',
-                'nis' => '1002',
-                'nisn' => '9991002',
-                'class' => 'X-A',
-                'academic_year' => '2023/2024',
-                'parent_name' => 'Hadi Nuraini',
+                'parent_name' => 'Slamet Santoso',
                 'parent_phone' => '08765432109',
             ],
             [
-                'name' => 'Dimas Prakoso',
-                'email' => 'dimas.prakoso@example.com',
+                'name' => 'Siti Rahma',
+                'email' => 'siti.rahma@example.com',
                 'password' => Hash::make('password'),
                 'role' => 'student',
-                'phone_number' => '08345678901',
-                'address' => 'Jl. Kenanga No. 78, Jakarta',
-                'birth_date' => '2006-11-03',
-                'gender' => 'L',
-                'nis' => '1003',
-                'nisn' => '9991003',
-                'class' => 'X-B',
-                'academic_year' => '2023/2024',
-                'parent_name' => 'Joko Prakoso',
-                'parent_phone' => '08123987456',
-            ],
-            [
-                'name' => 'Rina Anggraini',
-                'email' => 'rina.anggraini@example.com',
-                'password' => Hash::make('password'),
-                'role' => 'student',
-                'phone_number' => '08456789012',
-                'address' => 'Jl. Anggrek No. 12, Jakarta',
-                'birth_date' => '2006-02-18',
+                'phone_number' => '08234567890',
+                'address' => 'Jl. Dahlia No. 45, Jakarta',
+                'birth_date' => '2006-08-20',
                 'gender' => 'P',
-                'nis' => '1004',
-                'nisn' => '9991004',
-                'class' => 'X-B',
+                'nis' => '1002',
+                'nisn' => '9991002',
+                'class_id' => $classId,
                 'academic_year' => '2023/2024',
-                'parent_name' => 'Budi Anggraini',
-                'parent_phone' => '08789456123',
-            ],
-            [
-                'name' => 'Adi Nugroho',
-                'email' => 'adi.nugroho@example.com',
-                'password' => Hash::make('password'),
-                'role' => 'student',
-                'phone_number' => '08567890123',
-                'address' => 'Jl. Dahlia No. 56, Jakarta',
-                'birth_date' => '2005-07-30',
-                'gender' => 'L',
-                'nis' => '1005',
-                'nisn' => '9991005',
-                'class' => 'XI-A',
-                'academic_year' => '2023/2024',
-                'parent_name' => 'Hendra Nugroho',
-                'parent_phone' => '08456123789',
+                'parent_name' => 'Ahmad Rahmat',
+                'parent_phone' => '08654321098',
             ],
         ];
-
+        
         foreach ($students as $student) {
             User::create($student);
         }
     }
-} 
+}

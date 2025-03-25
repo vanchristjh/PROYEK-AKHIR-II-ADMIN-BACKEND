@@ -99,6 +99,39 @@ class User extends Authenticatable
     }
     
     /**
+     * Get the class that the student belongs to.
+     */
+    public function studentClass()
+    {
+        return $this->belongsTo(ClassRoom::class, 'class_id');
+    }
+
+    /**
+     * Get the class that the teacher is homeroom teacher of.
+     */
+    public function homeroomClass()
+    {
+        return $this->hasOne(ClassRoom::class, 'teacher_id');
+    }
+
+    /**
+     * Get the schedules associated with the teacher.
+     */
+    public function schedules()
+    {
+        return $this->hasMany(ClassSchedule::class, 'teacher_id');
+    }
+
+    /**
+     * Get the subjects associated with the teacher.
+     */
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'subject_teacher', 'teacher_id', 'subject_id')
+                    ->withTimestamps();
+    }
+    
+    /**
      * Normalize gender value when setting
      * 
      * @param string $value

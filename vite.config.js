@@ -13,7 +13,16 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '$': 'jQuery',
+            '$': 'jquery',
+            'jQuery': 'jquery',
+        },
+    },
+    optimizeDeps: {
+        include: ['jquery'],
+    },
+    build: {
+        commonjsOptions: {
+            include: [/jquery/],
         },
     },
 });

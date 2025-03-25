@@ -9,7 +9,8 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        return view('auth.login');
+        $session = session()->all();
+        return view('auth.login', compact('session'));
     }
 
     public function login(Request $request)
@@ -36,4 +37,4 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
         return redirect('/');
     }
-} 
+}

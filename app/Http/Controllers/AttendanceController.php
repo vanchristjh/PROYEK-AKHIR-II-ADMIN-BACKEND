@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\AttendanceRecord;
 use App\Models\ClassRoom;
-use App\Models\Student;
+use App\Models\User;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -92,6 +92,8 @@ class AttendanceController extends Controller
         $attendances = $attendance->records()->with('student')->get();
         
         $attendanceSummary = $attendance->getStatusSummary();
+        
+        $session = $attendance; // Define $session variable as an alias for $attendance
 
         return view('dashboard.attendance.show', compact('attendance', 'attendances', 'attendanceSummary', 'session'));
     }
@@ -109,8 +111,9 @@ class AttendanceController extends Controller
 
         $attendance->load(['class', 'subject']);
         
-        // Get all students in this class
-        $students = Student::where('class_id', $attendance->class_id)
+        // Get all students in this class - using users table directly
+        $students = User::where('role', 'student')
+            ->where('class_id', $attendance->class_id)
             ->orderBy('name')
             ->get();
         
@@ -136,7 +139,7 @@ class AttendanceController extends Controller
         // Validate input
         $request->validate([
             'student_id' => 'required|array',
-            'student_id.*' => 'exists:students,id',
+            'student_id.*' => 'exists:users,id,role,student', // Changed from exists:students,id
             'status' => 'required|array',
             'status.*' => 'in:hadir,izin,sakit,alpa,terlambat',
             'notes' => 'nullable|array',
@@ -198,7 +201,8 @@ class AttendanceController extends Controller
 
         // If class is selected, get students from that class
         if ($request->filled('class_id')) {
-            $students = Student::where('class_id', $request->class_id)
+            $students = User::where('role', 'student')
+                ->where('class_id', $request->class_id)
                 ->orderBy('name')
                 ->get();
         }
@@ -247,7 +251,7 @@ class AttendanceController extends Controller
 
         $summary = [
             'total_sessions' => Attendance::count(),
-            'total_students' => Student::count(),
+            'total_students' => User::where('role', 'student')->count(),
             'attendance_percentage' => $totalRecords > 0 ? round(($presentCount / $totalRecords) * 100) . '%' : '0%',
             'absent_count' => $absentCount,
         ];

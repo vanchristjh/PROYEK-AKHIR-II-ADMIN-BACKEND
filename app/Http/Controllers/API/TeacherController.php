@@ -138,4 +138,51 @@ class TeacherController extends Controller
             'message' => 'Tidak ada file yang diunggah',
         ], 400);
     }
-} 
+
+    /**
+     * Get teacher's subject information
+     */
+    public function getSubject($id)
+    {
+        $teacher = User::where('role', 'teacher')
+            ->where('id', $id)
+            ->first();
+            
+        if (!$teacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Guru tidak ditemukan'
+            ], 404);
+        }
+        
+        // Find the subject taught by this teacher
+        $subject = $teacher->subject ?? '';
+        
+        // If the teacher doesn't have a subject assigned, check from related tables
+        if (empty($subject)) {
+            // Check from subjects table if applicable
+            $teacherSubject = $teacher->subjects()->first();
+            if ($teacherSubject) {
+                $subject = $teacherSubject->name;
+            } else {
+                // Check most common subject taught in schedules
+                $schedule = $teacher->schedules()
+                    ->select('subject')
+                    ->groupBy('subject')
+                    ->orderByRaw('COUNT(*) DESC')
+                    ->first();
+                    
+                if ($schedule) {
+                    $subject = $schedule->subject;
+                }
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'teacher_id' => $teacher->id,
+            'teacher_name' => $teacher->name,
+            'subject' => $subject
+        ]);
+    }
+}

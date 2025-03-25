@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -31,11 +32,19 @@ class StudentController extends Controller
      */
     public function show($id)
     {
-        $student = User::where('role', 'student')->findOrFail($id);
-        
-        return response()->json([
-            'student' => $student,
-        ]);
+        try {
+            $student = Student::findOrFail($id);
+            return response()->json([
+                'success' => true,
+                'data' => $student
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Student not found',
+                'error' => $e->getMessage()
+            ], 404);
+        }
     }
     
     /**
@@ -139,4 +148,4 @@ class StudentController extends Controller
             'message' => 'Tidak ada file yang diunggah',
         ], 400);
     }
-} 
+}

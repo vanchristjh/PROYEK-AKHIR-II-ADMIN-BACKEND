@@ -25,6 +25,14 @@
         </div>
         @endif
 
+        @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bx bx-error-circle me-1"></i>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+
         <div class="table-responsive">
             <table class="table table-hover border">
                 <thead class="table-light">
@@ -37,6 +45,7 @@
                         <th>Kelas</th>
                         <th>Tahun Akademik</th>
                         <th>Jenis Kelamin</th>
+                        <th>Orang Tua</th>
                         <th class="text-center" width="10%">Aksi</th>
                     </tr>
                 </thead>
@@ -51,31 +60,27 @@
                                 <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=2d4059&color=fff&size=40" alt="{{ $student->name }}" class="rounded-circle" width="40" height="40">
                             @endif
                         </td>
-                        <td>{{ $student->nis }}</td>
-                        <td>{{ $student->nisn }}</td>
+                        <td>{{ $student->nis ?? '-' }}</td>
+                        <td>{{ $student->nisn ?? '-' }}</td>
                         <td>{{ $student->name }}</td>
-                        <td>{{ $student->class }}</td>
-                        <td>{{ $student->academic_year }}</td>
-                        <td>{{ $student->gender == 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
+                        <td>{{ $student->class->name ?? '-' }}</td>
+                        <td>{{ $student->academic_year ?? '-' }}</td>
+                        <td>{{ $student->gender == 'male' ? 'Laki-laki' : 'Perempuan' }}</td>
+                        <td>{{ $student->parent_name ?? '-' }}</td>
                         <td>
                             <div class="d-flex gap-1 justify-content-center">
-                                <a href="{{ route('students.edit', $student) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit">
-                                    <i class="bx bx-edit-alt"></i>
+                                <a href="{{ route('students.show', $student) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Detail">
+                                    <i class="bx bx-show"></i>
                                 </a>
-                                <form action="{{ route('students.destroy', $student) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus akun siswa ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Hapus">
-                                        <i class="bx bx-trash"></i>
-                                    </button>
-                                </form>
+                                <a href="{{ route('students.edit', $student) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit">
+                                    <i class="bx bx-edit"></i>
+                                </a>
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-4 text-muted">
-                            <i class="bx bx-error-circle fs-3 d-block mb-2"></i>
+                        <td colspan="10" class="text-center py-4 text-muted">
                             Belum ada data siswa
                         </td>
                     </tr>
@@ -105,7 +110,13 @@
                 row.style.display = text.includes(searchValue) ? '' : 'none';
             });
         });
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
     });
 </script>
 @endsection
-@endsection 
+@endsection

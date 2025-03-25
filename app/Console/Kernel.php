@@ -20,6 +20,7 @@ class Kernel extends ConsoleKernel
         FixDatabaseConstraints::class,
         RecreateClassesTable::class,
         \App\Console\Commands\FixAnnouncementsCommand::class,
+        \App\Console\Commands\SafeDbReset::class,
     ];
 
     /**

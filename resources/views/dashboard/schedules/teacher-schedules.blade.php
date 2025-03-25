@@ -315,8 +315,6 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle delete modal
-        const deleteModal = document.getElementById('deleteModal');
         if (deleteModal) {
             const deleteForm = document.getElementById('deleteForm');
             const scheduleSubject = document.getElementById('scheduleSubject');
@@ -341,6 +339,4 @@
         }
     });
 </script>
-@endsection
-
 @endsection

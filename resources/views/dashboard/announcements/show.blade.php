@@ -66,15 +66,15 @@
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 status-list-item">
                         <span>Status</span>
                         <span>{!! $announcement->status_badge !!}</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 status-list-item">
                         <span>Prioritas</span>
                         <span>{!! $announcement->priority_badge !!}</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 status-list-item">
                         <span>Target</span>
                         <span>
                             @switch($announcement->target_audience)
@@ -95,11 +95,11 @@
                             @endswitch
                         </span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 status-list-item">
                         <span>Tanggal Publikasi</span>
                         <span>{{ $announcement->published_at ? $announcement->published_at->format('d M Y H:i') : '-' }}</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 status-list-item">
                         <span>Tanggal Kadaluarsa</span>
                         <span>{{ $announcement->expired_at ? $announcement->expired_at->format('d M Y H:i') : 'Tidak Ada' }}</span>
                     </li>
@@ -121,7 +121,7 @@
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="status" value="published">
-                        <button type="submit" class="btn btn-success btn-sm w-100">
+                        <button type="submit" class="btn btn-success btn-sm w-100 action-btn">
                             <i class="bx bx-check-circle me-1"></i> Publikasikan
                         </button>
                     </form>
@@ -132,7 +132,7 @@
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="status" value="draft">
-                        <button type="submit" class="btn btn-warning btn-sm w-100">
+                        <button type="submit" class="btn btn-warning btn-sm w-100 action-btn">
                             <i class="bx bx-edit me-1"></i> Jadikan Draft
                         </button>
                     </form>
@@ -143,7 +143,7 @@
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="status" value="archived">
-                        <button type="submit" class="btn btn-secondary btn-sm w-100">
+                        <button type="submit" class="btn btn-secondary btn-sm w-100 action-btn">
                             <i class="bx bx-archive me-1"></i> Arsipkan
                         </button>
                     </form>
@@ -153,7 +153,7 @@
         </div>
         
         <!-- Preview Card -->
-        <div class="card shadow-sm">
+        <div class="card shadow-sm preview-card">
             <div class="card-header bg-white">
                 <h5 class="card-title mb-0">Preview</h5>
             </div>
@@ -201,12 +201,36 @@
 @section('styles')
 <style>
     .announcement-content {
-        line-height: 1.6;
+        line-height: 1.7;
+        font-size: 1.05rem;
     }
     
     .announcement-content img {
         max-width: 100%;
         height: auto;
+        border-radius: 0.75rem;
+        margin: 1.5rem 0;
+    }
+    
+    .announcement-content p {
+        margin-bottom: 1.25rem;
+    }
+    
+    .announcement-content ul, 
+    .announcement-content ol {
+        margin-bottom: 1.25rem;
+        padding-left: 1.5rem;
+    }
+    
+    .announcement-content h1, 
+    .announcement-content h2, 
+    .announcement-content h3,
+    .announcement-content h4,
+    .announcement-content h5,
+    .announcement-content h6 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
     }
     
     .content-preview {
@@ -214,6 +238,32 @@
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
+    }
+    
+    .preview-card {
+        transition: all 0.3s ease;
+    }
+    
+    .preview-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .status-list-item {
+        transition: all 0.2s ease;
+    }
+    
+    .status-list-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .action-btn {
+        transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 </style>
 @endsection

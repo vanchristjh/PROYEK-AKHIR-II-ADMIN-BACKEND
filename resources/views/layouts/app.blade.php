@@ -42,7 +42,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f5f8fa;
+            background-color: #f8f9fa;
             color: #333;
             overflow-x: hidden;
         }
@@ -50,7 +50,7 @@
         /* Sidebar Styling */
         .sidebar {
             width: var(--sidebar-width);
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary-color) 100%);
             height: 100vh;
             position: fixed;
             top: 0;
@@ -122,7 +122,7 @@
         
         .sidebar .nav-link.active {
             color: #fff;
-            background-color: rgba(255, 255, 255, 0.15);
+            background-color: rgba(255, 255, 255, 0.1);
             font-weight: 500;
         }
         
@@ -178,14 +178,14 @@
         /* Card Styling */
         .card {
             border: none;
-            border-radius: var(--border-radius);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: transform 0.2s, box-shadow 0.2s;
             overflow: hidden;
         }
         
         .card:hover {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
         }
         
         .card-header {
@@ -202,7 +202,7 @@
         /* Button Styling */
         .btn {
             font-weight: 500;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             padding: 0.375rem 1rem;
             transition: all 0.2s ease;
         }
@@ -235,6 +235,8 @@
             color: #212529;
             vertical-align: middle;
             border-color: #e9ecef;
+            border-radius: 0.5rem;
+            overflow: hidden;
         }
         
         .table-hover tbody tr:hover {
@@ -249,14 +251,14 @@
         
         /* Form Controls */
         .form-control, .form-select {
-            border-radius: 0.375rem;
-            border-color: #e2e8f0;
+            border-radius: 0.5rem;
+            border-color: #dee2e6;
             padding: 0.5rem 0.75rem;
         }
         
         .form-control:focus, .form-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(0, 102, 179, 0.15);
+            box-shadow: 0 0 0 0.25rem rgba(0, 102, 179, 0.25);
         }
         
         /* Form Label */
@@ -274,7 +276,7 @@
         
         /* Alert Styling */
         .alert {
-            border-radius: var(--border-radius);
+            border-radius: 0.5rem;
             border: none;
         }
         

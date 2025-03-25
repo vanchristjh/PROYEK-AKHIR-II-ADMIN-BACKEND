@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Student;
 use App\Models\User;
 use App\Models\ClassRoom;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Helpers\ImagesHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\QueryException;
@@ -55,36 +57,63 @@ class StudentController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:8|confirmed',
             'nis' => 'required|string|max:20|unique:users',
-            'gender' => 'required|in:L,P,laki-laki,perempuan',
-            'phone' => 'nullable|string|max:15',  // Keep this name for the form field
-            'address' => 'nullable|string',
+            'nisn' => 'nullable|string|unique:users',
             'class_id' => 'required|exists:class_rooms,id',
-        ], [
-            'class_id.required' => 'The class field is required.',
-            'class_id.exists' => 'The selected class is invalid.',
-            'gender.in' => 'The selected gender is invalid. Please choose either Laki-laki or Perempuan.',
+            'gender' => 'required|in:L,P',
+            'phone_number' => 'nullable|string|max:15',
+            'address' => 'nullable|string',
+            'birth_date' => 'nullable|date',
+            'academic_year' => 'nullable|string',
+            'parent_name' => 'nullable|string|max:255',
+            'parent_phone' => 'nullable|string|max:15',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:1024', // Max 1MB
         ]);
         
         try {
-            // Create the student user with correct field mappings
-            $student = User::create([
+            $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'nis' => $request->nis,
-                'gender' => $request->gender, // The model will normalize this
-                'phone_number' => $request->phone ?? null,  // Map 'phone' form field to 'phone_number' database column
-                'address' => $request->address,
-                'role' => 'student',
+                'nisn' => $request->nisn,
                 'class_id' => $request->class_id,
-            ]);
+                'gender' => $request->gender,
+                'phone_number' => $request->phone_number,
+                'address' => $request->address,
+                'birth_date' => $request->birth_date,
+                'academic_year' => $request->academic_year,
+                'parent_name' => $request->parent_name,
+                'parent_phone' => $request->parent_phone,
+                'role' => 'student',
+            ];
+
+            // Handle profile photo upload with processing
+            if ($request->hasFile('profile_photo')) {
+                try {
+                    // Use our custom image processing helper
+                    $photoPath = ImagesHelper::processImage(
+                        $request->file('profile_photo'),
+                        'profile-photos',
+                        300, // max width
+                        300, // max height
+                        80   // quality
+                    );
+                    $userData['profile_photo'] = $photoPath;
+                } catch (\Exception $e) {
+                    // Fallback to simple upload if image processing fails
+                    $path = $request->file('profile_photo')->store('profile-photos', 'public');
+                    $userData['profile_photo'] = $path;
+                }
+            }
+            
+            $student = User::create($userData);
             
             return redirect()->route('students.index')
-                ->with('success', 'Student created successfully.');
+                ->with('success', 'Akun siswa berhasil dibuat.');
+                   
         } catch (QueryException $e) {
-            // Provide more detailed error message for debugging
             return back()->withInput()->withErrors([
                 'error' => 'Database error: ' . $e->getMessage()
             ]);
@@ -93,7 +122,22 @@ class StudentController extends Controller
 
     public function edit(User $student)
     {
-        return view('dashboard.students.edit', compact('student'));
+        try {
+            // First try to get classes from the class_rooms table
+            if (Schema::hasTable('class_rooms')) {
+                $classes = ClassRoom::orderBy('level')->orderBy('name')->get();
+            } else if (Schema::hasTable('classes')) {
+                // If class_rooms doesn't exist, try the 'classes' table as fallback
+                $classes = DB::table('classes')->orderBy('level')->orderBy('name')->get();
+            } else {
+                $classes = collect([]);
+            }
+        } catch (QueryException $e) {
+            // If there's a database error, provide an empty collection
+            $classes = collect([]);
+        }
+        
+        return view('dashboard.students.edit', compact('student', 'classes'));
     }
 
     public function update(Request $request, User $student)
@@ -103,7 +147,7 @@ class StudentController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,'.$student->id,
             'nis' => 'required|string|unique:users,nis,'.$student->id,
             'nisn' => 'nullable|string|unique:users,nisn,'.$student->id,
-            'class' => 'required|string',
+            'class_id' => 'required|exists:class_rooms,id',
             'phone_number' => 'nullable|string|max:15',
             'address' => 'nullable|string',
             'birth_date' => 'nullable|date',
@@ -111,15 +155,15 @@ class StudentController extends Controller
             'academic_year' => 'nullable|string',
             'parent_name' => 'nullable|string|max:255',
             'parent_phone' => 'nullable|string|max:15',
-            'profile_photo' => 'nullable|image|max:2048',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:1024', // Max 1MB
         ]);
-
+        
         $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'nis' => $request->nis,
             'nisn' => $request->nisn,
-            'class' => $request->class,
+            'class_id' => $request->class_id,
             'phone_number' => $request->phone_number,
             'address' => $request->address,
             'birth_date' => $request->birth_date,
@@ -129,32 +173,54 @@ class StudentController extends Controller
             'parent_phone' => $request->parent_phone,
         ];
 
-        // Handle profile photo upload
-        if ($request->hasFile('profile_photo')) {
-            // Delete old photo if exists
-            if ($student->profile_photo) {
-                Storage::disk('public')->delete($student->profile_photo);
+        try {
+            // Handle profile photo update
+            if ($request->hasFile('profile_photo')) {
+                // Delete old photo if exists
+                if ($student->profile_photo) {
+                    Storage::disk('public')->delete($student->profile_photo);
+                }
+                
+                try {
+                    // Use our custom image processing helper
+                    $photoPath = ImagesHelper::processImage(
+                        $request->file('profile_photo'),
+                        'profile-photos',
+                        300, // max width
+                        300, // max height
+                        80   // quality
+                    );
+                    $userData['profile_photo'] = $photoPath;
+                } catch (\Exception $e) {
+                    // Fallback to simple upload if image processing fails
+                    $path = $request->file('profile_photo')->store('profile-photos', 'public');
+                    $userData['profile_photo'] = $path;
+                }
             }
-            $path = $request->file('profile_photo')->store('profile-photos', 'public');
-            $userData['profile_photo'] = $path;
-        }
-
-        $student->update($userData);
-
-        if ($request->filled('password')) {
-            $request->validate([
-                'password' => 'required|string|min:8|confirmed',
-            ]);
             
-            $student->update([
-                'password' => Hash::make($request->password),
+            $student->update($userData);
+            
+            // Update password if provided
+            if ($request->filled('password')) {
+                $request->validate([
+                    'password' => 'required|string|min:8|confirmed',
+                ]);
+                
+                $student->update([
+                    'password' => Hash::make($request->password),
+                ]);
+            }
+            
+            return redirect()->route('students.index')
+                ->with('success', 'Akun siswa berhasil diperbarui.');
+                
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors([
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
             ]);
         }
-
-        return redirect()->route('students.index')
-            ->with('success', 'Akun siswa berhasil diperbarui.');
     }
-
+    
     public function destroy(User $student)
     {
         // Delete profile photo if exists
@@ -166,5 +232,29 @@ class StudentController extends Controller
         
         return redirect()->route('students.index')
             ->with('success', 'Akun siswa berhasil dihapus.');
+    }
+
+    /**
+     * Find a student by ID
+     * 
+     * @param int $id
+     * @return \App\Models\User
+     */
+    public function find($id)
+    {
+        // Use the User model with role='student' filter instead of Student model directly
+        return User::where('role', 'student')->findOrFail($id);
+    }
+    
+    /**
+     * Display the specified resource.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $student = User::where('role', 'student')->findOrFail($id);
+        return view('dashboard.students.show', compact('student'));
     }
 }

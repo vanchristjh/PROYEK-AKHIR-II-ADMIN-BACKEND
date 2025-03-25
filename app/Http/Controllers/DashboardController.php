@@ -18,6 +18,8 @@ class DashboardController extends Controller
         $upcomingEvents = AcademicCalendar::upcoming()->take(5)->get();
         $currentEvents = AcademicCalendar::current()->take(3)->get();
         
-        return view('dashboard.index', compact('totalStudents', 'totalTeachers', 'upcomingEvents', 'currentEvents'));
+        $session = session()->all(); // or another appropriate definition
+
+        return view('dashboard.index', compact('totalStudents', 'totalTeachers', 'upcomingEvents', 'currentEvents', 'session'));
     }
 }

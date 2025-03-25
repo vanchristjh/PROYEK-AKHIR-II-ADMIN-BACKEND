@@ -6,6 +6,8 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\StudentController;
 use App\Http\Controllers\API\TeacherController;
 use App\Http\Controllers\API\TestController;
+use App\Http\Controllers\API\ScheduleController;
+use App\Http\Controllers\API\AnnouncementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,4 +49,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/teachers/{id}', [TeacherController::class, 'show']);
     Route::put('/teachers/{id}', [TeacherController::class, 'update']);
     Route::post('/teachers/profile-photo', [TeacherController::class, 'uploadProfilePhoto']);
-}); 
+    Route::get('/teachers/{id}/subject', [TeacherController::class, 'getSubject']);
+    
+    // Schedule management
+    Route::get('/schedules', [ScheduleController::class, 'index']);
+    Route::get('/schedules/student', [ScheduleController::class, 'getStudentSchedules']);
+    Route::get('/schedules/teacher', [ScheduleController::class, 'getTeacherSchedules']);
+    
+    // Announcements
+    Route::get('/announcements', [AnnouncementController::class, 'getAnnouncements']);
+    
+    // Academic Calendar
+    Route::get('/academic-calendar', [AcademicCalendarController::class, 'getEvents']);
+    Route::get('/academic-calendar/upcoming', [AcademicCalendarController::class, 'getUpcomingEvents']);
+});

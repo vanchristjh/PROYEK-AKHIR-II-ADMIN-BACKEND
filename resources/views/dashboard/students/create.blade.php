@@ -50,7 +50,8 @@
                                 
                                 <div class="col-md-6">
                                     <label for="profile_photo" class="form-label">Foto Profil</label>
-                                    <input type="file" class="form-control" id="profile_photo" name="profile_photo">
+                                    <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" onchange="validateFileSize(this)">
+                                    <small class="text-muted">Format: JPG, PNG, GIF. Maks: 1MB</small>
                                 </div>
                             </div>
                         </div>
@@ -81,21 +82,28 @@
                                 
                                 <div class="col-md-6">
                                     <label for="gender" class="form-label">Jenis Kelamin <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('gender') is-invalid @enderror" id="gender" name="gender" required>
+                                    <select class="form-select" id="gender" name="gender" required>
                                         <option value="" selected disabled>Pilih Jenis Kelamin</option>
                                         <option value="L" {{ old('gender') == 'L' ? 'selected' : '' }}>Laki-laki</option>
                                         <option value="P" {{ old('gender') == 'P' ? 'selected' : '' }}>Perempuan</option>
                                     </select>
-                                    @error('gender')
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
-                                        </div>
-                                    @enderror
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="birth_date" class="form-label">Tanggal Lahir</label>
-                                    <input type="text" class="form-control datepicker" id="birth_date" name="birth_date" value="{{ old('birth_date') }}">
+                                    <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ old('birth_date') }}">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="class_id" class="form-label">Kelas <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="class_id" name="class_id" required>
+                                        <option value="" selected disabled>Pilih Kelas</option>
+                                        @foreach($classes as $class)
+                                            <option value="{{ $class->id }}" {{ old('class_id') == $class->id ? 'selected' : '' }}>
+                                                {{ $class->name }} ({{ $class->level }} - {{ $class->type }})
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 
                                 <div class="col-md-6">
@@ -104,45 +112,13 @@
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label for="class_id" class="form-label">Kelas <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('class_id') is-invalid @enderror" id="class_id" name="class_id">
-                                        <option value="" selected disabled>Pilih Kelas</option>
-                                        @if(isset($classes) && count($classes) > 0)
-                                            @foreach($classes as $class)
-                                                <option value="{{ $class->id }}" {{ old('class_id') == $class->id ? 'selected' : '' }}>
-                                                    {{ $class->name }} ({{ $class->level }})
-                                                </option>
-                                            @endforeach
-                                        @else
-                                            <option value="" disabled>Tidak ada kelas tersedia</option>
-                                        @endif
-                                    </select>
-                                    @error('class_id')
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
-                                        </div>
-                                    @enderror
-                                    @if(!isset($classes) || count($classes) == 0)
-                                        <small class="text-danger">
-                                            Tidak ada kelas tersedia. 
-                                            <a href="{{ route('classes.create') }}" class="text-primary">Tambah kelas baru</a>
-                                        </small>
-                                    @endif
-                                </div>
-                                
-                                <div class="col-md-6">
                                     <label for="academic_year" class="form-label">Tahun Akademik</label>
-                                    <select class="form-select" id="academic_year" name="academic_year">
-                                        <option value="" selected disabled>Pilih Tahun Akademik</option>
-                                        <option value="2022/2023" {{ old('academic_year') == '2022/2023' ? 'selected' : '' }}>2022/2023</option>
-                                        <option value="2023/2024" {{ old('academic_year') == '2023/2024' ? 'selected' : '' }}>2023/2024</option>
-                                        <option value="2024/2025" {{ old('academic_year') == '2024/2025' ? 'selected' : '' }}>2024/2025</option>
-                                    </select>
+                                    <input type="text" class="form-control" id="academic_year" name="academic_year" value="{{ old('academic_year', date('Y').'/'.( date('Y')+1 )) }}">
                                 </div>
                                 
                                 <div class="col-md-12">
                                     <label for="address" class="form-label">Alamat</label>
-                                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address') }}</textarea>
+                                    <textarea class="form-control" id="address" name="address" rows="2">{{ old('address') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -160,7 +136,7 @@
                                     <label for="parent_name" class="form-label">Nama Orang Tua/Wali</label>
                                     <input type="text" class="form-control" id="parent_name" name="parent_name" value="{{ old('parent_name') }}">
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <label for="parent_phone" class="form-label">Nomor Telepon Orang Tua/Wali</label>
                                     <input type="text" class="form-control" id="parent_phone" name="parent_phone" value="{{ old('parent_phone') }}">
@@ -187,12 +163,12 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Select2
         if (typeof $.fn.select2 !== 'undefined') {
             $('.select2').select2({
                 theme: 'bootstrap-5'
             });
         }
+        
         // Initialize Flatpickr for date pickers
         if (typeof flatpickr !== 'undefined') {
             flatpickr(".datepicker", {
@@ -201,6 +177,15 @@
                 altInput: true,
                 altFormat: "d M Y"
             });
+        }
+        
+        // File size validation
+        function validateFileSize(input) {
+            const maxSize = 1024 * 1024; // 1MB
+            if (input.files && input.files[0] && input.files[0].size > maxSize) {
+                alert("Ukuran file terlalu besar! Maksimum 1MB.");
+                input.value = '';
+            }
         }
     });
 </script>

@@ -160,6 +160,38 @@
             classSelect.addEventListener('change', updateScheduleInfo);
             subjectSelect.addEventListener('change', updateScheduleInfo);
         }
+
+        // Validate end time is after start time
+        const startTimeInput = document.getElementById('start_time');
+        const endTimeInput = document.getElementById('end_time');
+        const form = document.querySelector('form');
+        
+        function validateTimes() {
+            if (startTimeInput.value && endTimeInput.value) {
+                if (endTimeInput.value <= startTimeInput.value) {
+                    endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
+                    return false;
+                } else {
+                    endTimeInput.setCustomValidity('');
+                    return true;
+                }
+            }
+            return true;
+        }
+        
+        startTimeInput.addEventListener('change', validateTimes);
+        endTimeInput.addEventListener('change', validateTimes);
+        
+        // Validate form before submission
+        form.addEventListener('submit', function(e) {
+            if (!validateTimes()) {
+                e.preventDefault();
+                alert('Waktu selesai harus setelah waktu mulai');
+            }
+        });
+        
+        // Initialize validation on page load
+        validateTimes();
     });
 </script>
 @endsection

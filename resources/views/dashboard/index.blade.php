@@ -63,18 +63,21 @@
 <div class="row g-4 mb-4">
     <!-- Students Card -->
     <div class="col-md-6 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm">
+        <div class="card h-100 border-0 shadow-sm hover-shadow">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
-                    <div class="icon-box bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                    <div class="icon-box bg-primary bg-opacity-15 rounded-3 p-3 me-3">
                         <i class="bx bxs-user-detail fs-1 text-primary"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted mb-1">Total Siswa</h6>
+                        <h6 class="text-muted mb-1 small text-uppercase">Total Siswa</h6>
                         <h3 class="mb-0 fw-bold">{{ $totalStudents }}</h3>
                     </div>
                 </div>
-                <div class="mt-3">
+                <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ min(100, ($totalStudents/500)*100) }}%" aria-valuenow="{{ $totalStudents }}" aria-valuemin="0" aria-valuemax="500"></div>
+                </div>
+                <div class="mt-1">
                     <a href="{{ route('students.index') }}" class="btn btn-sm btn-outline-primary w-100">
                         <i class="bx bx-show me-1"></i> Lihat Data Siswa
                     </a>
@@ -85,18 +88,21 @@
 
     <!-- Teachers Card -->
     <div class="col-md-6 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm">
+        <div class="card h-100 border-0 shadow-sm hover-shadow">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
-                    <div class="icon-box bg-info bg-opacity-10 rounded-3 p-3 me-3">
+                    <div class="icon-box bg-info bg-opacity-15 rounded-3 p-3 me-3">
                         <i class="bx bxs-user-badge fs-1 text-info"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted mb-1">Total Guru</h6>
+                        <h6 class="text-muted mb-1 small text-uppercase">Total Guru</h6>
                         <h3 class="mb-0 fw-bold">{{ $totalTeachers }}</h3>
                     </div>
                 </div>
-                <div class="mt-3">
+                <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ min(100, ($totalTeachers/50)*100) }}%" aria-valuenow="{{ $totalTeachers }}" aria-valuemin="0" aria-valuemax="50"></div>
+                </div>
+                <div class="mt-1">
                     <a href="{{ route('teachers.index') }}" class="btn btn-sm btn-outline-info w-100">
                         <i class="bx bx-show me-1"></i> Lihat Data Guru
                     </a>
@@ -107,18 +113,21 @@
     
     <!-- Classes Card -->
     <div class="col-md-6 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm">
+        <div class="card h-100 border-0 shadow-sm hover-shadow">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
-                    <div class="icon-box bg-success bg-opacity-10 rounded-3 p-3 me-3">
+                    <div class="icon-box bg-success bg-opacity-15 rounded-3 p-3 me-3">
                         <i class="bx bxs-school fs-1 text-success"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted mb-1">Total Kelas</h6>
+                        <h6 class="text-muted mb-1 small text-uppercase">Total Kelas</h6>
                         <h3 class="mb-0 fw-bold">18</h3>
                     </div>
                 </div>
-                <div class="mt-3">
+                <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 75%" aria-valuenow="18" aria-valuemin="0" aria-valuemax="24"></div>
+                </div>
+                <div class="mt-1">
                     <a href="#" class="btn btn-sm btn-outline-success w-100">
                         <i class="bx bx-show me-1"></i> Lihat Data Kelas
                     </a>
@@ -129,18 +138,21 @@
     
     <!-- Events Card -->
     <div class="col-md-6 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm">
+        <div class="card h-100 border-0 shadow-sm hover-shadow">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
-                    <div class="icon-box bg-warning bg-opacity-10 rounded-3 p-3 me-3">
+                    <div class="icon-box bg-warning bg-opacity-15 rounded-3 p-3 me-3">
                         <i class="bx bxs-calendar-event fs-1 text-warning"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted mb-1">Acara Bulan Ini</h6>
+                        <h6 class="text-muted mb-1 small text-uppercase">Acara Bulan Ini</h6>
                         <h3 class="mb-0 fw-bold">3</h3>
                     </div>
                 </div>
-                <div class="mt-3">
+                <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 30%" aria-valuenow="3" aria-valuemin="0" aria-valuemax="10"></div>
+                </div>
+                <div class="mt-1">
                     <a href="#" class="btn btn-sm btn-outline-warning w-100">
                         <i class="bx bx-show me-1"></i> Lihat Jadwal
                     </a>
@@ -446,189 +458,33 @@
         if (typeof flatpickr !== 'undefined') {
             flatpickr("#datePicker", {
                 dateFormat: "d M Y",
-                defaultDate: "today",
+                defaultDate: "{{ date('d M Y') }}",
                 onChange: function(selectedDates, dateStr) {
                     document.getElementById('currentDate').textContent = dateStr;
                 }
-            });
-
-            flatpickr(".datepicker", {
-                dateFormat: "Y-m-d",
             });
         }
 
         // Academic Progress Chart using ApexCharts
         if (typeof ApexCharts !== 'undefined') {
-            const academicOptions = {
+            const options = {
+                // Chart configuration options
                 series: [{
-                    name: 'IPA',
-                    data: [78, 82, 80, 85, 83, 87, 88, 86, 84, 83, 85, 88]
-                }, {
-                    name: 'IPS',
-                    data: [75, 78, 77, 79, 80, 81, 82, 81, 83, 82, 84, 85]
+                    name: "Nilai Rata-rata",
+                    data: [78, 82, 85, 76, 90, 88, 95]
                 }],
                 chart: {
+                    type: 'line',
                     height: 300,
-                    type: 'area',
                     toolbar: {
                         show: false
-                    },
-                    fontFamily: 'Inter, sans-serif',
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 3
-                },
-                xaxis: {
-                    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
-                },
-                yaxis: {
-                    min: 70,
-                    max: 100,
-                    title: {
-                        text: 'Nilai Rata-rata'
                     }
                 },
-                fill: {
-                    type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1,
-                        opacityFrom: 0.4,
-                        opacityTo: 0.1,
-                        stops: [0, 90, 100]
-                    }
-                },
-                grid: {
-                    borderColor: '#f1f1f1',
-                },
-                legend: {
-                    position: 'top',
-                    horizontalAlign: 'right',
-                },
-                tooltip: {
-                    x: {
-                        format: 'MM'
-                    },
-                },
-                colors: ['#0066b3', '#1e88e5'],
+                // Additional chart options
             };
-
-            if (document.querySelector("#academicChartContainer")) {
-                const academicChart = new ApexCharts(document.querySelector("#academicChartContainer"), academicOptions);
-                academicChart.render();
-            }
-
-            // Student Distribution Chart
-            const distributionOptions = {
-                series: [320, 280, 250],
-                chart: {
-                    type: 'donut',
-                    height: 300,
-                    fontFamily: 'Inter, sans-serif',
-                },
-                labels: ['Kelas X', 'Kelas XI', 'Kelas XII'],
-                colors: ['#0066b3', '#1e88e5', '#64b5f6'],
-                plotOptions: {
-                    pie: {
-                        donut: {
-                            size: '65%',
-                            labels: {
-                                show: true,
-                                total: {
-                                    show: true,
-                                    label: 'Total Siswa',
-                                    formatter: function (w) {
-                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                responsive: [{
-                    breakpoint: 480,
-                    options: {
-                        chart: {
-                            height: 250
-                        },
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }],
-                legend: {
-                    position: 'bottom',
-                    dataLabels: {
-                        formatter: function (val, opts) {
-                            return opts.w.globals.seriesTotals[opts.seriesIndex];
-                        }
-                    }
-                },
-            };
-
-            if (document.querySelector("#studentDistributionChart")) {
-                const distributionChart = new ApexCharts(document.querySelector("#studentDistributionChart"), distributionOptions);
-                distributionChart.render();
-            }
-        }
-
-        // Show notifications with SweetAlert2
-        document.querySelector('.btn-primary').addEventListener('click', function() {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Data Diperbarui!',
-                    text: 'Data dashboard telah diperbarui.',
-                    icon: 'success',
-                    confirmButtonColor: '#0066b3',
-                    confirmButtonText: 'Oke'
-                });
-            }
-        });
-
-        // Class Form Submission
-        const saveClassBtn = document.getElementById('saveClassBtn');
-        if (saveClassBtn) {
-            saveClassBtn.addEventListener('click', function() {
-                const form = document.getElementById('addClassForm');
-                const formElements = form.elements;
-                let isValid = true;
-                
-                // Basic form validation
-                for (let i = 0; i < formElements.length; i++) {
-                    if (formElements[i].hasAttribute('required') && !formElements[i].value) {
-                        formElements[i].classList.add('is-invalid');
-                        isValid = false;
-                    } else {
-                        formElements[i].classList.remove('is-invalid');
-                    }
-                }
-                
-                if (isValid) {
-                    // Here you would normally send an AJAX request to save the class
-                    // For demonstration, we'll just show a success message
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: 'Kelas Berhasil Ditambahkan!',
-                            text: `Kelas ${document.getElementById('className').value} telah berhasil ditambahkan.`,
-                            icon: 'success',
-                            confirmButtonColor: '#0066b3',
-                            confirmButtonText: 'Oke'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Close the modal
-                                const modal = bootstrap.Modal.getInstance(document.getElementById('addClassModal'));
-                                modal.hide();
-                                
-                                // Reset the form
-                                form.reset();
-                            }
-                        });
-                    }
-                }
-            });
+            
+            const chart = new ApexCharts(document.querySelector("#academicChart"), options);
+            chart.render();
         }
     });
 </script>

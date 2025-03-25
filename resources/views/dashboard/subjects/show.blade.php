@@ -85,12 +85,7 @@
                                                 </div>
                                                 <div class="flex-grow-1 ms-3">
                                                     <h6 class="mb-0 fw-semibold">{{ $teacher->name }}</h6>
-                                                    <p class="mb-0 small text-muted">
-                                                        {{ $teacher->nip ?? 'NIP: -' }}
-                                                        @if($teacher->subject)
-                                                            <span class="ms-2">{{ $teacher->subject }}</span>
-                                                        @endif
-                                                    </p>
+                                                    <p class="mb-0 small text-muted">{{ $teacher->subject ?? 'Tidak ada mata pelajaran' }}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -99,7 +94,7 @@
                             @endforeach
                         </div>
                     @else
-                        <p class="text-muted">Belum ada guru yang mengampu mata pelajaran ini.</p>
+                        <p class="text-muted">Belum ada guru yang mengajar mata pelajaran ini.</p>
                     @endif
                 </div>
                 

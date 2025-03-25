@@ -41,7 +41,8 @@ class AttendanceRecord extends Model
      */
     public function student(): BelongsTo
     {
-        return $this->belongsTo(Student::class, 'student_id');
+        // Explicitly target the users table for students
+        return $this->belongsTo(User::class, 'student_id')->where('role', 'student');
     }
 
     /**

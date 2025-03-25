@@ -89,28 +89,14 @@
                                     @endif
                                 </div>
                                 <div class="small mt-1">
-                                    <span class="text-primary">
-                                        @php
-                                            $diffDays = now()->diffInDays($event->start_date, false);
-                                            if ($diffDays == 0) {
-                                                echo '<span class="text-success">Hari ini</span>';
-                                            } elseif ($diffDays == 1) {
-                                                echo '<span class="text-warning">Besok</span>';
-                                            } elseif ($diffDays > 1 && $diffDays <= 7) {
-                                                echo '<span class="text-primary">' . $diffDays . ' hari lagi</span>';
-                                            } else {
-                                                echo '<span class="text-muted">' . $event->start_date->format('d M Y') . '</span>';
-                                            }
-                                        @endphp
-                                    </span>
+                                    {{ Str::limit($event->description, 100) }}
                                 </div>
                             </a>
                         @endforeach
                     </div>
                 @else
-                    <div class="text-center py-5">
-                        <img src="https://via.placeholder.com/100" alt="No events" class="img-fluid mb-3 opacity-50" style="max-width: 100px;">
-                        <p class="text-muted">Tidak ada agenda mendatang</p>
+                    <div class="p-4 text-center">
+                        <p class="text-muted mb-0">Tidak ada agenda mendatang</p>
                     </div>
                 @endif
             </div>

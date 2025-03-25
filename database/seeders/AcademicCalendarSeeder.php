@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\AcademicCalendar;
 use Carbon\Carbon;
@@ -16,17 +15,17 @@ class AcademicCalendarSeeder extends Seeder
     {
         $events = [
             [
-                'title' => 'Ujian Akhir Semester Genap',
-                'description' => 'Ujian akan dilaksanakan untuk semua mata pelajaran. Siswa diharapkan mempersiapkan diri dengan baik.',
-                'start_date' => Carbon::now()->addDays(20)->setTime(8, 0),
-                'end_date' => Carbon::now()->addDays(25)->setTime(15, 0),
-                'location' => 'Ruang Kelas',
+                'title' => 'Ujian Tengah Semester',
+                'description' => 'Ujian tengah semester untuk semua kelas',
+                'start_date' => Carbon::now()->addDays(15)->setTime(8, 0),
+                'end_date' => Carbon::now()->addDays(19)->setTime(12, 0),
+                'location' => 'Seluruh ruang kelas',
                 'event_type' => 'exam',
                 'is_important' => true,
                 'created_by' => 1,
                 'academic_year' => '2023/2024',
                 'semester' => '2',
-                'target_audience' => 'students',
+                'target_audience' => 'students'
             ],
             [
                 'title' => 'Rapat Guru dan Staf',

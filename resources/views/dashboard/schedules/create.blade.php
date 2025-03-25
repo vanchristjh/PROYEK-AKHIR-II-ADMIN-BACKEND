@@ -245,6 +245,70 @@
                 }
             }
         });
+
+        // Initialize Select2
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+        
+        // Initialize Flatpickr for date pickers
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr(".datepicker", {
+                dateFormat: "Y-m-d",
+                allowInput: true,
+                altInput: true,
+                altFormat: "d M Y"
+            });
+        }
+        
+        // Time slot validation
+        const startTimeInput = document.getElementById('start_time');
+        const endTimeInput = document.getElementById('end_time');
+        
+        startTimeInput.addEventListener('change', function() {
+            if (startTimeInput.value && endTimeInput.value) {
+                if (endTimeInput.value <= startTimeInput.value) {
+                    endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
+                    showTimeError("Waktu selesai harus setelah waktu mulai");
+                } else {
+                    endTimeInput.setCustomValidity('');
+                    hideTimeError();
+                }
+            }
+        });
+        
+        endTimeInput.addEventListener('change', function() {
+            if (startTimeInput.value && endTimeInput.value) {
+                if (endTimeInput.value <= startTimeInput.value) {
+                    endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
+                    showTimeError("Waktu selesai harus setelah waktu mulai");
+                } else {
+                    endTimeInput.setCustomValidity('');
+                    hideTimeError();
+                }
+            }
+        });
+        
+        function showTimeError(message) {
+            const errorDiv = document.getElementById('time-error') || document.createElement('div');
+            errorDiv.id = 'time-error';
+            errorDiv.className = 'alert alert-danger mt-2';
+            errorDiv.textContent = message;
+            
+            if (!document.getElementById('time-error')) {
+                endTimeInput.parentNode.appendChild(errorDiv);
+            }
+        }
+        
+        function hideTimeError() {
+            const errorDiv = document.getElementById('time-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
     });
 </script>
 @endsection

@@ -77,7 +77,7 @@
                                         <h5 class="mb-0">{{ $teacher->name }}</h5>
                                         <p class="text-muted mb-0">{{ $teacher->email }}</p>
                                         <div class="mt-2">
-                                            <span class="badge bg-primary">{{ $schedulesByDay->flatten()->count() ?? 0 }} jadwal</span>dwal</span>dwal</span>
+                                            <span class="badge bg-primary">{{ $schedulesByDay->flatten()->count() ?? 0 }} jadwal</span>
                                         </div>
                                     </div>
                                 </div>

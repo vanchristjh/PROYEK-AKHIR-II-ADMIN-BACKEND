@@ -16,13 +16,14 @@ class Subject extends Model
         'class_level',
         'semester',
         'curriculum',
-        'is_active',
-        'credits',
         'subject_type',
+        'credits',
+        'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'credits' => 'integer',
     ];
 
     /**
@@ -30,8 +31,9 @@ class Subject extends Model
      */
     public function teachers()
     {
-        return $this->belongsToMany(User::class, 'teacher_subjects', 'subject_id', 'teacher_id')
-                    ->where('role', 'teacher');
+        return $this->belongsToMany(User::class, 'subject_teacher', 'subject_id', 'teacher_id')
+                    ->where('role', 'teacher')
+                    ->withTimestamps();
     }
 
     /**
@@ -39,6 +41,6 @@ class Subject extends Model
      */
     public function schedules()
     {
-        return $this->hasMany(Schedule::class);
+        return $this->hasMany(ClassSchedule::class, 'subject', 'name');
     }
 }

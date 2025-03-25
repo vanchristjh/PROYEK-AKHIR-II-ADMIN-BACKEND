@@ -93,8 +93,9 @@
                                 </div>
                                 
                                 <div class="col-md-4">
-                                    <label for="credits" class="form-label">Jumlah SKS</label>
-                                    <input type="number" class="form-control @error('credits') is-invalid @enderror" id="credits" name="credits" value="{{ old('credits', 0) }}" min="0">
+                                    <label for="credits" class="form-label">Jumlah SKS <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control @error('credits') is-invalid @enderror" id="credits" name="credits" value="{{ old('credits', 1) }}" min="1" required>
+                                    <small class="text-muted">Minimal 1 SKS</small>
                                     @error('credits')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

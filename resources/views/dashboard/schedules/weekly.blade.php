@@ -101,15 +101,14 @@
                             <td class="bg-light text-center align-middle fw-bold">{{ $timeSlot }}</td>
                             
                             @foreach($days as $day)
-                                <td class="schedule-cell">
+                                <td class="schedule-cell p-2 position-relative" style="min-width: 150px; height: 100px;">
                                     @if(isset($weeklySchedule[$day][$timeSlot]) && count($weeklySchedule[$day][$timeSlot]) > 0)
                                         @foreach($weeklySchedule[$day][$timeSlot] as $schedule)
-                                            <div class="schedule-item mb-2 p-2 border rounded
-                                                @if($schedule->is_active) bg-white @else bg-light text-muted @endif">
+                                            <div class="schedule-item mb-2 p-2 border rounded bg-light shadow-sm">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge bg-primary">{{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }}</span>
+                                                    <span class="badge bg-primary">{{ $schedule->subject }}</span>
                                                     <div class="dropdown">
-                                                        <button class="btn btn-sm py-0 px-1" type="button" data-bs-toggle="dropdown">
+                                                        <button class="btn btn-sm btn-link text-muted dropdown-toggle p-0" type="button" data-bs-toggle="dropdown">
                                                             <i class="bx bx-dots-vertical-rounded"></i>
                                                         </button>
                                                         <ul class="dropdown-menu dropdown-menu-end">
@@ -128,19 +127,21 @@
                                                         </ul>
                                                     </div>
                                                 </div>
-                                                <h6 class="mb-0 text-truncate">{{ $schedule->subject }}</h6>
                                                 <div class="small">
-                                                    <div class="text-truncate">{{ $schedule->class ? $schedule->class->name : '-' }}</div>
-                                                    <div class="text-truncate text-muted">{{ $schedule->teacher ? $schedule->teacher->name : '-' }}</div>
-                                                    @if($schedule->room)
-                                                        <div class="text-truncate text-muted"><i class="bx bx-map-pin"></i> {{ $schedule->room }}</div>
-                                                    @endif
+                                                    <div class="text-truncate fw-medium">{{ $schedule->class ? $schedule->class->name : '-' }}</div>
+                                                    <div class="text-muted small">
+                                                        <i class="bx bx-time me-1"></i>{{ substr($schedule->start_time, 0, 5) }} - {{ substr($schedule->end_time, 0, 5) }}
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        <i class="bx bx-user me-1"></i>{{ $schedule->teacher ? $schedule->teacher->name : '-' }}
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endforeach
                                     @else
-                                        <div class="text-center py-2">
-                                            <span class="text-muted small">-</span>
+                                        <div class="text-center py-2 text-muted small">
+                                            <i class="bx bx-calendar-x d-block mb-1 fs-4"></i>
+                                            Tidak ada jadwal
                                         </div>
                                     @endif
                                 </td>
