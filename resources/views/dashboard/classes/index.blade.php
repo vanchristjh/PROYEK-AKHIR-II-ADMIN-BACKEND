@@ -90,8 +90,8 @@
                         </div>
                         @else
                         <div class="text-center py-5">
-                            <img src="https://via.placeholder.com/150" alt="No classes" class="img-fluid mb-3" style="opacity: 0.5; max-width: 150px;">
-                            <h6 class="text-muted">Belum ada kelas untuk tingkat X</h6>
+                            <i class="bx bx-book-content text-secondary" style="font-size: 3.5rem; opacity: 0.5;"></i>
+                            <h6 class="text-muted mt-3">Belum ada kelas untuk tingkat X</h6>
                             <p class="small text-muted">Silakan tambahkan kelas baru menggunakan tombol "Tambah Kelas"</p>
                         </div>
                         @endif

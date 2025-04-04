@@ -215,6 +215,7 @@
                         <li><a class="dropdown-item" href="{{ route('teachers.create') }}"><i class="bx bx-user-voice"></i> Tambah Guru</a></li>
                         <li><a class="dropdown-item" href="{{ route('announcements.create') }}"><i class="bx bx-bell-plus"></i> Buat Pengumuman</a></li>
                         <li><a class="dropdown-item" href="{{ route('schedules.create') }}"><i class="bx bx-calendar-plus"></i> Buat Jadwal</a></li>
+                        <li><a class="dropdown-item" href="{{ route('academic-calendar.create') }}"><i class="bx bx-calendar-event"></i> Tambah Agenda Kalender</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{{ route('classes.create') }}"><i class="bx bx-plus-circle"></i> Kelas Baru</a></li>
                     </ul>

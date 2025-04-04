@@ -32,34 +32,37 @@
                             
                             <div class="mb-3">
                                 <label for="title" class="form-label">Judul Agenda <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="title" name="title" value="{{ old('title') }}" required>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ old('title') }}" placeholder="Masukkan judul agenda" required>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="description" class="form-label">Deskripsi</label>
-                                <textarea class="form-control" id="description" name="description" rows="5">{{ old('description') }}</textarea>
+                                <textarea class="form-control" id="description" name="description" rows="5" placeholder="Deskripsi agenda...">{{ old('description') }}</textarea>
                                 <small class="text-muted">Berikan deskripsi detil tentang agenda ini.</small>
                             </div>
                             
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="start_date" class="form-label">Tanggal Mulai <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ old('start_date', now()->format('Y-m-d')) }}" required>
+                            <div class="card bg-light border-0 p-3 mb-3">
+                                <h6 class="mb-3">Waktu Pelaksanaan <span class="text-danger">*</span></h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="start_date" class="form-label">Tanggal Mulai</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ old('start_date', now()->format('Y-m-d')) }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="start_time" class="form-label">Waktu Mulai</label>
+                                        <input type="time" class="form-control" id="start_time" name="start_time" value="{{ old('start_time', '08:00') }}" required>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="start_time" class="form-label">Waktu Mulai <span class="text-danger">*</span></label>
-                                    <input type="time" class="form-control" id="start_time" name="start_time" value="{{ old('start_time', '08:00') }}" required>
-                                </div>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="end_date" class="form-label">Tanggal Selesai <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ old('end_date', now()->format('Y-m-d')) }}" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="end_time" class="form-label">Waktu Selesai <span class="text-danger">*</span></label>
-                                    <input type="time" class="form-control" id="end_time" name="end_time" value="{{ old('end_time', '16:00') }}" required>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="end_date" class="form-label">Tanggal Selesai <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ old('end_date', now()->format('Y-m-d')) }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="end_time" class="form-label">Waktu Selesai <span class="text-danger">*</span></label>
+                                        <input type="time" class="form-control" id="end_time" name="end_time" value="{{ old('end_time', '16:00') }}" required>
+                                    </div>
                                 </div>
                             </div>
                             

@@ -77,11 +77,11 @@
                     </div>
                 </div>
                 
-                <hr>
+                <hr class="my-4">
                 
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="small text-muted">
-                        <i class="bx bx-user-circle me-1"></i> Dibuat oleh: {{ $academicCalendar->creator ? $academicCalendar->creator->name : 'System' }}
+                        <i class="bx bx-user-circle me-1"></i> Dibuat oleh: {{ $academicCalendar->creator ? $academicCalendar->creator->name : 'Admin' }}
                     </div>
                     <div class="small text-muted">
                         <i class="bx bx-calendar-check me-1"></i> Dibuat: {{ $academicCalendar->created_at->format('d M Y H:i') }}
@@ -92,14 +92,14 @@
         
         <!-- Quick Actions -->
         <div class="d-flex gap-2 mb-4">
-            <a href="{{ route('academic-calendar.edit', $academicCalendar) }}" class="btn btn-outline-primary flex-grow-1">
-                <i class="bx bx-edit me-1"></i> Edit Agenda
+            <a href="{{ route('academic-calendar.edit', $academicCalendar) }}" class="btn btn-outline-primary flex-grow-1 d-flex align-items-center justify-content-center">
+                <i class="bx bx-edit me-2"></i> Edit Agenda
             </a>
-            <form action="{{ route('academic-calendar.destroy', $academicCalendar) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus agenda ini?')">
+            <form action="{{ route('academic-calendar.destroy', $academicCalendar) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus agenda ini?')">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger">
-                    <i class="bx bx-trash me-1"></i> Hapus
+                <button type="submit" class="btn btn-outline-danger d-flex align-items-center">
+                    <i class="bx bx-trash me-2"></i> Hapus
                 </button>
             </form>
         </div>

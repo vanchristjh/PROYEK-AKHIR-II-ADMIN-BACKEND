@@ -11,17 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Check if the table already exists before trying to create it
         if (!Schema::hasTable('announcements')) {
             Schema::create('announcements', function (Blueprint $table) {
                 $table->id();
                 $table->string('title');
                 $table->text('content');
-                $table->enum('status', ['published', 'draft', 'archived'])->default('draft');
-                $table->timestamp('published_at')->nullable();
-                $table->timestamp('expired_at')->nullable();
-                $table->enum('target_audience', ['all', 'students', 'teachers', 'staff'])->default('all');
-                $table->enum('priority', ['high', 'medium', 'low'])->default('medium');
-                $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('author_id')->nullable()->constrained('users')->onDelete('set null');
+                $table->datetime('published_at')->nullable();
+                $table->string('target_audience')->default('all'); // 'all', 'students', 'teachers', etc.
+                $table->boolean('is_important')->default(false);
+                $table->string('image_path')->nullable();
                 $table->timestamps();
             });
         }
@@ -32,6 +32,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('announcements');
+        // Don't drop the table in down(), as it might have been created by another migration
+        // and we don't want to accidentally remove data
     }
 };

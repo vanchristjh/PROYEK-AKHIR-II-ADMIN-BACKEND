@@ -8,6 +8,8 @@ use App\Http\Controllers\API\TeacherController;
 use App\Http\Controllers\API\TestController;
 use App\Http\Controllers\API\ScheduleController;
 use App\Http\Controllers\API\AnnouncementController;
+use App\Http\Controllers\API\AcademicCalendarController;
+use App\Http\Controllers\API\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,4 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Academic Calendar
     Route::get('/academic-calendar', [AcademicCalendarController::class, 'getEvents']);
     Route::get('/academic-calendar/upcoming', [AcademicCalendarController::class, 'getUpcomingEvents']);
+    
+    // Dashboard data
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 });

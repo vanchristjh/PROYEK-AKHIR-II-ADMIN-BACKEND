@@ -154,8 +154,9 @@
         
         <!-- Preview Card -->
         <div class="card shadow-sm preview-card">
-            <div class="card-header bg-white">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Preview</h5>
+                <i class="bx bx-info-circle text-muted" data-bs-toggle="tooltip" title="Tampilan pengumuman seperti yang akan dilihat oleh pengguna"></i>
             </div>
             <div class="card-body">
                 <p class="card-text small text-muted">Ini adalah tampilan pengumuman seperti yang akan dilihat oleh pengguna:</p>

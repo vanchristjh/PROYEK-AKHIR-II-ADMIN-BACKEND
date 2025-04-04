@@ -4,10 +4,10 @@
 
 @section('page-actions')
 <div class="d-flex">
-    <a href="{{ route('academic-calendar.index') }}" class="btn btn-light btn-sm me-2">
+    <a href="{{ route('academic-calendar.index') }}" class="btn btn-light btn-sm me-2 d-flex align-items-center">
         <i class="bx bx-list-ul me-1"></i> Tampilan Daftar
     </a>
-    <a href="{{ route('academic-calendar.create') }}" class="btn btn-primary btn-sm">
+    <a href="{{ route('academic-calendar.create') }}" class="btn btn-primary btn-sm d-flex align-items-center">
         <i class="bx bx-plus me-1"></i> Tambah Agenda
     </a>
 </div>

@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Announcement;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class FixAnnouncementsCommand extends Command
 {
@@ -27,6 +29,20 @@ class FixAnnouncementsCommand extends Command
     public function handle()
     {
         $this->info('Checking announcements...');
+        
+        // Check if there's a schema issue to fix
+        if (Schema::hasTable('announcements')) {
+            if (Schema::hasColumn('announcements', 'is_important') && Schema::hasColumn('announcements', 'priority')) {
+                $this->info('Converting is_important to priority...');
+                
+                // Convert is_important to priority
+                DB::table('announcements')
+                    ->where('is_important', true)
+                    ->update(['priority' => 'high']);
+                
+                $this->info('Conversion completed.');
+            }
+        }
         
         // Get all published announcements
         $publishedAnnouncements = Announcement::where('status', 'published')->get();

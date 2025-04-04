@@ -7,6 +7,7 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Console\Commands\FixMySQLDatabase;
 use App\Console\Commands\FixDatabaseConstraints;
 use App\Console\Commands\RecreateClassesTable;
+use App\Models\Announcement;
 
 class Kernel extends ConsoleKernel
 {
@@ -30,6 +31,16 @@ class Kernel extends ConsoleKernel
     {
         // Check for upcoming class schedules every minute to send notifications
         $schedule->command('schedules:notify')->everyMinute();
+
+        // Archive expired announcements
+        $schedule->call(function () {
+            Announcement::where('status', 'published')
+                ->where('expired_at', '<', now())
+                ->update(['status' => 'archived']);
+        })->daily();
+        
+        // Run the announcement fixer weekly
+        $schedule->command('announcements:fix')->weekly();
     }
 
     /**

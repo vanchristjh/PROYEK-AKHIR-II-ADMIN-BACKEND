@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             TeacherSeeder::class,
             SubjectSeeder::class,
             AcademicCalendarSeeder::class,
+            AnnouncementSeeder::class, // Add our new announcement seeder
         ]);
 
         // User::factory(10)->create();

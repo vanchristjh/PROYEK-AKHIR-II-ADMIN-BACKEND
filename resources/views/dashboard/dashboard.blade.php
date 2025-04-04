@@ -29,19 +29,23 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <button class="btn btn-sm btn-primary me-2">
+                        <button class="btn btn-sm btn-primary me-2" onclick="window.location.reload()">
                             <i class="bx bx-refresh me-1"></i> Refresh Data
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary">
+                        <a href="{{ route('settings.index') }}" class="btn btn-sm btn-outline-secondary">
                             <i class="bx bx-cog me-1"></i> Pengaturan
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 bg-primary d-flex align-items-center justify-content-center p-4">
                 <div class="text-center text-white">
-                    <img src="https://ui-avatars.com/api/?name=SMA&background=0066b3&color=fff&bold=true&size=80" alt="Logo SMA" class="img-fluid rounded mb-3" style="border: 5px solid rgba(255,255,255,0.2)">
-                    <h5 class="mb-1">SMA Negeri</h5>
+                    @if(file_exists(public_path('images/logo.png')))
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo SMA" class="img-fluid rounded mb-3" style="border: 5px solid rgba(255,255,255,0.2); max-height: 80px;">
+                    @else
+                        <img src="https://ui-avatars.com/api/?name=SMA&background=0066b3&color=fff&bold=true&size=80" alt="Logo SMA" class="img-fluid rounded mb-3" style="border: 5px solid rgba(255,255,255,0.2)">
+                    @endif
+                    <h5 class="mb-1">{{ config('app.name', 'SMA Negeri') }}</h5>
                     <p class="mb-0 small opacity-75">Pendidikan Berkualitas untuk Masa Depan Cemerlang</p>
                 </div>
             </div>
@@ -111,14 +115,14 @@
                     </div>
                     <div>
                         <h6 class="text-muted mb-1 small text-uppercase">Total Kelas</h6>
-                        <h3 class="mb-0 fw-bold">18</h3>
+                        <h3 class="mb-0 fw-bold">{{ $totalClasses }}</h3>
                     </div>
                 </div>
                 <div class="progress mb-3" style="height: 6px;">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: 75%" aria-valuenow="18" aria-valuemin="0" aria-valuemax="24"></div>
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ min(100, ($totalClasses/24)*100) }}%" aria-valuenow="{{ $totalClasses }}" aria-valuemin="0" aria-valuemax="24"></div>
                 </div>
                 <div class="mt-1">
-                    <a href="#" class="btn btn-sm btn-outline-success w-100">
+                    <a href="{{ route('classes.index') }}" class="btn btn-sm btn-outline-success w-100">
                         <i class="bx bx-show me-1"></i> Lihat Data Kelas
                     </a>
                 </div>
@@ -136,14 +140,14 @@
                     </div>
                     <div>
                         <h6 class="text-muted mb-1 small text-uppercase">Acara Bulan Ini</h6>
-                        <h3 class="mb-0 fw-bold">3</h3>
+                        <h3 class="mb-0 fw-bold">{{ $eventsThisMonth }}</h3>
                     </div>
                 </div>
                 <div class="progress mb-3" style="height: 6px;">
-                    <div class="progress-bar bg-warning" role="progressbar" style="width: 30%" aria-valuenow="3" aria-valuemin="0" aria-valuemax="10"></div>
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ min(100, ($eventsThisMonth/10)*100) }}%" aria-valuenow="{{ $eventsThisMonth }}" aria-valuemin="0" aria-valuemax="10"></div>
                 </div>
                 <div class="mt-1">
-                    <a href="#" class="btn btn-sm btn-outline-warning w-100">
+                    <a href="{{ route('academic-calendar.index') }}" class="btn btn-sm btn-outline-warning w-100">
                         <i class="bx bx-show me-1"></i> Lihat Jadwal
                     </a>
                 </div>
@@ -220,7 +224,7 @@
                 <a href="{{ route('academic-calendar.index') }}" class="btn btn-sm btn-outline-primary">Lihat Semua</a>
             </div>
             <div class="card-body p-4">
-                @if(isset($upcomingEvents) && $upcomingEvents->count() > 0)
+                @if($upcomingEvents && $upcomingEvents->count() > 0)
                     <div class="list-group list-group-flush">
                         @foreach($upcomingEvents as $event)
                             <div class="list-group-item px-0 py-3 d-flex border-top-0">
@@ -275,36 +279,41 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Pengumuman Terkini</h5>
-                <button class="btn btn-sm btn-outline-primary">Semua</button>
+                @if(isset($announcements) && count($announcements) > 0)
+                    <a href="{{ route('announcements.index') }}" class="btn btn-sm btn-outline-primary">Semua</a>
+                @endif
             </div>
             <div class="card-body p-4">
-                <div class="d-flex align-items-center p-3 bg-primary bg-opacity-10 rounded mb-3">
-                    <div class="icon-box bg-primary rounded-circle p-2 me-3">
-                        <i class="bx bx-news text-white"></i>
+                @if(isset($announcements) && count($announcements) > 0)
+                    @foreach($announcements as $announcement)
+                        <div class="d-flex align-items-center p-3 {{ $loop->first ? 'bg-primary' : ($loop->index == 1 ? 'bg-info' : 'bg-success') }} bg-opacity-10 rounded mb-3">
+                            <div class="icon-box {{ $loop->first ? 'bg-primary' : ($loop->index == 1 ? 'bg-info' : 'bg-success') }} rounded-circle p-2 me-3">
+                                <i class="bx {{ $loop->first ? 'bx-news' : ($loop->index == 1 ? 'bx-calendar-check' : 'bx-trophy') }} text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ $announcement->title }}</h6>
+                                <p class="mb-0 small">{{ Str::limit($announcement->content, 60) }}</p>
+                                <small class="text-muted">{{ $announcement->created_at ? $announcement->created_at->diffForHumans() : '-' }}</small>
+                            </div>
+                        </div>
+                    @endforeach
+                    <div class="text-center mt-3">
+                        <a href="{{ route('announcements.index') }}" class="btn btn-sm btn-primary">
+                            <i class="bx bx-news me-1"></i> Lihat Semua Pengumuman
+                        </a>
                     </div>
-                    <div>
-                        <h6 class="mb-1">Penerimaan Siswa Baru</h6>
-                        <p class="mb-0 small">Pendaftaran dibuka mulai 1 Juni 2024</p>
+                @else
+                    <div class="text-center py-5">
+                        <i class="bx bx-news text-muted" style="font-size: 4rem;"></i>
+                        <h5 class="mt-3">Tidak Ada Pengumuman Terkini</h5>
+                        <p class="text-muted">Belum ada pengumuman yang dibuat</p>
+                        @if(Route::has('announcements.create'))
+                            <a href="{{ route('announcements.create') }}" class="btn btn-sm btn-primary">
+                                <i class="bx bx-plus me-1"></i> Tambah Pengumuman
+                            </a>
+                        @endif
                     </div>
-                </div>
-                <div class="d-flex align-items-center p-3 bg-info bg-opacity-10 rounded mb-3">
-                    <div class="icon-box bg-info rounded-circle p-2 me-3">
-                        <i class="bx bx-calendar-check text-white"></i>
-                    </div>
-                    <div>
-                        <h6 class="mb-1">Libur Hari Raya</h6>
-                        <p class="mb-0 small">Sekolah libur tanggal 5-10 Mei 2024</p>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center p-3 bg-success bg-opacity-10 rounded">
-                    <div class="icon-box bg-success rounded-circle p-2 me-3">
-                        <i class="bx bx-trophy text-white"></i>
-                    </div>
-                    <div>
-                        <h6 class="mb-1">Prestasi Olimpiade Sains</h6>
-                        <p class="mb-0 small">Selamat kepada Budi Santoso yang meraih juara 1</p>
-                    </div>
-                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -322,99 +331,48 @@
             </div>
             <div class="card-body p-4">
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="card h-100 border bg-light">
-                            <div class="card-body">
-                                <h6 class="card-title mb-3">Kelas X</h6>
-                                <div class="list-group list-group-flush">
-                                    <div class="list-group-item bg-transparent border-0 px-0 py-2">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Kelas X-IPA 1</span>
-                                            <span class="badge bg-primary rounded-pill">32 siswa</span>
+                    @if(isset($classGroups) && count($classGroups) > 0)
+                        @foreach($classGroups as $level => $levelClasses)
+                            <div class="col-md-4">
+                                <div class="card h-100 border bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title mb-3">Kelas {{ $level }}</h6>
+                                        <div class="list-group list-group-flush">
+                                            @forelse($levelClasses as $class)
+                                                <div class="list-group-item bg-transparent border-0 px-0 py-2">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span>{{ $class->name }}</span>
+                                                        <span class="badge bg-primary rounded-pill">
+                                                            {{ $class->students_count ?? ($class->students ? $class->students->count() : 0) }} siswa
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            @empty
+                                                <div class="text-center py-3">
+                                                    <p class="text-muted mb-0">Belum ada kelas untuk tingkat ini</p>
+                                                </div>
+                                            @endforelse
+                                        </div>
+                                        <div class="mt-3">
+                                            <a href="{{ route('classes.index', ['level' => $level]) }}" class="btn btn-sm btn-outline-primary w-100">
+                                                Lihat Semua Kelas {{ $level }}
+                                            </a>
                                         </div>
                                     </div>
-                                    <div class="list-group-item bg-transparent border-0 px-0 py-2">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Kelas X-IPA 2</span>
-                                            <span class="badge bg-primary rounded-pill">30 siswa</span>
-                                        </div>
-                                    </div>
-                                    <div class="list-group-item bg-transparent border-0 px-0 py-2">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Kelas X-IPS 1</span>
-                                            <span class="badge bg-primary rounded-pill">31 siswa</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mt-3">
-                                    <a href="{{ route('classes.index') }}" class="btn btn-sm btn-outline-primary w-100">Lihat Semua Kelas X</a>
                                 </div>
                             </div>
+                        @endforeach
+                    @else
+                        <div class="col-12 text-center py-5">
+                            <i class="bx bx-building-house text-muted" style="font-size: 4rem;"></i>
+                            <h5 class="mt-3">Tidak Ada Data Kelas</h5>
+                            <p class="text-muted">Belum ada kelas yang ditambahkan</p>
+                            <a href="{{ route('classes.create') }}" class="btn btn-sm btn-primary">
+                                <i class="bx bx-plus me-1"></i> Tambah Kelas Baru
+                            </a>
                         </div>
-                    </div>
-                    <!-- ...existing code for other levels... -->
+                    @endif
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Class Modal -->
-<div class="modal fade" id="addClassModal" tabindex="-1" aria-labelledby="addClassModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addClassModalLabel">Tambah Kelas Baru</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addClassForm">
-                    <div class="mb-3">
-                        <label for="className" class="form-label">Nama Kelas</label>
-                        <input type="text" class="form-control" id="className" placeholder="Contoh: X-IPA 3" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="classLevel" class="form-label">Tingkat</label>
-                        <select class="form-select" id="classLevel" required>
-                            <option value="" selected disabled>Pilih tingkat kelas</option>
-                            <option value="X">Kelas X</option>
-                            <option value="XI">Kelas XI</option>
-                            <option value="XII">Kelas XII</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="classType" class="form-label">Jurusan</label>
-                        <select class="form-select" id="classType" required>
-                            <option value="" selected disabled>Pilih jurusan</option>
-                            <option value="IPA">IPA</option>
-                            <option value="IPS">IPS</option>
-                            <option value="Bahasa">Bahasa</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="classCapacity" class="form-label">Kapasitas</label>
-                        <input type="number" class="form-control" id="classCapacity" placeholder="Contoh: 30" min="1" max="40" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="classTeacher" class="form-label">Wali Kelas</label>
-                        <select class="form-select" id="classTeacher" required>
-                            <option value="" selected disabled>Pilih wali kelas</option>
-                            <option value="1">Budi Setiawan, S.Pd.</option>
-                            <option value="2">Siti Aminah, M.Pd.</option>
-                            <option value="3">Eko Prasetyo, S.Pd.</option>
-                            <option value="4">Dewi Lestari, S.Pd.</option>
-                            <option value="5">Joko Santoso, M.Pd.</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="classRoom" class="form-label">Ruang Kelas</label>
-                        <input type="text" class="form-control" id="classRoom" placeholder="Contoh: R-301" required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="saveClassBtn">Simpan</button>
             </div>
         </div>
     </div>

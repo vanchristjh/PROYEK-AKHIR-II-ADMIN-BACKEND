@@ -28,19 +28,19 @@
                         <span>Status</span>
                         <span>
                             @if($session->is_completed)
-                                <span class="badge bg-success">Selesai</span>
+                                <span class="badge bg-success"><i class="bx bx-check-circle me-1"></i> Selesai</span>
                             @else
-                                <span class="badge bg-warning">Belum Selesai</span>
+                                <span class="badge bg-warning text-dark"><i class="bx bx-time me-1"></i> Belum Selesai</span>
                             @endif
                         </span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <span>Kelas</span>
-                        <span>{{ $session->class->name ?? 'N/A' }}</span>
+                        <span class="fw-semibold">{{ $session->class->name ?? 'N/A' }}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <span>Mata Pelajaran</span>
-                        <span>{{ $session->subject->name ?? 'N/A' }}</span>
+                        <span class="fw-semibold">{{ $session->subject->name ?? 'N/A' }}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <span>Tanggal</span>

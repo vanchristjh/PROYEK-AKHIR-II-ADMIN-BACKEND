@@ -13,9 +13,9 @@
     <div class="card-body">
         <!-- Success Message -->
         @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bx bx-check-circle me-1"></i>
-            {{ session('success') }}
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bx bx-check-circle fs-4 me-2"></i>
+            <div>{{ session('success') }}</div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         @endif
