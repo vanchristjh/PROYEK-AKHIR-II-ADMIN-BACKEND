@@ -44,6 +44,7 @@ class User extends Authenticatable
         'join_date',
         'education_level',
         'education_institution',
+        'preferences',
     ];
 
     /**
@@ -68,6 +69,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'birth_date' => 'date',
             'join_date' => 'date',
+            'preferences' => 'array',
         ];
     }
     

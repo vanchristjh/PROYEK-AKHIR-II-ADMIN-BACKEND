@@ -21,7 +21,7 @@
         </div>
         @endif
 
-        <form action="{{ route('academic-calendar.update', $academicCalendar) }}" method="POST">
+        <form action="{{ route('academic-calendar.update', $academicCalendar) }}" method="POST" id="calendarForm">
             @csrf
             @method('PUT')
             
@@ -147,7 +147,7 @@
                     </div>
                     
                     <div class="d-flex gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary flex-grow-1">
+                        <button type="submit" class="btn btn-primary flex-grow-1" id="saveButton">
                             <i class="bx bx-save me-1"></i> Simpan Perubahan
                         </button>
                         <form action="{{ route('academic-calendar.destroy', $academicCalendar) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus agenda ini?')">
@@ -186,6 +186,68 @@
         
         // Initialize with the current start date
         endDateInput.min = startDateInput.value;
+
+        // Form submission with animation
+        const calendarForm = document.getElementById('calendarForm');
+        const saveButton = document.getElementById('saveButton');
+        
+        if (calendarForm) {
+            // Track form changes
+            const formInputs = document.querySelectorAll('#calendarForm input, #calendarForm select, #calendarForm textarea');
+            let formChanged = false;
+            
+            formInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    formChanged = true;
+                    // Visual feedback for changed field
+                    this.classList.add('border-primary');
+                    const label = document.querySelector(`label[for="${this.id}"]`);
+                    if (label) {
+                        label.innerHTML += ' <i class="bx bx-pencil text-primary small"></i>';
+                    }
+                });
+            });
+            
+            calendarForm.addEventListener('submit', function(e) {
+                if (saveButton && formChanged) {
+                    // Change button text and add spinner
+                    saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                    saveButton.disabled = true;
+                    
+                    // Add animation to the card
+                    const card = this.closest('.card');
+                    if (card) {
+                        card.classList.add('saving');
+                    }
+                }
+            });
+        }
     });
 </script>
+
+<style>
+    .saving {
+        position: relative;
+    }
+    
+    .saving::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(to right, transparent, var(--primary), transparent);
+        animation: loading 1s infinite linear;
+    }
+    
+    @keyframes loading {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .border-primary {
+        transition: all 0.3s;
+    }
+</style>
 @endsection

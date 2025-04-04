@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- Add cache control headers -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
 
     <title>{{ config('app.name', 'SMA Admin') }} - @yield('page-title', 'Dashboard')</title>
 
@@ -403,12 +407,43 @@
                 color: #e5e5e5;
             }
         }
+
+        #page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary, #0066b3);
+            z-index: 9999;
+            transform: translateX(-100%);
+        }
+        
+        #page-loader.loading {
+            animation: page-loading 1s infinite ease-in-out;
+        }
+        
+        @keyframes page-loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .fade-transition {
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .fade-out {
+            opacity: 0.7;
+        }
     </style>
     
     @yield('styles')
 </head>
 <body>
-    <div id="app">
+    <!-- Page Loader -->
+    <div id="page-loader"></div>
+    
+    <div id="app" class="fade-transition">
         @yield('content')
     </div>
     
@@ -421,7 +456,20 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
     <script>
+        // Add this at the beginning of the script
         document.addEventListener('DOMContentLoaded', function() {
+            // Debug information
+            console.log('Page loaded at:', new Date().toString());
+            console.log('Current URL:', window.location.href);
+            
+            // Force refresh on back/forward navigation
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted) {
+                    console.log('Page was loaded from cache (back/forward navigation). Refreshing...');
+                    window.location.reload();
+                }
+            });
+            
             // Initialize Tooltips
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
             if (tooltipTriggerList.length > 0) {
@@ -460,6 +508,59 @@
                 if (sidebar && sidebar.classList.contains('show') && !sidebar.contains(event.target) && event.target !== menuToggle) {
                     sidebar.classList.remove('show');
                 }
+            });
+
+            // Page transition indicator
+            const loader = document.getElementById('page-loader');
+            const app = document.getElementById('app');
+            
+            // Stop loading indicator when page is fully loaded
+            loader.classList.remove('loading');
+            loader.style.transform = 'translateX(0)';
+            setTimeout(() => {
+                loader.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 300);
+            }, 200);
+            
+            // Show loading indicator when navigating away
+            document.addEventListener('click', function(e) {
+                // Only handle link clicks
+                const link = e.target.closest('a');
+                if (!link) return;
+                
+                // Ignore links with no href, hash only, or javascript:
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('javascript:') || 
+                    link.target === '_blank' || e.ctrlKey || e.metaKey) {
+                    return;
+                }
+                
+                // Don't apply to download links or links with data-no-loader attribute
+                if (link.hasAttribute('download') || link.hasAttribute('data-no-loader')) {
+                    return;
+                }
+                
+                // Show loading state
+                loader.style.display = 'block';
+                loader.classList.add('loading');
+                app.classList.add('fade-out');
+            });
+            
+            // Handle form submissions
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                
+                // Don't show loader for AJAX forms
+                if (form.hasAttribute('data-no-loader')) {
+                    return;
+                }
+                
+                // Show loading state
+                loader.style.display = 'block';
+                loader.classList.add('loading');
+                app.classList.add('fade-out');
             });
         });
     </script>

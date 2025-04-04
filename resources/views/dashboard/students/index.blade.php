@@ -10,12 +10,6 @@
 
 @section('dashboard-content')
 <div class="card shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0 fw-semibold">Daftar Siswa</h5>
-        <div>
-            <input type="text" class="form-control form-control-sm" placeholder="Cari siswa..." id="searchInput">
-        </div>
-    </div>
     <div class="card-body">
         @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -94,29 +88,4 @@
         </div>
     </div>
 </div>
-
-@section('scripts')
-<script>
-    // Simple search functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('searchInput');
-        const tableRows = document.querySelectorAll('tbody tr');
-        
-        searchInput.addEventListener('keyup', function() {
-            const searchValue = this.value.toLowerCase();
-            
-            tableRows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchValue) ? '' : 'none';
-            });
-        });
-
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        });
-    });
-</script>
-@endsection
 @endsection

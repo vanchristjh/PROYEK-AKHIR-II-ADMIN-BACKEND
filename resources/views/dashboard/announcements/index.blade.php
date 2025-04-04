@@ -20,13 +20,9 @@
         </div>
         @endif
 
-        <!-- Search & Filters -->
+        <!-- Filters -->
         <div class="row mb-3">
             <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="bx bx-search"></i></span>
-                    <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari pengumuman...">
-                </div>
             </div>
             <div class="col-md-3">
                 <select class="form-select" id="statusFilter">
@@ -148,27 +144,23 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
+        // Status and priority filters
         const statusFilter = document.getElementById('statusFilter');
         const priorityFilter = document.getElementById('priorityFilter');
         const tableRows = document.querySelectorAll('tbody tr');
         
         function filterTable() {
-            const searchValue = searchInput.value.toLowerCase();
             const statusValue = statusFilter.value;
             const priorityValue = priorityFilter.value;
             
             tableRows.forEach(row => {
-                const rowText = row.textContent.toLowerCase();
                 const rowStatus = row.dataset.status;
                 const rowPriority = row.dataset.priority;
                 
-                const matchesSearch = rowText.includes(searchValue);
                 const matchesStatus = statusValue === '' || rowStatus === statusValue;
                 const matchesPriority = priorityValue === '' || rowPriority === priorityValue;
                 
-                if (matchesSearch && matchesStatus && matchesPriority) {
+                if (matchesStatus && matchesPriority) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -176,7 +168,6 @@
             });
         }
         
-        searchInput.addEventListener('keyup', filterTable);
         statusFilter.addEventListener('change', filterTable);
         priorityFilter.addEventListener('change', filterTable);
     });

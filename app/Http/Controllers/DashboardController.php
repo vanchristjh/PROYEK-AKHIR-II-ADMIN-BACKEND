@@ -20,6 +20,6 @@ class DashboardController extends Controller
         
         $session = session()->all(); // or another appropriate definition
 
-        return view('dashboard.index', compact('totalStudents', 'totalTeachers', 'upcomingEvents', 'currentEvents', 'session'));
+        return view('dashboard.dashboard', compact('totalStudents', 'totalTeachers', 'upcomingEvents', 'currentEvents', 'session'));
     }
 }

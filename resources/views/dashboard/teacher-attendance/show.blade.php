@@ -79,7 +79,7 @@
                                     <div class="small">Sakit</div>
                                 </div>
                             </div>
-                            <div class "col-md-2 col-6 mb-3">
+                            <div class="col-md-2 col-6 mb-3">
                                 <div class="text-center py-3 border rounded bg-warning bg-opacity-10">
                                     <div class="fs-4 fw-bold text-warning">{{ $attendanceSummary['izin'] ?? 0 }}</div>
                                     <div class="small">Izin</div>
@@ -132,11 +132,7 @@
                             <tr>
                                 <td class="align-middle">{{ $index + 1 }}</td>
                                 <td class="align-middle">
-                                    @if($record->teacher->profile_photo)
-                                        <img src="{{ asset('storage/'.$record->teacher->profile_photo) }}" alt="{{ $record->teacher->name }}" class="rounded-circle" width="40" height="40">
-                                    @else
-                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($record->teacher->name) }}&background=0066b3&color=fff&size=40" alt="{{ $record->teacher->name }}" class="rounded-circle" width="40" height="40">
-                                    @endif
+                                    <img src="{{ $record->teacher->profile_photo_url }}" alt="{{ $record->teacher->name }}" class="rounded-circle" width="40" height="40">
                                 </td>
                                 <td class="align-middle fw-medium">{{ $record->teacher->name }}</td>
                                 <td class="align-middle">{{ $record->teacher->nip ?? '-' }}</td>

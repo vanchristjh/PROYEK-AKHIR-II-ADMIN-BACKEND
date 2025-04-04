@@ -60,7 +60,7 @@
         </div>
         
         <!-- Teacher Attendance Form -->
-        <form action="{{ route('teacher-attendance.update', $session->id) }}" method="POST">
+        <form action="{{ route('teacher-attendance.update', $session->id) }}" method="POST" id="attendanceForm">
             @csrf
             @method('PUT')
             
@@ -165,7 +165,7 @@
                         <a href="{{ route('teacher-attendance.index') }}" class="btn btn-outline-secondary me-2">
                             <i class="bx bx-x me-1"></i> Batal
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="saveButton">
                             <i class="bx bx-save me-1"></i> Simpan Absensi
                         </button>
                     </div>
@@ -222,6 +222,34 @@
                 });
             });
         }
+
+        // Form submission with animation
+        const attendanceForm = document.getElementById('attendanceForm');
+        const saveButton = document.getElementById('saveButton');
+        
+        if (attendanceForm) {
+            attendanceForm.addEventListener('submit', function(e) {
+                if (saveButton) {
+                    // Change button text and add spinner
+                    saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                    saveButton.disabled = true;
+                }
+            });
+        }
+
+        // Highlight changed items
+        const statusOptions = document.querySelectorAll('.btn-check');
+        statusOptions.forEach(option => {
+            option.addEventListener('change', function() {
+                const cardElement = this.closest('.attendance-card');
+                if (cardElement) {
+                    cardElement.classList.add('border-primary');
+                    setTimeout(() => {
+                        cardElement.classList.remove('border-primary');
+                    }, 1000);
+                }
+            });
+        });
     });
 </script>
 @endsection

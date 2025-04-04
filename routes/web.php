@@ -146,4 +146,15 @@ Route::middleware(['auth'])->group(function () {
     
     // Student routes
     Route::resource('students', StudentController::class);
+
+    // Settings routes
+    Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+    Route::get('/settings/account', [App\Http\Controllers\SettingsController::class, 'account'])->name('settings.account');
+    Route::get('/settings/notifications', [App\Http\Controllers\SettingsController::class, 'notifications'])->name('settings.notifications');
+    Route::get('/settings/appearance', [App\Http\Controllers\SettingsController::class, 'appearance'])->name('settings.appearance');
+    Route::get('/settings/system', [App\Http\Controllers\SettingsController::class, 'system'])->name('settings.system');
+    Route::put('/settings/update-account', [App\Http\Controllers\SettingsController::class, 'updateAccount'])->name('settings.update-account');
+    Route::put('/settings/update-system', [App\Http\Controllers\SettingsController::class, 'updateSystem'])->name('settings.update-system');
+    Route::put('/settings/update-appearance', [App\Http\Controllers\SettingsController::class, 'updateAppearance'])->name('settings.update-appearance');
+    Route::put('/settings/update-notifications', [App\Http\Controllers\SettingsController::class, 'updateNotifications'])->name('settings.update-notifications');
 });

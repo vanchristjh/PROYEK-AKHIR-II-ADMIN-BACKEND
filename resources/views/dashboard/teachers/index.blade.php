@@ -12,9 +12,6 @@
 <div class="card shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0 fw-semibold">Daftar Guru</h5>
-        <div>
-            <input type="text" class="form-control form-control-sm" placeholder="Cari guru..." id="searchInput">
-        </div>
     </div>
     <div class="card-body">
         @if (session('success'))
@@ -89,23 +86,4 @@
         </div>
     </div>
 </div>
-
-@section('scripts')
-<script>
-    // Simple search functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('searchInput');
-        const tableRows = document.querySelectorAll('tbody tr');
-        
-        searchInput.addEventListener('keyup', function() {
-            const searchValue = this.value.toLowerCase();
-            
-            tableRows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchValue) ? '' : 'none';
-            });
-        });
-    });
-</script>
 @endsection
-@endsection 

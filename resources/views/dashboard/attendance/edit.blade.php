@@ -49,7 +49,7 @@
             </div>
         </div>
 
-        <form action="{{ route('attendance.update', $session->id) }}" method="POST">
+        <form action="{{ route('attendance.update', $session->id) }}" method="POST" id="attendanceForm">
             @csrf
             @method('PUT')
             
@@ -66,7 +66,7 @@
                     </thead>
                     <tbody>
                         @forelse($students ?? [] as $index => $student)
-                        <tr>
+                        <tr class="attendance-card">
                             <td>{{ $index + 1 }}</td>
                             <td>{{ $student->name }}</td>
                             <td>{{ $student->nis ?? '-' }}</td>
@@ -118,7 +118,7 @@
                         <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary me-2">
                             <i class="bx bx-x me-1"></i> Batal
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="saveButton">
                             <i class="bx bx-save me-1"></i> Simpan Absensi
                         </button>
                     </div>
@@ -127,6 +127,34 @@
         </form>
     </div>
 </div>
+
+<style>
+    .attendance-card.changed {
+        border-color: var(--primary) !important;
+        background-color: rgba(0, 102, 179, 0.05);
+        transition: all 0.3s;
+    }
+    
+    .saved-indicator {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: var(--success);
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: scale(0);
+        transition: transform 0.3s;
+    }
+    
+    .saved-indicator.show {
+        transform: scale(1);
+    }
+</style>
 @endsection
 
 @section('scripts')
@@ -143,6 +171,45 @@
                 });
             });
         }
+
+        // Form submission with animation
+        const attendanceForm = document.getElementById('attendanceForm');
+        const saveButton = document.getElementById('saveButton');
+        
+        if (attendanceForm) {
+            attendanceForm.addEventListener('submit', function(e) {
+                if (saveButton) {
+                    // Change button text and add spinner
+                    saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                    saveButton.disabled = true;
+                }
+                
+                // Add saving indicators to all changed cards
+                const changedCards = document.querySelectorAll('.attendance-card.changed');
+                changedCards.forEach(card => {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'saved-indicator';
+                    indicator.innerHTML = '<i class="bx bx-check"></i>';
+                    card.appendChild(indicator);
+                    
+                    // Animate the indicator
+                    setTimeout(() => {
+                        indicator.classList.add('show');
+                    }, 100);
+                });
+            });
+        }
+
+        // Track changes to attendance status
+        const statusOptions = document.querySelectorAll('.btn-check');
+        statusOptions.forEach(option => {
+            option.addEventListener('change', function() {
+                const cardElement = this.closest('.attendance-card');
+                if (cardElement) {
+                    cardElement.classList.add('changed');
+                }
+            });
+        });
     });
 </script>
 @endsection

@@ -43,7 +43,7 @@
         </div>
         @endif
 
-        <form action="{{ route('schedules.update', $schedule) }}" method="POST">
+        <form action="{{ route('schedules.update', $schedule) }}" method="POST" id="scheduleForm">
             @csrf
             @method('PUT')
             
@@ -249,12 +249,12 @@
                         </div>
                     </div>
                     
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-grow-1">
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{{ route('schedules.index') }}" class="btn btn-outline-secondary me-2">
+                            <i class="bx bx-x me-1"></i> Batal
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="saveButton">
                             <i class="bx bx-save me-1"></i> Simpan Perubahan
-                        </button>
-                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                            <i class="bx bx-trash me-1"></i>
                         </button>
                     </div>
                 </div>
@@ -321,6 +321,43 @@
         
         // Initial validation
         validateTimes();
+
+        // Form submission with animation
+        const scheduleForm = document.getElementById('scheduleForm');
+        const saveButton = document.getElementById('saveButton');
+        
+        if (scheduleForm) {
+            scheduleForm.addEventListener('submit', function(e) {
+                if (saveButton) {
+                    // Change button text and add spinner
+                    saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                    saveButton.disabled = true;
+                }
+            });
+        }
+        
+        // Track changes to form fields
+        const formInputs = document.querySelectorAll('#scheduleForm input, #scheduleForm select, #scheduleForm textarea');
+        formInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                this.classList.add('is-changed');
+                this.closest('.mb-3')?.classList.add('border-start', 'border-primary', 'border-3', 'ps-2');
+            });
+        });
+        
+        // Handle notification options toggle
+        const enableNotification = document.getElementById('enable_notification');
+        const notificationOptions = document.getElementById('notification_options');
+        
+        if (enableNotification && notificationOptions) {
+            enableNotification.addEventListener('change', function() {
+                if (this.checked) {
+                    notificationOptions.style.display = 'block';
+                } else {
+                    notificationOptions.style.display = 'none';
+                }
+            });
+        }
     });
 </script>
 @endsection

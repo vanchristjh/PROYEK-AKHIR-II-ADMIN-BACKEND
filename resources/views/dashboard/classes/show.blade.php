@@ -73,11 +73,7 @@
                     <h6 class="text-uppercase text-muted small">Wali Kelas</h6>
                     @if($class->teacher)
                     <div class="d-flex align-items-center p-3 rounded-3 bg-light">
-                        @if($class->teacher->profile_photo)
-                            <img src="{{ asset('storage/'.$class->teacher->profile_photo) }}" alt="{{ $class->teacher->name }}" class="rounded-circle me-3" width="48" height="48">
-                        @else
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode($class->teacher->name) }}&background=0066b3&color=fff&size=48" alt="{{ $class->teacher->name }}" class="rounded-circle me-3" width="48">
-                        @endif
+                        <img src="{{ $class->teacher->profile_photo_url }}" alt="{{ $class->teacher->name }}" class="rounded-circle me-3" width="48">
                         <div>
                             <h6 class="mb-0 fw-semibold">{{ $class->teacher->name }}</h6>
                             <p class="mb-0 small text-muted">{{ $class->teacher->nip ?? 'NIP tidak tersedia' }}</p>
@@ -116,9 +112,6 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                 <h5 class="mb-0">Daftar Siswa</h5>
                 <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <input type="text" class="form-control form-control-sm" id="studentSearch" placeholder="Cari siswa..." style="min-width: 200px;">
-                    </div>
                     <span class="badge bg-primary rounded-pill">{{ $class->students->count() }} Siswa</span>
                 </div>
             </div>
@@ -189,22 +182,6 @@
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
-        
-        // Simple student search functionality
-        const searchInput = document.getElementById('studentSearch');
-        const table = document.getElementById('studentTable');
-        
-        if (searchInput && table) {
-            searchInput.addEventListener('keyup', function() {
-                const searchTerm = this.value.toLowerCase();
-                const rows = table.querySelectorAll('tbody tr');
-                
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
-                });
-            });
-        }
     });
 </script>
 @endsection

@@ -18,16 +18,19 @@
             </div>
         </div>
         
-        <!-- User Profile Preview -->
-        <div class="user-profile-preview">
-            <div class="user-avatar">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=0066b3&color=fff" alt="{{ Auth::user()->name }}">
-                <span class="status-indicator online"></span>
-            </div>
-            <div class="user-info">
-                <h6 class="user-name">{{ Auth::user()->name }}</h6>
-                <span class="user-role">Administrator</span>
-            </div>
+        <!-- Settings Link (replacing User Profile Preview) -->
+        <div class="settings-link mb-3">
+            <a href="{{ route('settings.index') }}" class="d-flex align-items-center p-3 rounded-3 text-decoration-none">
+                <div class="flex-shrink-0">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                        <i class="bx bx-cog text-white fs-5"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h6 class="mb-0 text-white">Pengaturan Sistem</h6>
+                    <span class="text-muted small">Konfigurasi aplikasi</span>
+                </div>
+            </a>
         </div>
         
         <div class="sidebar-search">
@@ -155,22 +158,8 @@
                     </a>
                 </li>
                 
-                <li class="nav-item {{ Request::is('reports*') ? 'active' : '' }}">
-                    <a href="{{ url('/reports') }}" class="nav-link">
-                        <i class="bx bx-file"></i>
-                        <span>Laporan</span>
-                    </a>
-                </li>
-                
                 <li class="nav-divider">
                     <span>PENGATURAN</span>
-                </li>
-                
-                <li class="nav-item {{ Request::is('profile*') ? 'active' : '' }}">
-                    <a href="{{ url('/profile') }}" class="nav-link">
-                        <i class="bx bx-user-circle"></i>
-                        <span>Profil Saya</span>
-                    </a>
                 </li>
                 
                 <li class="nav-item {{ Request::is('settings*') ? 'active' : '' }}">
@@ -211,20 +200,6 @@
                             <li class="breadcrumb-item active" aria-current="page">@yield('page-title', 'Dashboard')</li>
                         </ol>
                     </nav>
-                </div>
-            </div>
-            
-            <div class="navbar-center d-none d-lg-block">
-                <div class="global-search">
-                    <form action="{{ url('/search') }}" method="GET">
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bx bx-search"></i>
-                            </span>
-                            <input type="text" class="form-control" name="q" placeholder="Cari siswa, guru, kelas atau lainnya..." aria-label="Search">
-                            <button class="btn btn-primary" type="submit">Cari</button>
-                        </div>
-                    </form>
                 </div>
             </div>
             
@@ -360,6 +335,27 @@
         
         <!-- Page Content -->
         <div class="page-content">
+            <!-- Flash Messages -->
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="bx bx-check-circle fs-4 me-2"></i>
+                        <div>{{ session('success') }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="bx bx-error-circle fs-4 me-2"></i>
+                        <div>{{ session('error') }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            
             @yield('dashboard-content')
         </div>
         
@@ -378,6 +374,9 @@
         </footer>
     </div>
 </div>
+
+<!-- Include Toast Notifications -->
+@include('layouts.partials.toast-notifications')
 
 <!-- Dashboard Styles -->
 <style>
@@ -622,7 +621,7 @@ body {
 .nav-link i {
     font-size: 1.25rem;
     margin-right: 0.75rem;
-    color: var(--text-muted);
+    color: var (--text-muted);
     transition: color var(--transition-speed);
 }
 
@@ -767,7 +766,7 @@ body {
     align-items: center;
     justify-content: center;
     background-color: var(--danger-light);
-    color: var(--danger);
+    color: var (--danger);
     border: none;
     border-radius: var(--border-radius);
     padding: 0.5rem 1rem;
@@ -1462,5 +1461,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+</script>
+
+<script>
+    // Print all session data for debugging
+    console.log('All sessions:', @json(session()->all()));
 </script>
 @endsection

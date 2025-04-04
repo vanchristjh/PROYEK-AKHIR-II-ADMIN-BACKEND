@@ -4,16 +4,6 @@
 
 @section('page-actions')
 <div class="d-flex align-items-center">
-    <div class="dropdown me-2">
-        <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bx bx-export me-1"></i> Export
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
-            <li><a class="dropdown-item" href="#"><i class="bx bxs-file-pdf me-2 text-danger"></i>PDF</a></li>
-            <li><a class="dropdown-item" href="#"><i class="bx bxs-file-excel me-2 text-success"></i>Excel</a></li>
-            <li><a class="dropdown-item" href="#"><i class="bx bxs-file me-2 text-primary"></i>CSV</a></li>
-        </ul>
-    </div>
     <button type="button" class="btn btn-sm btn-primary d-flex align-items-center" id="datePicker">
         <i class="bx bx-calendar me-1"></i> <span id="currentDate">{{ date('d M Y') }}</span>
     </button>
@@ -463,28 +453,6 @@
                     document.getElementById('currentDate').textContent = dateStr;
                 }
             });
-        }
-
-        // Academic Progress Chart using ApexCharts
-        if (typeof ApexCharts !== 'undefined') {
-            const options = {
-                // Chart configuration options
-                series: [{
-                    name: "Nilai Rata-rata",
-                    data: [78, 82, 85, 76, 90, 88, 95]
-                }],
-                chart: {
-                    type: 'line',
-                    height: 300,
-                    toolbar: {
-                        show: false
-                    }
-                },
-                // Additional chart options
-            };
-            
-            const chart = new ApexCharts(document.querySelector("#academicChart"), options);
-            chart.render();
         }
     });
 </script>
