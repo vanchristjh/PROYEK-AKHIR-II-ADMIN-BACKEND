@@ -65,12 +65,12 @@
                             <div class="mb-3">
                                 <label for="activity_type" class="form-label">Jenis Kegiatan</label>
                                 <select class="form-select @error('activity_type') is-invalid @enderror" id="activity_type" name="activity_type">
-                                    <option value="" {{ old('activity_type') == '' ? 'selected' : '' }}>-- Pilih Jenis Kegiatan --</option>
-                                    <option value="Kegiatan Belajar Mengajar" {{ old('activity_type') == 'Kegiatan Belajar Mengajar' ? 'selected' : '' }}>Kegiatan Belajar Mengajar</option>
-                                    <option value="Rapat Guru" {{ old('activity_type') == 'Rapat Guru' ? 'selected' : '' }}>Rapat Guru</option>
-                                    <option value="Upacara" {{ old('activity_type') == 'Upacara' ? 'selected' : '' }}>Upacara</option>
-                                    <option value="Ekstrakulikuler" {{ old('activity_type') == 'Ekstrakulikuler' ? 'selected' : '' }}>Ekstrakulikuler</option>
-                                    <option value="Lainnya" {{ old('activity_type') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                                    <option value="" {{ old('activity_type') === '' ? 'selected' : '' }}>-- Pilih Jenis Kegiatan --</option>
+                                    <option value="Kegiatan Belajar Mengajar" {{ old('activity_type') === 'Kegiatan Belajar Mengajar' ? 'selected' : '' }}>Kegiatan Belajar Mengajar</option>
+                                    <option value="Rapat Guru" {{ old('activity_type') === 'Rapat Guru' ? 'selected' : '' }}>Rapat Guru</option>
+                                    <option value="Upacara" {{ old('activity_type') === 'Upacara' ? 'selected' : '' }}>Upacara</option>
+                                    <option value="Ekstrakulikuler" {{ old('activity_type') === 'Ekstrakulikuler' ? 'selected' : '' }}>Ekstrakulikuler</option>
+                                    <option value="Lainnya" {{ old('activity_type') === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                                 </select>
                                 @error('activity_type')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -117,4 +117,48 @@
         </form>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.querySelector('form');
+        const startTimeInput = document.getElementById('start_time');
+        const endTimeInput = document.getElementById('end_time');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        function validateTimes() {
+            if (startTimeInput.value && endTimeInput.value) {
+                if (endTimeInput.value <= startTimeInput.value) {
+                    endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
+                    return false;
+                } else {
+                    endTimeInput.setCustomValidity('');
+                    return true;
+                }
+            }
+            return true;
+        }
+        
+        startTimeInput.addEventListener('change', validateTimes);
+        endTimeInput.addEventListener('change', validateTimes);
+        
+        // Validate form before submission
+        form.addEventListener('submit', function(e) {
+            if (!validateTimes()) {
+                e.preventDefault();
+                alert('Waktu selesai harus setelah waktu mulai');
+                return;
+            }
+            
+            // Show loading state on button
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memproses...';
+            submitBtn.disabled = true;
+        });
+        
+        // Initialize validation on page load
+        validateTimes();
+    });
+</script>
 @endsection

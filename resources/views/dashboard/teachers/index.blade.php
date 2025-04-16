@@ -86,4 +86,29 @@
         </div>
     </div>
 </div>
+
+<!-- Export Options -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0">Ekspor Data</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-2 mb-md-0">
+                <div class="d-grid">
+                    <a href="{{ route('teachers.export.excel') }}" class="btn btn-outline-success">
+                        <i class="bx bx-file-excel me-1"></i> Ekspor ke Excel
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-grid">
+                    <a href="{{ route('teachers.export.pdf') }}" class="btn btn-outline-danger">
+                        <i class="bx bx-file-pdf me-1"></i> Ekspor ke PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

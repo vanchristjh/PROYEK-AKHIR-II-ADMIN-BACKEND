@@ -51,7 +51,11 @@ class TeacherSeeder extends Seeder
         ];
 
         foreach ($teachers as $teacher) {
-            User::create($teacher);
+            // Check if teacher already exists before creating
+            User::firstOrCreate(
+                ['email' => $teacher['email']],
+                $teacher
+            );
         }
     }
 }

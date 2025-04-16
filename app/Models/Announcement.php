@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class Announcement extends Model
 {
@@ -14,16 +15,22 @@ class Announcement extends Model
         'title',
         'content',
         'status',
+        'priority',
         'published_at',
         'expired_at',
         'target_audience',
-        'priority',
         'created_by',
+        'attachment_path',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
         'expired_at' => 'datetime',
+    ];
+
+    protected $dates = [
+        'published_at',
+        'expired_at',
     ];
 
     /**
@@ -40,13 +47,13 @@ class Announcement extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'published')
-            ->where(function ($q) {
-                $q->whereNull('expired_at')
-                    ->orWhere('expired_at', '>=', now());
-            })
-            ->where(function ($q) {
-                $q->whereNull('published_at')
+            ->where(function ($query) {
+                $query->whereNull('published_at')
                     ->orWhere('published_at', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('expired_at')
+                    ->orWhere('expired_at', '>=', now());
             });
     }
 
@@ -68,12 +75,14 @@ class Announcement extends Model
      */
     public function getPriorityBadgeAttribute()
     {
-        return match($this->priority) {
-            'high' => '<span class="badge bg-danger">Penting</span>',
-            'medium' => '<span class="badge bg-info">Sedang</span>',
-            'low' => '<span class="badge bg-light text-dark">Rendah</span>',
-            default => '',
-        };
+        switch ($this->priority) {
+            case 'high':
+                return '<span class="badge bg-danger">Penting</span>';
+            case 'medium':
+                return '<span class="badge bg-info">Sedang</span>';
+            default:
+                return '<span class="badge bg-secondary">Rendah</span>';
+        }
     }
 
     /**
@@ -85,11 +94,13 @@ class Announcement extends Model
             return false;
         }
 
-        if ($this->expired_at && $this->expired_at < now()) {
+        $now = Carbon::now();
+
+        if ($this->published_at && $this->published_at->gt($now)) {
             return false;
         }
 
-        if ($this->published_at && $this->published_at > now()) {
+        if ($this->expired_at && $this->expired_at->lt($now)) {
             return false;
         }
 

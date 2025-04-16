@@ -51,7 +51,11 @@ class SubjectSeeder extends Seeder
         ];
         
         foreach ($subjects as $subject) {
-            Subject::create($subject);
+            // Use firstOrCreate to prevent duplicate entries
+            Subject::firstOrCreate(
+                ['code' => $subject['code']], // Check if subject with this code already exists
+                $subject // Data to create if not found
+            );
         }
     }
 }

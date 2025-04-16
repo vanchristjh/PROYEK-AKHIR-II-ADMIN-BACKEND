@@ -124,12 +124,14 @@ class TeacherAttendanceController extends Controller
         }
 
         $session = $teacherAttendance; // Alias for the view
+        $attendance = $teacherAttendance; // Define attendance as alias for teacherAttendance
 
         return view('dashboard.teacher-attendance.edit', compact(
             'teacherAttendance', 
             'teachers', 
             'attendances', 
-            'session'
+            'session',
+            'attendance'
         ));
     }
 

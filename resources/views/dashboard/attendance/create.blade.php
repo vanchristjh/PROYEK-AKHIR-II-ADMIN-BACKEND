@@ -75,6 +75,27 @@
                                 <textarea class="form-control" id="notes" name="notes" rows="3">{{ old('notes') }}</textarea>
                                 <small class="text-muted">Catatan tambahan mengenai sesi pembelajaran ini (opsional)</small>
                             </div>
+
+                            <div id="preview-area" class="d-none">
+                                <div class="card border mt-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bx bx-info-circle text-primary me-1"></i>
+                                            Informasi Siswa
+                                        </h6>
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span>Total siswa dalam kelas:</span>
+                                            <span class="badge bg-primary" id="students-count">0</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar" id="students-progress" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <div class="form-text mt-2 text-center" id="preview-message">
+                                            Pilih kelas untuk melihat informasi siswa
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -102,6 +123,11 @@
                                     <li>Pada halaman berikutnya, isi status kehadiran masing-masing siswa</li>
                                     <li>Klik "Simpan Absensi" untuk menyimpan data</li>
                                 </ol>
+                            </div>
+                            
+                            <div id="feedback-area" class="alert alert-success mt-3 mb-3 d-none">
+                                <i class="bx bx-check-circle me-1"></i>
+                                <span id="feedback-message">Data siap diproses</span>
                             </div>
                             
                             <div class="mt-4">
@@ -144,39 +170,204 @@
         // Get schedule details when class and subject are selected
         const classSelect = document.getElementById('class_id');
         const subjectSelect = document.getElementById('subject_id');
+        const startTimeInput = document.getElementById('start_time');
+        const endTimeInput = document.getElementById('end_time');
+        const form = document.querySelector('form');
+        const submitBtn = document.querySelector('button[type="submit"]');
         
         if (classSelect && subjectSelect) {
+            classSelect.addEventListener('change', function() {
+                const classId = this.value;
+                
+                if (classId) {
+                    // Reset subject dropdown
+                    subjectSelect.innerHTML = '<option value="">Memuat mata pelajaran...</option>';
+                    subjectSelect.disabled = true;
+                    
+                    // Make AJAX request to get subjects for this class
+                    fetch(`/api/classes/${classId}/subjects`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.status === 404 
+                                    ? 'Kelas tidak ditemukan' 
+                                    : 'Server tidak dapat memproses permintaan');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Reset dropdown
+                            subjectSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+                            
+                            if (!data || data.length === 0) {
+                                subjectSelect.innerHTML = '<option value="">Tidak ada mata pelajaran</option>';
+                                showToast('Tidak ada mata pelajaran untuk kelas ini', 'warning');
+                                return;
+                            }
+                            
+                            // Add options
+                            data.forEach(subject => {
+                                const option = document.createElement('option');
+                                option.value = subject.id;
+                                option.textContent = subject.name;
+                                subjectSelect.appendChild(option);
+                            });
+                            
+                            // Re-enable select
+                            subjectSelect.disabled = false;
+                            
+                            // If there was a previously selected subject, try to reselect it
+                            const previouslySelected = "{{ old('subject_id') }}";
+                            if (previouslySelected) {
+                                const option = subjectSelect.querySelector(`option[value="${previouslySelected}"]`);
+                                if (option) {
+                                    option.selected = true;
+                                    
+                                    // Trigger change event to check for schedules
+                                    const event = new Event('change');
+                                    subjectSelect.dispatchEvent(event);
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading subjects:', error);
+                            subjectSelect.innerHTML = '<option value="">Error memuat data</option>';
+                            subjectSelect.disabled = false;
+                            showToast(`Gagal memuat data mata pelajaran: ${error.message || 'Koneksi terputus'}`, 'error');
+                            
+                            // Add retry button
+                            const retryBtn = document.createElement('button');
+                            retryBtn.type = 'button';
+                            retryBtn.className = 'btn btn-sm btn-outline-primary mt-2';
+                            retryBtn.innerHTML = '<i class="bx bx-refresh me-1"></i> Coba Lagi';
+                            retryBtn.addEventListener('click', () => {
+                                const event = new Event('change');
+                                classSelect.dispatchEvent(event);
+                            });
+                            subjectSelect.parentElement.appendChild(retryBtn);
+                        });
+                } else {
+                    // Reset subject dropdown
+                    subjectSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+                }
+            });
+            
+            // Check for scheduled times when both class and subject are selected
             const updateScheduleInfo = function() {
                 const classId = classSelect.value;
                 const subjectId = subjectSelect.value;
                 
                 if (classId && subjectId) {
-                    // Here you can add Ajax call to get schedule info
-                    // and auto-fill start_time and end_time
-                    // if you have schedule data available
+                    // Show loading indicator
+                    const infoElement = document.createElement('div');
+                    infoElement.id = 'schedule-info';
+                    infoElement.className = 'alert alert-info mt-3 fade show';
+                    infoElement.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Memeriksa jadwal yang tersedia...</span>
+                        </div>
+                    `;
+                    
+                    // Replace or append the info element
+                    const existingInfo = document.getElementById('schedule-info');
+                    if (existingInfo) {
+                        existingInfo.replaceWith(infoElement);
+                    } else {
+                        subjectSelect.parentElement.appendChild(infoElement);
+                    }
+                    
+                    // Make AJAX request to get schedule info
+                    fetch(`/api/schedules/check?class_id=${classId}&subject_id=${subjectId}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Gagal memeriksa jadwal');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            const existingInfo = document.getElementById('schedule-info');
+                            if (existingInfo) existingInfo.remove();
+                            
+                            if (data.schedule) {
+                                // Show schedule info
+                                const infoElement = document.createElement('div');
+                                infoElement.id = 'schedule-info';
+                                infoElement.className = 'alert alert-info mt-3';
+                                infoElement.innerHTML = `
+                                    <i class="bx bx-calendar me-2"></i>
+                                    <strong>Jadwal ditemukan:</strong> ${data.schedule.day}, 
+                                    ${data.schedule.start_time} - ${data.schedule.end_time}
+                                    <button type="button" class="btn btn-sm btn-primary ms-2" id="use-schedule">
+                                        Gunakan Waktu Ini
+                                    </button>
+                                `;
+                                subjectSelect.parentElement.appendChild(infoElement);
+                                
+                                // Add click handler to use this schedule
+                                document.getElementById('use-schedule').addEventListener('click', function() {
+                                    startTimeInput.value = data.schedule.start_time;
+                                    endTimeInput.value = data.schedule.end_time;
+                                    validateTimes();
+                                    showToast('Waktu jadwal diterapkan', 'success');
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error checking schedules:', error);
+                            const existingInfo = document.getElementById('schedule-info');
+                            if (existingInfo) existingInfo.remove();
+                            
+                            const errorElement = document.createElement('div');
+                            errorElement.id = 'schedule-info';
+                            errorElement.className = 'alert alert-warning mt-3';
+                            errorElement.innerHTML = `
+                                <i class="bx bx-error-circle me-2"></i>
+                                <span>Gagal memeriksa jadwal: ${error.message || 'Terjadi kesalahan koneksi'}</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="retry-schedule">
+                                    <i class="bx bx-refresh me-1"></i> Coba Lagi
+                                </button>
+                            `;
+                            subjectSelect.parentElement.appendChild(errorElement);
+                            
+                            document.getElementById('retry-schedule').addEventListener('click', updateScheduleInfo);
+                        });
                 }
             };
             
-            classSelect.addEventListener('change', updateScheduleInfo);
             subjectSelect.addEventListener('change', updateScheduleInfo);
         }
 
-        // Validate end time is after start time
-        const startTimeInput = document.getElementById('start_time');
-        const endTimeInput = document.getElementById('end_time');
-        const form = document.querySelector('form');
-        
         function validateTimes() {
             if (startTimeInput.value && endTimeInput.value) {
                 if (endTimeInput.value <= startTimeInput.value) {
                     endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
+                    showTimeError("Waktu selesai harus setelah waktu mulai");
                     return false;
                 } else {
                     endTimeInput.setCustomValidity('');
+                    hideTimeError();
                     return true;
                 }
             }
             return true;
+        }
+        
+        function showTimeError(message) {
+            let errorDiv = document.getElementById('time-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'time-error';
+                errorDiv.className = 'alert alert-danger mt-2';
+                endTimeInput.parentElement.appendChild(errorDiv);
+            }
+            errorDiv.textContent = message;
+        }
+        
+        function hideTimeError() {
+            const errorDiv = document.getElementById('time-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
         }
         
         startTimeInput.addEventListener('change', validateTimes);
@@ -186,12 +377,43 @@
         form.addEventListener('submit', function(e) {
             if (!validateTimes()) {
                 e.preventDefault();
-                alert('Waktu selesai harus setelah waktu mulai');
+                return;
+            }
+            
+            if (submitBtn) {
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memproses...';
+                submitBtn.disabled = true;
             }
         });
         
         // Initialize validation on page load
         validateTimes();
+        
+        // Initialize class dropdown if it has a selected value
+        if (classSelect && classSelect.value) {
+            const event = new Event('change');
+            classSelect.dispatchEvent(event);
+        }
+        
+        // Helper function to show toast notifications
+        function showToast(message, type = 'info') {
+            if (typeof bootstrap !== 'undefined' && typeof bootstrap.Toast !== 'undefined') {
+                const toastElement = document.getElementById(`${type}Toast`) || document.getElementById('infoToast');
+                if (toastElement) {
+                    const messageElement = document.getElementById(`${type}ToastMessage`) || document.getElementById('infoToastMessage');
+                    if (messageElement) messageElement.textContent = message;
+                    const toast = new bootstrap.Toast(toastElement);
+                    toast.show();
+                } else {
+                    // Fallback if toast element not found
+                    alert(message);
+                }
+            } else {
+                // Fallback if bootstrap is not loaded
+                alert(message);
+                console.log(`[${type.toUpperCase()}]: ${message}`);
+            }
+        }
     });
 </script>
 @endsection

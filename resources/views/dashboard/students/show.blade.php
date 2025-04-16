@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <div class="card shadow-sm">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-white py-3">
                 <h5 class="card-title mb-0">Informasi Akademik</h5>
             </div>
@@ -62,6 +62,26 @@
                         <span class="fw-medium">{{ $student->nisn ?? 'Tidak tersedia' }}</span>
                     </li>
                 </ul>
+            </div>
+        </div>
+        
+        <!-- Quick Actions Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0">Aksi Cepat</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ route('attendance.create', ['student_id' => $student->id]) }}" class="btn btn-outline-primary">
+                        <i class="bx bx-calendar-check me-1"></i> Input Kehadiran
+                    </a>
+                    <a href="{{ route('attendance.report', ['student_id' => $student->id]) }}" class="btn btn-outline-info">
+                        <i class="bx bx-bar-chart-alt-2 me-1"></i> Lihat Laporan Kehadiran
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary" onclick="printStudentDetails()">
+                        <i class="bx bx-printer me-1"></i> Cetak Data Siswa
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -87,7 +107,7 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label text-muted small">Jenis Kelamin</label>
-                        <p class="mb-0">{{ $student->gender == 'L' ? 'Laki-laki' : 'Perempuan' }}</p>
+                        <p class="mb-0">{{ ($student->gender == 'male' || $student->gender == 'L') ? 'Laki-laki' : 'Perempuan' }}</p>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label text-muted small">Nomor Telepon</label>
@@ -115,6 +135,76 @@
                         <label class="form-label text-muted small">Nomor Telepon Orang Tua/Wali</label>
                         <p class="mb-0">{{ $student->parent_phone ?? 'Tidak tersedia' }}</p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Statistics Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Statistik Kehadiran</h5>
+                <span class="badge bg-primary">{{ now()->format('F Y') }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Hadir</span>
+                                    <span class="badge bg-success">{{ $attendanceStats['hadir'] ?? 0 }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $attendanceStats['hadir_percent'] ?? 0 }}%" aria-valuenow="{{ $attendanceStats['hadir'] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Izin</span>
+                                    <span class="badge bg-info">{{ $attendanceStats['izin'] ?? 0 }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ $attendanceStats['izin_percent'] ?? 0 }}%" aria-valuenow="{{ $attendanceStats['izin'] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Sakit</span>
+                                    <span class="badge bg-warning">{{ $attendanceStats['sakit'] ?? 0 }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $attendanceStats['sakit_percent'] ?? 0 }}%" aria-valuenow="{{ $attendanceStats['sakit'] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Alpa</span>
+                                    <span class="badge bg-danger">{{ $attendanceStats['alpa'] ?? 0 }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $attendanceStats['alpa_percent'] ?? 0 }}%" aria-valuenow="{{ $attendanceStats['alpa'] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-2">
+                    <a href="{{ route('attendance.report', ['student_id' => $student->id]) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bx bx-show me-1"></i> Lihat Detail Kehadiran
+                    </a>
                 </div>
             </div>
         </div>
@@ -177,4 +267,102 @@
         </div>
     </div>
 </div>
+
+<!-- Hidden Print Section -->
+<div id="printSection" style="display: none;">
+    <div class="row mb-4">
+        <div class="col-3 text-center">
+            @if($student->profile_photo)
+                <img src="{{ asset('storage/'.$student->profile_photo) }}" alt="{{ $student->name }}" class="img-thumbnail" width="150">
+            @else
+                <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=2d4059&color=fff&size=150" alt="{{ $student->name }}" class="img-thumbnail" width="150">
+            @endif
+        </div>
+        <div class="col-9">
+            <table class="table table-borderless">
+                <tr>
+                    <td width="150">Nama</td>
+                    <td width="20">:</td>
+                    <td>{{ $student->name }}</td>
+                </tr>
+                <tr>
+                    <td>NIS</td>
+                    <td>:</td>
+                    <td>{{ $student->nis ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td>NISN</td>
+                    <td>:</td>
+                    <td>{{ $student->nisn ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td>Kelas</td>
+                    <td>:</td>
+                    <td>{{ $student->class->name ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td>Tahun Akademik</td>
+                    <td>:</td>
+                    <td>{{ $student->academic_year ?? '-' }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <h5>Data Pribadi</h5>
+    <table class="table table-bordered">
+        <tr>
+            <td width="30%">Tanggal Lahir</td>
+            <td>{{ $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d F Y') : '-' }}</td>
+        </tr>
+        <tr>
+            <td>Jenis Kelamin</td>
+            <td>{{ ($student->gender == 'male' || $student->gender == 'L') ? 'Laki-laki' : 'Perempuan' }}</td>
+        </tr>
+        <tr>
+            <td>Alamat</td>
+            <td>{{ $student->address ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td>Nomor Telepon</td>
+            <td>{{ $student->phone_number ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td>Email</td>
+            <td>{{ $student->email }}</td>
+        </tr>
+        <tr>
+            <td>Nama Orang Tua/Wali</td>
+            <td>{{ $student->parent_name ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td>No. Telepon Orang Tua/Wali</td>
+            <td>{{ $student->parent_phone ?? '-' }}</td>
+        </tr>
+    </table>
+    <div class="mt-5 text-end">
+        <p>Dicetak pada: {{ now()->format('d F Y H:i') }}</p>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+    function printStudentDetails() {
+        const printContents = document.getElementById('printSection').innerHTML;
+        const originalContents = document.body.innerHTML;
+        
+        document.body.innerHTML = `
+            <div class="container py-4">
+                <div class="text-center mb-4">
+                    <h4>DATA SISWA</h4>
+                    <h5>SMA NEGERI 1 GIRSANG SIPANGAN BOLON</h5>
+                </div>
+                ${printContents}
+            </div>
+        `;
+        
+        window.print();
+        document.body.innerHTML = originalContents;
+    }
+</script>
 @endsection

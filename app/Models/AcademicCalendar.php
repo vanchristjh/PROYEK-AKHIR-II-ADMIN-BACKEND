@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Support\Str; // Make sure this import is present
 
 class AcademicCalendar extends Model
 {
@@ -22,12 +23,17 @@ class AcademicCalendar extends Model
         'semester',
         'target_audience',
         'created_by',
+        'is_holiday',
+        'is_exam',
+        'color',
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'is_important' => 'boolean',
+        'is_holiday' => 'boolean',
+        'is_exam' => 'boolean',
     ];
 
     public function creator()
@@ -56,16 +62,11 @@ class AcademicCalendar extends Model
     public function getEventTypeBadgeAttribute()
     {
         switch ($this->event_type) {
-            case 'academic':
-                return '<span class="badge bg-primary">Akademik</span>';
-            case 'exam':
-                return '<span class="badge bg-danger">Ujian</span>';
-            case 'holiday':
-                return '<span class="badge bg-success">Libur</span>';
-            case 'meeting':
-                return '<span class="badge bg-info">Rapat</span>';
-            case 'extracurricular':
-                return '<span class="badge bg-warning text-dark">Ekstrakurikuler</span>';
+            case 'academic': return '<span class="badge bg-primary">Akademik</span>';
+            case 'exam': return '<span class="badge bg-danger">Ujian</span>';
+            case 'holiday': return '<span class="badge bg-success">Libur</span>';
+            case 'meeting': return '<span class="badge bg-info">Rapat</span>';
+            case 'extracurricular': return '<span class="badge bg-warning text-dark">Ekstrakurikuler</span>';
             default:
                 return '<span class="badge bg-secondary">Lainnya</span>';
         }
@@ -88,5 +89,36 @@ class AcademicCalendar extends Model
     {
         return $query->where('end_date', '<', now())
                     ->orderBy('end_date', 'desc');
+    }
+
+    public function getColorAttribute($value)
+    {
+        if ($value) {
+            return $value;
+        }
+        
+        if ($this->is_holiday) {
+            return '#dc3545'; // red
+        }
+        
+        if ($this->is_exam) {
+            return '#fd7e14'; // orange
+        }
+        
+        $typeColors = [
+            'holiday' => '#dc3545', // red
+            'exam' => '#fd7e14', // orange
+            'academic' => '#0d6efd', // blue
+            'extracurricular' => '#198754', // green
+            'meeting' => '#6f42c1', // purple
+            'other' => '#6c757d', // gray
+        ];
+        
+        return $typeColors[$this->event_type] ?? '#6c757d';
+    }
+
+    public static function createEvent(array $data)
+    {
+        return self::create($data);
     }
 }

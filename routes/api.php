@@ -10,6 +10,7 @@ use App\Http\Controllers\API\ScheduleController;
 use App\Http\Controllers\API\AnnouncementController;
 use App\Http\Controllers\API\AcademicCalendarController;
 use App\Http\Controllers\API\DashboardController;
+use App\Http\Controllers\API\ClassController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,7 +46,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/students/{id}', [StudentController::class, 'show']);
     Route::put('/students/{id}', [StudentController::class, 'update']);
     Route::post('/students/profile-photo', [StudentController::class, 'uploadProfilePhoto']);
+    Route::get('/students/{id}/attendance', [StudentController::class, 'getAttendance']);
+    Route::get('/students/{id}/attendance/statistics', [StudentController::class, 'getAttendanceStatistics']);
     
+    // API route to get students for a class (used by the dropdown)
+    Route::get('/classes/{class_id}/students', function ($classId) {
+        return App\Models\User::where('role', 'student')
+            ->where('class_id', $classId)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+    });
+
+    // Add the export routes
+    Route::prefix('students')->middleware('auth:sanctum')->group(function () {
+        Route::post('/export/excel', [StudentController::class, 'exportExcel']);
+        Route::post('/export/pdf', [StudentController::class, 'exportPdf']);
+    });
+
     // Teacher management
     Route::get('/teachers', [TeacherController::class, 'index']);
     Route::get('/teachers/{id}', [TeacherController::class, 'show']);
@@ -65,6 +83,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/academic-calendar', [AcademicCalendarController::class, 'getEvents']);
     Route::get('/academic-calendar/upcoming', [AcademicCalendarController::class, 'getUpcomingEvents']);
     
+    // Academic Calendar API Routes
+    Route::prefix('academic-calendar')->group(function () {
+        Route::get('/events', [\App\Http\Controllers\Api\AcademicCalendarController::class, 'events']);
+        Route::get('/events/{id}', [\App\Http\Controllers\Api\AcademicCalendarController::class, 'event']);
+        Route::get('/upcoming', [\App\Http\Controllers\Api\AcademicCalendarController::class, 'upcoming']);
+    });
+
     // Dashboard data
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Class endpoints
+    Route::get('/classes/{class}/students', [ClassController::class, 'getStudents']);
 });

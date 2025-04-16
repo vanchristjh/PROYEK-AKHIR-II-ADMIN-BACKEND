@@ -142,16 +142,23 @@
                                 <label for="room" class="form-label fw-semibold">Ruangan</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bx bx-building"></i></span>
-                                    <input type="text" class="form-control @error('room') is-invalid @enderror" id="room" name="room" value="{{ old('room', $schedule->room) }}" placeholder="Contoh: Ruang 101">
+                                    <input type="text" class="form-control @error('room') is-invalid @enderror" id="room" name="room" value="{{ old('room', $schedule->room) }}" placeholder="Contoh: Ruang 101" list="roomSuggestions">
+                                    <datalist id="roomSuggestions">
+                                        <option value="Ruang 101">
+                                        <option value="Ruang 102">
+                                        <option value="Ruang 103">
+                                        <option value="Laboratorium Komputer">
+                                        <option value="Lapangan">
+                                    </datalist>
                                     @error('room')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
                             
-                            <div class="mb-1">
+                            <div class="mb-3">
                                 <label for="description" class="form-label fw-semibold">Deskripsi</label>
-                                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Tambahkan informasi atau catatan tambahan tentang jadwal ini">{{ old('description', $schedule->description) }}</textarea>
+                                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Contoh: Materi pembelajaran mencakup bab 3-5, pertemuan dengan ulangan harian, dsb.">{{ old('description', $schedule->description) }}</textarea>
                                 <small class="text-muted"><i class="bx bx-info-circle me-1"></i>Tambahkan informasi atau catatan tambahan tentang jadwal ini (opsional).</small>
                             </div>
                         </div>
@@ -248,16 +255,16 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-end mt-4">
-                        <a href="{{ route('schedules.index') }}" class="btn btn-outline-secondary me-2">
-                            <i class="bx bx-x me-1"></i> Batal
-                        </a>
-                        <button type="submit" class="btn btn-primary" id="saveButton">
-                            <i class="bx bx-save me-1"></i> Simpan Perubahan
-                        </button>
-                    </div>
                 </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+                <a href="{{ route('schedules.index') }}" class="btn btn-outline-secondary me-2">
+                    <i class="bx bx-x me-1"></i> Batal
+                </a>
+                <button type="submit" class="btn btn-primary" id="saveButton">
+                    <i class="bx bx-save me-1"></i> Simpan Perubahan
+                </button>
             </div>
         </form>
     </div>
@@ -288,6 +295,7 @@
         </div>
     </div>
 </div>
+@endsection
 
 @section('scripts')
 <script>
@@ -300,6 +308,57 @@
             notificationOptions.style.display = this.checked ? 'block' : 'none';
         });
         
+        // Enhanced teacher-subject relationship
+        const teacherSelect = document.getElementById('teacher_id');
+        const subjectInput = document.getElementById('subject');
+        
+        if (teacherSelect && subjectInput) {
+            teacherSelect.addEventListener('change', function() {
+                const teacherId = this.value;
+                if (teacherId) {
+                    // Show loading indicator
+                    const originalValue = subjectInput.value;
+                    subjectInput.value = 'Memuat mata pelajaran...';
+                    subjectInput.disabled = true;
+                    
+                    // Get teacher's subject via AJAX
+                    fetch(`/api/teachers/${teacherId}/subject`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Gagal memuat data mata pelajaran');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Enable input
+                            subjectInput.disabled = false;
+                            
+                            if (data.subject) {
+                                subjectInput.value = data.subject;
+                                // Add visual feedback
+                                subjectInput.classList.add('border-success');
+                                setTimeout(() => {
+                                    subjectInput.classList.remove('border-success');
+                                }, 2000);
+                                
+                                // Show success message
+                                showToast('Mata pelajaran berhasil diisi otomatis', 'success');
+                            } else {
+                                // If no subject found for teacher, revert to original or empty
+                                subjectInput.value = originalValue || '';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching teacher subject:', error);
+                            // On error, revert to original value
+                            subjectInput.disabled = false;
+                            subjectInput.value = originalValue || '';
+                            showToast('Gagal memuat mata pelajaran: ' + error.message, 'error');
+                        });
+                }
+            });
+        }
+        
         // Validate end time is after start time
         const startTimeInput = document.getElementById('start_time');
         const endTimeInput = document.getElementById('end_time');
@@ -309,56 +368,68 @@
                 if (endTimeInput.value <= startTimeInput.value) {
                     endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
                     endTimeInput.classList.add('is-invalid');
+                    return false;
                 } else {
                     endTimeInput.setCustomValidity('');
                     endTimeInput.classList.remove('is-invalid');
+                    return true;
                 }
             }
+            return true;
         }
         
-        endTimeInput.addEventListener('change', validateTimes);
         startTimeInput.addEventListener('change', validateTimes);
+        endTimeInput.addEventListener('change', validateTimes);
         
-        // Initial validation
-        validateTimes();
-
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 3000
+            });
+            
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', function() {
+                this.remove();
+            });
+        }
+        
         // Form submission with animation
         const scheduleForm = document.getElementById('scheduleForm');
         const saveButton = document.getElementById('saveButton');
         
         if (scheduleForm) {
             scheduleForm.addEventListener('submit', function(e) {
+                if (!validateTimes()) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Change button text and add spinner
                 if (saveButton) {
-                    // Change button text and add spinner
                     saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
                     saveButton.disabled = true;
                 }
             });
         }
-        
-        // Track changes to form fields
-        const formInputs = document.querySelectorAll('#scheduleForm input, #scheduleForm select, #scheduleForm textarea');
-        formInputs.forEach(input => {
-            input.addEventListener('change', function() {
-                this.classList.add('is-changed');
-                this.closest('.mb-3')?.classList.add('border-start', 'border-primary', 'border-3', 'ps-2');
-            });
-        });
-        
-        // Handle notification options toggle
-        const enableNotification = document.getElementById('enable_notification');
-        const notificationOptions = document.getElementById('notification_options');
-        
-        if (enableNotification && notificationOptions) {
-            enableNotification.addEventListener('change', function() {
-                if (this.checked) {
-                    notificationOptions.style.display = 'block';
-                } else {
-                    notificationOptions.style.display = 'none';
-                }
-            });
-        }
     });
 </script>
-@endsection
 @endsection

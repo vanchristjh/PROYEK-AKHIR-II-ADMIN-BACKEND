@@ -24,7 +24,7 @@
         </div>
         @endif
 
-        <form action="{{ route('students.update', $student) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('students.update', $student) }}" method="POST" enctype="multipart/form-data" id="studentForm">
             @csrf
             @method('PUT')
             
@@ -51,10 +51,10 @@
                                 
                                 <div class="col-md-6">
                                     <label for="profile_photo" class="form-label">Foto Profil</label>
-                                    <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" onchange="validateFileSize(this)">
+                                    <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" onchange="previewImage(this)">
                                     <small class="text-muted">Format: JPG, PNG, GIF. Maks: 1MB</small>
                                     @if($student->profile_photo)
-                                        <div class="mt-2">
+                                        <div class="mt-2" id="imagePreview">
                                             <img src="{{ asset('storage/'.$student->profile_photo) }}" alt="{{ $student->name }}" class="rounded" width="100">
                                         </div>
                                     @endif
@@ -83,7 +83,7 @@
                                 
                                 <div class="col-md-6">
                                     <label for="class_id" class="form-label">Kelas <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="class_id" name="class_id" required>
+                                    <select class="form-select select2" id="class_id" name="class_id" required>
                                         <option value="" disabled>Pilih Kelas</option>
                                         @foreach($classes as $class)
                                             <option value="{{ $class->id }}" {{ old('class_id', $student->class_id) == $class->id ? 'selected' : '' }}>
@@ -108,7 +108,7 @@
 
                                 <div class="col-md-6">
                                     <label for="birth_date" class="form-label">Tanggal Lahir</label>
-                                    <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ old('birth_date', $student->birth_date ? $student->birth_date->format('Y-m-d') : '') }}">
+                                    <input type="date" class="form-control datepicker" id="birth_date" name="birth_date" value="{{ old('birth_date', $student->birth_date ? $student->birth_date->format('Y-m-d') : '') }}">
                                 </div>
 
                                 <div class="col-md-6">
@@ -167,11 +167,82 @@
 
 @section('scripts')
 <script>
-    function validateFileSize(input) {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize select2 if available
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+        
+        // Initialize Flatpickr for date pickers if available
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr(".datepicker", {
+                dateFormat: "Y-m-d",
+                allowInput: true,
+                altInput: true,
+                altFormat: "d M Y",
+                maxDate: "today"
+            });
+        }
+        
+        // Password toggle visibility
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+        
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('bx-hide');
+                this.querySelector('i').classList.toggle('bx-show');
+            });
+        }
+        
+        // Enable Bootstrap form validation
+        const form = document.getElementById('studentForm');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                // Check if passwords match when both are filled
+                const password = document.getElementById('password');
+                const confirmPassword = document.getElementById('password_confirmation');
+                if (password && confirmPassword && password.value && confirmPassword.value && password.value !== confirmPassword.value) {
+                    confirmPassword.setCustomValidity('Passwords must match');
+                    event.preventDefault();
+                } else if (confirmPassword) {
+                    confirmPassword.setCustomValidity('');
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        }
+    });
+    
+    // Preview image before upload
+    function previewImage(input) {
         const maxSize = 1024 * 1024; // 1MB
-        if (input.files && input.files[0] && input.files[0].size > maxSize) {
-            alert('Ukuran file terlalu besar! Maksimal 1MB.');
-            input.value = '';
+        const preview = document.getElementById('imagePreview');
+        const previewImg = preview.querySelector('img');
+        
+        if (input.files && input.files[0]) {
+            if (input.files[0].size > maxSize) {
+                alert('Ukuran file terlalu besar! Maksimal 1MB.');
+                input.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
         }
     }
 </script>

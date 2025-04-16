@@ -283,7 +283,7 @@
                                     @endif
                                 </td>
                                 <td>{{ $attendance->check_in_time ? \Carbon\Carbon::parse($attendance->check_in_time)->format('H:i') : '-' }}</td>
-                                <td>{{ Str::limit($attendance->notes, 30) ?? '-' }}</td>
+                                <td>{{ \Illuminate\Support\Str::limit($attendance->notes, 30) ?? '-' }}</td>
                                 <td>
                                     @if($attendance->photo)
                                         <a href="{{ asset('storage/'.$attendance->photo) }}" target="_blank" class="d-inline-block">

@@ -126,9 +126,7 @@ class AttendanceController extends Controller
             $attendances[$record->student_id] = $record;
         }
 
-        $session = $attendance; // Alias for the attendance
-
-        return view('dashboard.attendance.edit', compact('attendance', 'students', 'attendances', 'session'));
+        return view('dashboard.attendance.edit', compact('attendance', 'students', 'attendances'));
     }
 
     /**

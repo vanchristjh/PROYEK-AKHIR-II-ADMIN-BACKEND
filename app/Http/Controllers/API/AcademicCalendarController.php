@@ -1,87 +1,109 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicCalendar;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class AcademicCalendarController extends Controller
 {
     /**
-     * Get all academic calendar events
+     * Get events for calendar view
      */
-    public function getEvents(Request $request)
+    public function events(Request $request)
     {
-        $user = Auth::user();
-        $userRole = $user->role;
+        $query = AcademicCalendar::query();
         
-        $query = AcademicCalendar::where(function($q) use ($userRole) {
-                $q->where('target_audience', 'all')
-                  ->orWhere('target_audience', $userRole);
-            })
-            ->orderBy('start_date', 'asc');
-            
-        // Apply optional filters
-        if ($request->has('event_type')) {
-            $query->where('event_type', $request->event_type);
+        // Apply date range filter
+        if ($request->has('start') && $request->has('end')) {
+            $query->where(function($q) use ($request) {
+                $q->whereBetween('start_date', [$request->start, $request->end])
+                  ->orWhereBetween('end_date', [$request->start, $request->end])
+                  ->orWhere(function($q2) use ($request) {
+                      $q2->where('start_date', '<=', $request->start)
+                         ->where('end_date', '>=', $request->end);
+                  });
+            });
         }
         
-        if ($request->has('month')) {
-            $query->whereMonth('start_date', $request->month);
+        // Apply event type filter
+        if ($request->has('event_types')) {
+            $eventTypes = explode(',', $request->event_types);
+            $query->whereIn('event_type', $eventTypes);
         }
         
-        if ($request->has('year')) {
-            $query->whereYear('start_date', $request->year);
-        }
-        
-        if ($request->has('academic_year')) {
+        // Apply academic year filter
+        if ($request->has('academic_year') && $request->academic_year) {
             $query->where('academic_year', $request->academic_year);
         }
         
+        // Apply semester filter
+        if ($request->has('semester') && $request->semester) {
+            $query->where('semester', $request->semester);
+        }
+        
+        // Apply audience filter
+        if ($request->has('audience') && $request->audience) {
+            $query->where(function($q) use ($request) {
+                $q->where('target_audience', $request->audience)
+                  ->orWhere('target_audience', 'all');
+            });
+        }
+        
+        // Get events
         $events = $query->get();
         
-        return response()->json([
-            'success' => true,
-            'events' => $events,
-            'count' => $events->count()
-        ]);
+        return response()->json($events);
+    }
+    
+    /**
+     * Get a single event
+     */
+    public function event($id)
+    {
+        $event = AcademicCalendar::findOrFail($id);
+        return response()->json($event);
     }
     
     /**
      * Get upcoming events
      */
-    public function getUpcomingEvents()
+    public function upcoming(Request $request)
     {
-        $user = Auth::user();
-        $userRole = $user->role;
+        $query = AcademicCalendar::query()
+            ->where('start_date', '>=', now())
+            ->orderBy('start_date')
+            ->limit(5);
         
-        $upcomingEvents = AcademicCalendar::where(function($q) use ($userRole) {
-                $q->where('target_audience', 'all')
-                  ->orWhere('target_audience', $userRole);
-            })
-            ->where('start_date', '>', Carbon::now())
-            ->orderBy('start_date', 'asc')
-            ->take(10)
-            ->get();
-            
-        $currentEvents = AcademicCalendar::where(function($q) use ($userRole) {
-                $q->where('target_audience', 'all')
-                  ->orWhere('target_audience', $userRole);
-            })
-            ->where('start_date', '<=', Carbon::now())
-            ->where('end_date', '>=', Carbon::now())
-            ->orderBy('end_date', 'asc')
-            ->get();
-            
-        return response()->json([
-            'success' => true,
-            'upcoming_events' => $upcomingEvents,
-            'current_events' => $currentEvents,
-            'upcoming_count' => $upcomingEvents->count(),
-            'current_count' => $currentEvents->count()
-        ]);
+        // Apply event type filter
+        if ($request->has('event_types')) {
+            $eventTypes = explode(',', $request->event_types);
+            $query->whereIn('event_type', $eventTypes);
+        }
+        
+        // Apply academic year filter
+        if ($request->has('academic_year') && $request->academic_year) {
+            $query->where('academic_year', $request->academic_year);
+        }
+        
+        // Apply semester filter
+        if ($request->has('semester') && $request->semester) {
+            $query->where('semester', $request->semester);
+        }
+        
+        // Apply audience filter
+        if ($request->has('audience') && $request->audience) {
+            $query->where(function($q) use ($request) {
+                $q->where('target_audience', $request->audience)
+                  ->orWhere('target_audience', 'all');
+            });
+        }
+        
+        // Get events
+        $events = $query->get();
+        
+        return response()->json($events);
     }
 }

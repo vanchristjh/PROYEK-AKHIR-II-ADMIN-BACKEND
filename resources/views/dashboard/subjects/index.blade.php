@@ -17,38 +17,63 @@
                     <div class="card-body">
                         <h6 class="card-title mb-3">
                             <i class="bx bx-filter-alt me-1 text-primary"></i> Filter Mata Pelajaran
+                            @if(request('name') || request('class_level') || request('semester'))
+                                <span class="badge bg-primary ms-2">Filter Aktif</span>
+                            @endif
                         </h6>
                         
                         <div class="collapse show" id="filterCollapse">
-                            <form action="{{ route('subjects.index') }}" method="GET" class="row g-3">
+                            <form action="{{ route('subjects.index') }}" method="GET" class="row g-3" id="filterForm">
                                 <div class="col-md-4">
                                     <label for="name" class="form-label">
                                         <i class="bx bx-book me-1 text-primary"></i> Nama Mata Pelajaran
                                     </label>
-                                    <input type="text" class="form-control custom-input shadow-none" id="name" name="name" value="{{ request('name') }}" placeholder="Nama mata pelajaran...">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control custom-input shadow-none" id="name" name="name" 
+                                            value="{{ request('name') }}" placeholder="Nama mata pelajaran...">
+                                        @if(request('name'))
+                                            <button type="button" class="btn btn-outline-secondary clear-input" data-target="name">
+                                                <i class="bx bx-x"></i>
+                                            </button>
+                                        @endif
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-4">
                                     <label for="class_level" class="form-label">
                                         <i class="bx bx-line-chart me-1 text-primary"></i> Tingkat Kelas
                                     </label>
-                                    <select class="form-select shadow-none" id="class_level" name="class_level">
-                                        <option value="">Semua Tingkat</option>
-                                        <option value="X" {{ request('class_level') == 'X' ? 'selected' : '' }}>Kelas X</option>
-                                        <option value="XI" {{ request('class_level') == 'XI' ? 'selected' : '' }}>Kelas XI</option>
-                                        <option value="XII" {{ request('class_level') == 'XII' ? 'selected' : '' }}>Kelas XII</option>
-                                    </select>
+                                    <div class="input-group">
+                                        <select class="form-select shadow-none filter-select" id="class_level" name="class_level">
+                                            <option value="">Semua Tingkat</option>
+                                            <option value="X" {{ request('class_level') == 'X' ? 'selected' : '' }}>Kelas X</option>
+                                            <option value="XI" {{ request('class_level') == 'XI' ? 'selected' : '' }}>Kelas XI</option>
+                                            <option value="XII" {{ request('class_level') == 'XII' ? 'selected' : '' }}>Kelas XII</option>
+                                        </select>
+                                        @if(request('class_level'))
+                                            <button type="button" class="btn btn-outline-secondary clear-select" data-target="class_level">
+                                                <i class="bx bx-x"></i>
+                                            </button>
+                                        @endif
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-4">
                                     <label for="semester" class="form-label">
                                         <i class="bx bx-calendar me-1 text-primary"></i> Semester
                                     </label>
-                                    <select class="form-select shadow-none" id="semester" name="semester">
-                                        <option value="">Semua Semester</option>
-                                        <option value="1" {{ request('semester') == '1' ? 'selected' : '' }}>Semester 1</option>
-                                        <option value="2" {{ request('semester') == '2' ? 'selected' : '' }}>Semester 2</option>
-                                    </select>
+                                    <div class="input-group">
+                                        <select class="form-select shadow-none filter-select" id="semester" name="semester">
+                                            <option value="">Semua Semester</option>
+                                            <option value="1" {{ request('semester') == '1' ? 'selected' : '' }}>Semester 1</option>
+                                            <option value="2" {{ request('semester') == '2' ? 'selected' : '' }}>Semester 2</option>
+                                        </select>
+                                        @if(request('semester'))
+                                            <button type="button" class="btn btn-outline-secondary clear-select" data-target="semester">
+                                                <i class="bx bx-x"></i>
+                                            </button>
+                                        @endif
+                                    </div>
                                 </div>
                                 
                                 <div class="col-12 text-end">
@@ -56,9 +81,11 @@
                                         <button type="submit" class="btn btn-primary hover-shadow">
                                             <i class="bx bx-filter-alt me-1"></i> Filter
                                         </button>
-                                        <a href="{{ route('subjects.index') }}" class="btn btn-outline-secondary hover-shadow ms-2">
-                                            <i class="bx bx-reset me-1"></i> Reset
-                                        </a>
+                                        @if(request('name') || request('class_level') || request('semester'))
+                                            <a href="{{ route('subjects.index') }}" class="btn btn-outline-secondary hover-shadow ms-2">
+                                                <i class="bx bx-reset me-1"></i> Reset
+                                            </a>
+                                        @endif
                                     </div>
                                 </div>
                             </form>
@@ -153,6 +180,67 @@
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
         });
+        
+        // Auto-submit on select change
+        document.querySelectorAll('.filter-select').forEach(select => {
+            select.addEventListener('change', function() {
+                document.getElementById('filterForm').submit();
+            });
+        });
+        
+        // Clear input field
+        document.querySelectorAll('.clear-input').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).value = '';
+                document.getElementById('filterForm').submit();
+            });
+        });
+        
+        // Clear select field
+        document.querySelectorAll('.clear-select').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).value = '';
+                document.getElementById('filterForm').submit();
+            });
+        });
+        
+        // Highlight active filters
+        function highlightActiveFilters() {
+            document.querySelectorAll('select, input[type="text"]').forEach(el => {
+                if (el.value) {
+                    const parentGroup = el.closest('.input-group') || el.parentElement;
+                    parentGroup.classList.add('has-filter');
+                }
+            });
+        }
+        
+        highlightActiveFilters();
     });
 </script>
+
+<style>
+    .has-filter {
+        border-left: 3px solid var(--bs-primary) !important;
+        padding-left: 5px;
+    }
+    
+    .filter-select {
+        cursor: pointer;
+    }
+    
+    .clear-input, .clear-select {
+        z-index: 4;
+    }
+    
+    /* Animation for filter changes */
+    .filter-card {
+        transition: all 0.3s ease;
+    }
+    
+    .filter-card:has(.has-filter) {
+        border-left: 4px solid var(--bs-primary) !important;
+    }
+</style>
 @endsection

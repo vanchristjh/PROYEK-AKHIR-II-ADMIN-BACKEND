@@ -39,8 +39,8 @@
                                 <tr>
                                     <td>{{ $ann->title }}</td>
                                     <td>{{ $ann->status }}</td>
-                                    <td>{{ $ann->published_at ?? 'NULL' }}</td>
-                                    <td>{{ $ann->expired_at ?? 'NULL' }}</td>
+                                    <td>{{ $ann->published_at ? $ann->published_at->format('d M Y') : 'NULL' }}</td>
+                                    <td>{{ $ann->expired_at ? $ann->expired_at->format('d M Y') : 'NULL' }}</td>
                                     <td>{{ $ann->is_active ? 'Ya' : 'Tidak' }}</td>
                                 </tr>
                                 @endforeach
@@ -99,10 +99,28 @@
                                             @if($announcement->expired_at)
                                                 <span class="ms-2"><i class="bx bx-time me-1"></i>Berakhir: {{ $announcement->expired_at->format('d M Y') }}</span>
                                             @endif
+                                            <span class="ms-2"><i class="bx bx-user-circle me-1"></i>Oleh: {{ $announcement->creator ? $announcement->creator->name : 'Admin' }}</span>
                                         </div>
                                         <div class="announcement-body">
-                                            {!! $announcement->content !!}
+                                            @if(\Illuminate\Support\Str::length($announcement->content) > 300)
+                                                <div class="content-preview">
+                                                    {!! \Illuminate\Support\Str::limit($announcement->content, 300) !!}
+                                                </div>
+                                                <div class="content-full d-none">
+                                                    {!! $announcement->content !!}
+                                                </div>
+                                                <button class="btn btn-sm btn-link read-more p-0 mt-2" data-action="read-more">
+                                                    <i class="bx bx-chevron-down me-1"></i>Baca selengkapnya
+                                                </button>
+                                            @else
+                                                {!! $announcement->content !!}
+                                            @endif
                                         </div>
+                                        @if($announcement->attachment_path)
+                                            <a href="{{ asset('storage/'.$announcement->attachment_path) }}" target="_blank" class="text-info">
+                                                <i class="bx bx-paperclip me-1"></i>Lampiran
+                                            </a>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -113,7 +131,6 @@
                         <img src="https://via.placeholder.com/150" alt="No announcements" class="img-fluid mb-3 opacity-50" style="max-width: 150px;">
                         <h6 class="text-muted">Tidak ada pengumuman saat ini</h6>
                         <p class="small text-muted">Pengumuman akan ditampilkan di sini ketika tersedia.</p>
-                        
                         @if(auth()->user()->role === 'admin')
                         <div class="mt-3">
                             <a href="{{ route('announcements.create') }}" class="btn btn-primary">
@@ -126,7 +143,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Rest of the sidebar unchanged -->
     <div class="col-lg-3">
         <div class="card shadow-sm mb-3">
@@ -137,7 +154,6 @@
                 @php
                     $highPriority = isset($activeAnnouncements) ? $activeAnnouncements->where('priority', 'high') : collect([]);
                 @endphp
-                
                 @if($highPriority->count() > 0)
                     <div class="list-group list-group-flush">
                         @foreach($highPriority as $announcement)
@@ -149,7 +165,7 @@
                                         </span>
                                     </div>
                                     <div>
-                                        <h6 class="mb-1">{{ Str::limit($announcement->title, 40) }}</h6>
+                                        <h6 class="mb-1">{{ \Illuminate\Support\Str::limit($announcement->title, 40) }}</h6>
                                         <div class="small text-muted">{{ $announcement->published_at ? $announcement->published_at->format('d M Y') : now()->format('d M Y') }}</div>
                                     </div>
                                 </div>
@@ -158,12 +174,13 @@
                     </div>
                 @else
                     <div class="p-3 text-center">
+                        <img src="https://via.placeholder.com/150" alt="No announcements" class="img-fluid mb-3 opacity-50" style="max-width: 150px;">
+                        <h6 class="text-muted">Tidak ada pengumuman penting saat ini</h6>
                         <p class="text-muted small mb-0">Tidak ada pengumuman penting saat ini.</p>
                     </div>
                 @endif
             </div>
         </div>
-        
         @if(auth()->user()->role === 'admin')
         <div class="card shadow-sm">
             <div class="card-header bg-white">
@@ -190,20 +207,20 @@
     .announcement-body {
         font-size: 0.95rem;
     }
-    
+
     .announcement-body img {
         max-width: 100%;
         height: auto;
     }
-    
+
     .icon-wrapper {
         transition: all 0.3s ease;
     }
-    
+
     .announcement-list .list-group-item:hover .icon-wrapper {
         transform: scale(1.1);
     }
-    
+
     .announcement-list .list-group-item {
         transition: all 0.3s ease;
         border-radius: 0.5rem;
@@ -211,17 +228,17 @@
         border: 1px solid #e9ecef;
         padding: 1.25rem;
     }
-    
+
     .announcement-list .list-group-item:hover {
         background-color: #f8f9fa;
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     }
-    
+
     .announcement-list .list-group-item.border-start.border-danger {
         border-left-width: 5px !important;
     }
-    
+
     .icon-wrapper {
         transition: all 0.3s ease;
         width: 48px !important;
@@ -231,22 +248,22 @@
         justify-content: center;
         font-size: 1.25rem;
     }
-    
+
     .announcement-list .list-group-item:hover .icon-wrapper {
         transform: scale(1.1) rotate(5deg);
     }
-    
+
     .announcement-body {
         font-size: 0.95rem;
         line-height: 1.6;
     }
-    
+
     .announcement-body img {
         max-width: 100%;
         height: auto;
         border-radius: 0.5rem;
     }
-    
+
     .announcement-date {
         display: inline-block;
         background-color: #f8f9fa;
@@ -255,10 +272,35 @@
         font-size: 0.8rem;
         margin-right: 0.5rem;
     }
-    
+
     .badge {
         padding: 0.35em 0.65em;
         font-weight: 500;
     }
 </style>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.read-more').forEach(button => {
+            button.addEventListener('click', function() {
+                const parent = this.closest('.announcement-body');
+                const previewElem = parent.querySelector('.content-preview');
+                const fullElem = parent.querySelector('.content-full');
+                if (this.dataset.action === 'read-more') {
+                    this.dataset.action = 'read-less';
+                    this.innerHTML = '<i class="bx bx-chevron-up me-1"></i>Tampilkan lebih sedikit';
+                    fullElem.classList.remove('d-none');
+                    previewElem.classList.add('d-none');
+                } else {
+                    this.dataset.action = 'read-more';
+                    this.innerHTML = '<i class="bx bx-chevron-down me-1"></i>Baca selengkapnya';
+                    fullElem.classList.add('d-none');
+                    previewElem.classList.remove('d-none');
+                }
+            });
+        });
+    });
+</script>
 @endsection

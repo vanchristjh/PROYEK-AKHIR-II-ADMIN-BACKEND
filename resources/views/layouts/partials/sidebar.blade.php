@@ -25,3 +25,11 @@
         </li>
     </ul>
 </li>
+
+<!-- Academic Grades -->
+<li class="nav-item">
+    <a href="{{ route('grades.index') }}" class="nav-link {{ Request::routeIs('grades.*') ? 'active' : '' }}">
+        <i class="bx bx-book-content me-2"></i>
+        <span>Nilai Akademik</span>
+    </a>
+</li>

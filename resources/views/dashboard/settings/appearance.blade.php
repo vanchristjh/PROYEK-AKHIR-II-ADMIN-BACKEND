@@ -11,16 +11,16 @@
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
-                    <a href="{{ route('settings.account') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <a href="{{ route('settings.account') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ request()->routeIs('settings.account') ? 'active' : '' }}">
                         <i class="bx bx-user me-3"></i> Akun
                     </a>
-                    <a href="{{ route('settings.notifications') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <a href="{{ route('settings.notifications') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ request()->routeIs('settings.notifications') ? 'active' : '' }}">
                         <i class="bx bx-bell me-3"></i> Notifikasi
                     </a>
-                    <a href="{{ route('settings.appearance') }}" class="list-group-item list-group-item-action d-flex align-items-center active">
+                    <a href="{{ route('settings.appearance') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ request()->routeIs('settings.appearance') ? 'active' : '' }}">
                         <i class="bx bx-palette me-3"></i> Tampilan
                     </a>
-                    <a href="{{ route('settings.system') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <a href="{{ route('settings.system') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ request()->routeIs('settings.system') ? 'active' : '' }}">
                         <i class="bx bx-cog me-3"></i> Sistem
                     </a>
                 </div>
@@ -60,7 +60,8 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <div class="form-check appearance-option border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="theme_mode" id="light_mode" value="light" checked>
+                                    <input class="form-check-input" type="radio" name="theme_mode" id="light_mode" value="light" 
+                                        {{ (isset($settings['theme_mode']) && $settings['theme_mode'] == 'light') || !isset($settings['theme_mode']) ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="light_mode">
                                         <div class="text-center mb-2">
                                             <div class="theme-preview bg-white border mb-2" style="height: 80px; position: relative;">
@@ -77,7 +78,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-check appearance-option border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="theme_mode" id="dark_mode" value="dark">
+                                    <input class="form-check-input" type="radio" name="theme_mode" id="dark_mode" value="dark"
+                                        {{ isset($settings['theme_mode']) && $settings['theme_mode'] == 'dark' ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="dark_mode">
                                         <div class="text-center mb-2">
                                             <div class="theme-preview bg-dark border mb-2" style="height: 80px; position: relative;">
@@ -94,7 +96,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-check appearance-option border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="theme_mode" id="auto_mode" value="auto">
+                                    <input class="form-check-input" type="radio" name="theme_mode" id="auto_mode" value="auto"
+                                        {{ isset($settings['theme_mode']) && $settings['theme_mode'] == 'auto' ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="auto_mode">
                                         <div class="text-center mb-2">
                                             <div class="theme-preview mb-2" style="height: 80px; position: relative; background: linear-gradient(to right, white 50%, #212529 50%);">
@@ -118,7 +121,8 @@
                         <div class="row g-3">
                             <div class="col-md-2 col-4">
                                 <div class="form-check appearance-option border rounded p-2">
-                                    <input class="form-check-input" type="radio" name="primary_color" id="color_blue" value="blue" checked>
+                                    <input class="form-check-input" type="radio" name="primary_color" id="color_blue" value="blue"
+                                        {{ (isset($settings['primary_color']) && $settings['primary_color'] == 'blue') || !isset($settings['primary_color']) ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="color_blue">
                                         <div class="text-center">
                                             <div class="color-preview rounded-circle mx-auto mb-2" style="background-color: #0066b3; width: 40px; height: 40px;"></div>
@@ -129,7 +133,8 @@
                             </div>
                             <div class="col-md-2 col-4">
                                 <div class="form-check appearance-option border rounded p-2">
-                                    <input class="form-check-input" type="radio" name="primary_color" id="color_green" value="green">
+                                    <input class="form-check-input" type="radio" name="primary_color" id="color_green" value="green"
+                                        {{ isset($settings['primary_color']) && $settings['primary_color'] == 'green' ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="color_green">
                                         <div class="text-center">
                                             <div class="color-preview rounded-circle mx-auto mb-2" style="background-color: #28a745; width: 40px; height: 40px;"></div>
@@ -140,7 +145,8 @@
                             </div>
                             <div class="col-md-2 col-4">
                                 <div class="form-check appearance-option border rounded p-2">
-                                    <input class="form-check-input" type="radio" name="primary_color" id="color_purple" value="purple">
+                                    <input class="form-check-input" type="radio" name="primary_color" id="color_purple" value="purple"
+                                        {{ isset($settings['primary_color']) && $settings['primary_color'] == 'purple' ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="color_purple">
                                         <div class="text-center">
                                             <div class="color-preview rounded-circle mx-auto mb-2" style="background-color: #6f42c1; width: 40px; height: 40px;"></div>
@@ -151,7 +157,8 @@
                             </div>
                             <div class="col-md-2 col-4">
                                 <div class="form-check appearance-option border rounded p-2">
-                                    <input class="form-check-input" type="radio" name="primary_color" id="color_red" value="red">
+                                    <input class="form-check-input" type="radio" name="primary_color" id="color_red" value="red"
+                                        {{ isset($settings['primary_color']) && $settings['primary_color'] == 'red' ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="color_red">
                                         <div class="text-center">
                                             <div class="color-preview rounded-circle mx-auto mb-2" style="background-color: #dc3545; width: 40px; height: 40px;"></div>
@@ -162,7 +169,8 @@
                             </div>
                             <div class="col-md-2 col-4">
                                 <div class="form-check appearance-option border rounded p-2">
-                                    <input class="form-check-input" type="radio" name="primary_color" id="color_orange" value="orange">
+                                    <input class="form-check-input" type="radio" name="primary_color" id="color_orange" value="orange"
+                                        {{ isset($settings['primary_color']) && $settings['primary_color'] == 'orange' ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="color_orange">
                                         <div class="text-center">
                                             <div class="color-preview rounded-circle mx-auto mb-2" style="background-color: #fd7e14; width: 40px; height: 40px;"></div>
@@ -173,7 +181,8 @@
                             </div>
                             <div class="col-md-2 col-4">
                                 <div class="form-check appearance-option border rounded p-2">
-                                    <input class="form-check-input" type="radio" name="primary_color" id="color_teal" value="teal">
+                                    <input class="form-check-input" type="radio" name="primary_color" id="color_teal" value="teal"
+                                        {{ isset($settings['primary_color']) && $settings['primary_color'] == 'teal' ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="color_teal">
                                         <div class="text-center">
                                             <div class="color-preview rounded-circle mx-auto mb-2" style="background-color: #20c997; width: 40px; height: 40px;"></div>
@@ -190,7 +199,8 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="form-check appearance-option border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="sidebar_layout" id="fixed_sidebar" value="fixed" checked>
+                                    <input class="form-check-input" type="radio" name="sidebar_layout" id="fixed_sidebar" value="fixed"
+                                        {{ (isset($settings['sidebar_layout']) && $settings['sidebar_layout'] == 'fixed') || !isset($settings['sidebar_layout']) ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="fixed_sidebar">
                                         <div class="d-flex align-items-center">
                                             <div class="layout-preview me-3" style="width: 80px; height: 60px; background: #f8f9fa; position: relative;">
@@ -209,7 +219,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-check appearance-option border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="sidebar_layout" id="collapsed_sidebar" value="collapsed">
+                                    <input class="form-check-input" type="radio" name="sidebar_layout" id="collapsed_sidebar" value="collapsed"
+                                        {{ isset($settings['sidebar_layout']) && $settings['sidebar_layout'] == 'collapsed' ? 'checked' : '' }}>
                                     <label class="form-check-label w-100" for="collapsed_sidebar">
                                         <div class="d-flex align-items-center">
                                             <div class="layout-preview me-3" style="width: 80px; height: 60px; background: #f8f9fa; position: relative;">
@@ -232,9 +243,9 @@
                     <div class="mb-4">
                         <label for="font_size" class="form-label">Ukuran Font</label>
                         <select class="form-select" id="font_size" name="font_size">
-                            <option value="small">Kecil</option>
-                            <option value="medium" selected>Sedang (Default)</option>
-                            <option value="large">Besar</option>
+                            <option value="small" {{ isset($settings['font_size']) && $settings['font_size'] == 'small' ? 'selected' : '' }}>Kecil</option>
+                            <option value="medium" {{ (isset($settings['font_size']) && $settings['font_size'] == 'medium') || !isset($settings['font_size']) ? 'selected' : '' }}>Sedang (Default)</option>
+                            <option value="large" {{ isset($settings['font_size']) && $settings['font_size'] == 'large' ? 'selected' : '' }}>Besar</option>
                         </select>
                         <div class="form-text">Mengubah ukuran font dapat mempengaruhi tata letak halaman</div>
                     </div>
@@ -294,9 +305,6 @@
                         </button>
                     </div>
                 </form>
-                
-                <!-- Include debug helper (hidden by default) -->
-                @include('dashboard.debug-helper')
             </div>
         </div>
     </div>
@@ -349,101 +357,167 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Apply saved theme mode when page loads
+        @if(isset($settings['theme_mode']))
+        const savedThemeMode = '{{ $settings['theme_mode'] }}';
+        applyThemeMode(savedThemeMode);
+        @endif
+        
+        // Apply saved primary color
+        @if(isset($settings['primary_color']))
+        const savedPrimaryColor = '{{ $settings['primary_color'] }}';
+        applyPrimaryColor(savedPrimaryColor);
+        @endif
+        
+        // Apply font size
+        @if(isset($settings['font_size']))
+        const savedFontSize = '{{ $settings['font_size'] }}';
+        applyFontSize(savedFontSize);
+        @endif
+
         // Theme mode switcher preview
         const themeRadios = document.querySelectorAll('input[name="theme_mode"]');
         const themePreview = document.getElementById('themePreview');
         
         themeRadios.forEach(radio => {
             radio.addEventListener('change', function() {
-                if (this.value === 'dark') {
-                    themePreview.classList.remove('bg-white');
-                    themePreview.classList.add('bg-dark', 'text-white');
-                    themePreview.querySelectorAll('.text-muted').forEach(el => {
-                        el.classList.remove('text-muted');
-                        el.classList.add('text-light');
-                    });
-                    themePreview.querySelectorAll('.bg-light').forEach(el => {
-                        el.classList.remove('bg-light');
-                        el.classList.add('bg-secondary');
-                    });
-                } else {
-                    themePreview.classList.remove('bg-dark', 'text-white');
-                    themePreview.classList.add('bg-white');
-                    themePreview.querySelectorAll('.text-light').forEach(el => {
-                        el.classList.remove('text-light');
-                        el.classList.add('text-muted');
-                    });
-                    themePreview.querySelectorAll('.bg-secondary').forEach(el => {
-                        el.classList.remove('bg-secondary');
-                        el.classList.add('bg-light');
-                    });
-                }
+                applyThemeMode(this.value);
             });
         });
+        
+        function applyThemeMode(mode) {
+            if (mode === 'dark') {
+                themePreview.classList.remove('bg-white');
+                themePreview.classList.add('bg-dark', 'text-white');
+                themePreview.querySelectorAll('.text-muted').forEach(el => {
+                    el.classList.remove('text-muted');
+                    el.classList.add('text-light');
+                });
+                themePreview.querySelectorAll('.bg-light').forEach(el => {
+                    el.classList.remove('bg-light');
+                    el.classList.add('bg-secondary');
+                });
+            } else {
+                themePreview.classList.remove('bg-dark', 'text-white');
+                themePreview.classList.add('bg-white');
+                themePreview.querySelectorAll('.text-light').forEach(el => {
+                    el.classList.remove('text-light');
+                    el.classList.add('text-muted');
+                });
+                themePreview.querySelectorAll('.bg-secondary').forEach(el => {
+                    el.classList.remove('bg-secondary');
+                    el.classList.add('bg-light');
+                });
+            }
+            
+            // For real app, you might also update the body class
+            if (mode === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else if (mode === 'light') {
+                document.body.classList.remove('dark-mode');
+            } else if (mode === 'auto') {
+                // Auto mode based on system preference
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+            }
+        }
         
         // Primary color switcher
         const colorRadios = document.querySelectorAll('input[name="primary_color"]');
         
         colorRadios.forEach(radio => {
             radio.addEventListener('change', function() {
-                let primaryColor;
-                
-                switch(this.value) {
-                    case 'blue': primaryColor = '#0066b3'; break;
-                    case 'green': primaryColor = '#28a745'; break;
-                    case 'purple': primaryColor = '#6f42c1'; break;
-                    case 'red': primaryColor = '#dc3545'; break;
-                    case 'orange': primaryColor = '#fd7e14'; break;
-                    case 'teal': primaryColor = '#20c997'; break;
-                    default: primaryColor = '#0066b3';
-                }
-                
-                document.documentElement.style.setProperty('--primary', primaryColor);
-                
-                // Update button and progress bar colors
-                document.querySelectorAll('.btn-primary').forEach(btn => {
-                    btn.style.backgroundColor = primaryColor;
-                    btn.style.borderColor = primaryColor;
-                });
-                
-                document.querySelectorAll('.progress-bar').forEach(bar => {
-                    bar.style.backgroundColor = primaryColor;
-                });
+                applyPrimaryColor(this.value);
             });
         });
+        
+        function applyPrimaryColor(color) {
+            let primaryColor;
+            let primaryRgb;
+            
+            switch(color) {
+                case 'blue': 
+                    primaryColor = '#0066b3'; 
+                    primaryRgb = '0, 102, 179';
+                    break;
+                case 'green': 
+                    primaryColor = '#28a745'; 
+                    primaryRgb = '40, 167, 69';
+                    break;
+                case 'purple': 
+                    primaryColor = '#6f42c1'; 
+                    primaryRgb = '111, 66, 193';
+                    break;
+                case 'red': 
+                    primaryColor = '#dc3545'; 
+                    primaryRgb = '220, 53, 69';
+                    break;
+                case 'orange': 
+                    primaryColor = '#fd7e14'; 
+                    primaryRgb = '253, 126, 20';
+                    break;
+                case 'teal': 
+                    primaryColor = '#20c997'; 
+                    primaryRgb = '32, 201, 151';
+                    break;
+                default: 
+                    primaryColor = '#0066b3'; 
+                    primaryRgb = '0, 102, 179';
+            }
+            
+            document.documentElement.style.setProperty('--primary', primaryColor);
+            document.documentElement.style.setProperty('--primary-rgb', primaryRgb);
+            
+            // Update button and progress bar colors
+            document.querySelectorAll('.btn-primary').forEach(btn => {
+                btn.style.backgroundColor = primaryColor;
+                btn.style.borderColor = primaryColor;
+            });
+            
+            document.querySelectorAll('.progress-bar').forEach(bar => {
+                bar.style.backgroundColor = primaryColor;
+            });
+        }
         
         // Font size changer
         const fontSizeSelector = document.getElementById('font_size');
         
         fontSizeSelector.addEventListener('change', function() {
+            applyFontSize(this.value);
+        });
+        
+        function applyFontSize(size) {
             const previewPanel = document.querySelector('.preview-panel');
             
-            switch(this.value) {
-                case 'small':
+            switch(size) {
+                case 'small': 
                     previewPanel.style.fontSize = '0.875rem';
                     document.querySelector('.theme-preview-title').style.fontSize = '1.15rem';
                     document.querySelector('.theme-preview-subtitle').style.fontSize = '0.95rem';
                     break;
-                case 'medium':
+                case 'medium': 
                     previewPanel.style.fontSize = '1rem';
                     document.querySelector('.theme-preview-title').style.fontSize = '1.25rem';
                     document.querySelector('.theme-preview-subtitle').style.fontSize = '1rem';
                     break;
-                case 'large':
+                case 'large': 
                     previewPanel.style.fontSize = '1.125rem';
                     document.querySelector('.theme-preview-title').style.fontSize = '1.4rem';
                     document.querySelector('.theme-preview-subtitle').style.fontSize = '1.15rem';
                     break;
             }
-        });
+        }
 
-        // Form submission handler with visual feedback
+        // Form submission handling with visual feedback
         const appearanceForm = document.getElementById('appearanceForm');
         const saveButton = document.getElementById('saveButton');
         
         if (appearanceForm) {
             appearanceForm.addEventListener('submit', function(e) {
-                // First prevent the default submission
+                // Prevent the default submission
                 e.preventDefault();
                 
                 // Show loading state
@@ -460,9 +534,6 @@
                 
                 localStorage.setItem('previousSettings', JSON.stringify(currentSettings));
                 
-                // Log debug info
-                console.log('Form submitting with data:', currentSettings);
-                
                 // Submit the form after a brief delay
                 setTimeout(() => {
                     this.submit();
@@ -472,7 +543,6 @@
         
         // Check if returning after a save to highlight changes
         window.addEventListener('load', function() {
-            console.log('Checking for success message:', @json(session('success') ? true : false));
             if (@json(session('success') ? true : false)) {
                 // If we have success message, check for changes
                 const savedSettings = localStorage.getItem('previousSettings');
@@ -524,5 +594,43 @@
             }
         }
     });
+    
+    // Helper function to show toast notifications
+    function showToast(message) {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Create toast element
+        const toastEl = document.createElement('div');
+        toastEl.className = 'toast align-items-center text-white bg-primary border-0';
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bx bx-check-circle me-1"></i> ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toastEl);
+        
+        // Initialize and show toast
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+        
+        // Remove from DOM after hiding
+        toastEl.addEventListener('hidden.bs.toast', () => {
+            toastEl.remove();
+        });
+    }
 </script>
 @endsection

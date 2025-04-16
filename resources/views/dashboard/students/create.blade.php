@@ -24,7 +24,7 @@
         </div>
         @endif
 
-        <form action="{{ route('students.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('students.store') }}" method="POST" enctype="multipart/form-data" id="studentForm" class="needs-validation" novalidate>
             @csrf
             
             <div class="row mb-4">
@@ -36,22 +36,39 @@
                                 <div class="col-md-6">
                                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                                     <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required>
+                                    <div class="invalid-feedback">
+                                        Email harus diisi dengan format yang benar.
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="password" name="password" required minlength="8">
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                            <i class="bx bx-hide"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Password harus diisi minimal 8 karakter.
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="password_confirmation" class="form-label">Konfirmasi Password <span class="text-danger">*</span></label>
                                     <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+                                    <div class="invalid-feedback">
+                                        Konfirmasi password harus sama dengan password.
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="profile_photo" class="form-label">Foto Profil</label>
-                                    <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" onchange="validateFileSize(this)">
+                                    <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" onchange="previewImage(this)">
                                     <small class="text-muted">Format: JPG, PNG, GIF. Maks: 1MB</small>
+                                    <div class="mt-2 text-center" id="imagePreview" style="display:none;">
+                                        <img src="" class="img-thumbnail" style="max-height: 150px;" alt="Preview">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -68,6 +85,9 @@
                                 <div class="col-md-6">
                                     <label for="nis" class="form-label">NIS <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="nis" name="nis" value="{{ old('nis') }}" required>
+                                    <div class="invalid-feedback">
+                                        NIS harus diisi.
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-6">
@@ -78,6 +98,9 @@
                                 <div class="col-md-6">
                                     <label for="name" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
+                                    <div class="invalid-feedback">
+                                        Nama lengkap harus diisi.
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-6">
@@ -87,11 +110,14 @@
                                         <option value="L" {{ old('gender') == 'L' ? 'selected' : '' }}>Laki-laki</option>
                                         <option value="P" {{ old('gender') == 'P' ? 'selected' : '' }}>Perempuan</option>
                                     </select>
+                                    <div class="invalid-feedback">
+                                        Jenis kelamin harus dipilih.
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="birth_date" class="form-label">Tanggal Lahir</label>
-                                    <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ old('birth_date') }}">
+                                    <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ old('birth_date') }}" max="{{ date('Y-m-d') }}">
                                 </div>
                                 
                                 <div class="col-md-6">
@@ -104,6 +130,9 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    <div class="invalid-feedback">
+                                        Kelas harus dipilih.
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-6">
@@ -163,30 +192,85 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize select2 if available
         if (typeof $.fn.select2 !== 'undefined') {
-            $('.select2').select2({
-                theme: 'bootstrap-5'
+            $('#class_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
             });
         }
         
-        // Initialize Flatpickr for date pickers
-        if (typeof flatpickr !== 'undefined') {
-            flatpickr(".datepicker", {
-                dateFormat: "Y-m-d",
-                allowInput: true,
-                altInput: true,
-                altFormat: "d M Y"
+        // Password toggle visibility
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+        
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('bx-hide');
+                this.querySelector('i').classList.toggle('bx-show');
             });
         }
         
-        // File size validation
-        function validateFileSize(input) {
-            const maxSize = 1024 * 1024; // 1MB
-            if (input.files && input.files[0] && input.files[0].size > maxSize) {
-                alert("Ukuran file terlalu besar! Maksimum 1MB.");
-                input.value = '';
-            }
+        // Enable Bootstrap form validation
+        const form = document.getElementById('studentForm');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                // Check if passwords match
+                const password = document.getElementById('password');
+                const confirmPassword = document.getElementById('password_confirmation');
+                if (password && confirmPassword && password.value !== confirmPassword.value) {
+                    confirmPassword.setCustomValidity('Password tidak sama');
+                    event.preventDefault();
+                } else if (confirmPassword) {
+                    confirmPassword.setCustomValidity('');
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
         }
     });
+    
+    // Preview image before upload
+    function previewImage(input) {
+        const maxSize = 1024 * 1024; // 1MB
+        const preview = document.getElementById('imagePreview');
+        const previewImg = preview.querySelector('img');
+        
+        if (input.files && input.files[0]) {
+            if (input.files[0].size > maxSize) {
+                alert('Ukuran file terlalu besar! Maksimal 1MB.');
+                input.value = '';
+                preview.style.display = 'none';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    // Generate random password
+    function generatePassword() {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        let password = "";
+        for (let i = 0; i < 12; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById('password').value = password;
+        document.getElementById('password_confirmation').value = password;
+    }
 </script>
 @endsection

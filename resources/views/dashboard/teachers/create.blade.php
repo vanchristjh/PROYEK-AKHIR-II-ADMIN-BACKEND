@@ -209,4 +209,4 @@
         }
     });
 </script>
-@endsection 
+@endsection

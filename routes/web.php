@@ -15,6 +15,10 @@ use App\Http\Controllers\AcademicCalendarController;
 use App\Http\Controllers\SubjectsController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\TeacherAttendanceController;
+use App\Http\Controllers\GradeCategoryController;
+use App\Http\Controllers\GradeItemController;
+use App\Http\Controllers\AcademicReportController;
+use App\Http\Controllers\GradeController;
 
 Route::get('/', function () {
     return redirect('/login');
@@ -24,6 +28,15 @@ Route::get('/', function () {
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Debug route to check session
+Route::get('/check-auth', function () {
+    return [
+        'authenticated' => auth()->check(),
+        'user' => auth()->user() ? auth()->user()->only(['id', 'name', 'email', 'role']) : null,
+        'session_id' => session()->getId(),
+    ];
+})->middleware('auth');
 
 // Dashboard Routes
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -39,6 +52,14 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::put('/{student}', [StudentController::class, 'update'])->name('students.update');
     Route::delete('/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
 });
+
+// Define export routes outside of any route groups for simplicity
+Route::get('/students/export/excel', [App\Http\Controllers\StudentController::class, 'exportExcel'])->name('students.export.excel');
+Route::get('/students/export/pdf', [App\Http\Controllers\StudentController::class, 'exportPdf'])->name('students.export.pdf');
+
+// Teacher export routes
+Route::get('/teachers/export/excel', [TeacherController::class, 'exportExcel'])->name('teachers.export.excel');
+Route::get('/teachers/export/pdf', [TeacherController::class, 'exportPdf'])->name('teachers.export.pdf');
 
 // Teacher Account Management Routes
 Route::resource('students', StudentController::class);
@@ -80,6 +101,8 @@ Route::prefix('announcements')->name('announcements.')->middleware(['auth'])->gr
     Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('update');
     Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])->name('destroy');
     Route::patch('/{announcement}/change-status', [AnnouncementController::class, 'changeStatus'])->name('change-status');
+    Route::post('/{announcement}/mark-read', [AnnouncementController::class, 'markAsRead'])->name('mark-read');
+    Route::get('/{announcement}/attachment', [AnnouncementController::class, 'downloadAttachment'])->name('attachment.download');
 });
 
 // Public announcements list
@@ -157,4 +180,48 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/settings/update-system', [App\Http\Controllers\SettingsController::class, 'updateSystem'])->name('settings.update-system');
     Route::put('/settings/update-appearance', [App\Http\Controllers\SettingsController::class, 'updateAppearance'])->name('settings.update-appearance');
     Route::put('/settings/update-notifications', [App\Http\Controllers\SettingsController::class, 'updateNotifications'])->name('settings.update-notifications');
+    Route::post('/settings/create-backup', [App\Http\Controllers\SettingsController::class, 'createBackup'])->name('settings.create-backup');
+    Route::delete('/settings/delete-account', [App\Http\Controllers\SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
+    
+    // Grades routes
+    Route::resource('grades', GradeController::class);
+
+    // Academic Grade Routes
+    Route::resource('grade-categories', GradeCategoryController::class);
+    Route::resource('grade-items', GradeItemController::class);
+    
+    // Academic Reports
+    Route::get('/academic-reports', [AcademicReportController::class, 'index'])->name('academic-reports.index');
+    Route::get('/academic-reports/{id}', [AcademicReportController::class, 'show'])->name('academic-reports.show');
+    Route::get('/academic-reports/{id}/print', [AcademicReportController::class, 'print'])->name('academic-reports.print');
+});
+
+// Notification routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/mark-as-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-as-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::get('/notifications/unread-count', [App\Http\Controllers\NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    Route::get('/notifications/get', [App\Http\Controllers\NotificationController::class, 'getNotifications'])->name('notifications.get');
+});
+
+// Academic Grade Management
+Route::resource('grade-categories', GradeCategoryController::class);
+Route::resource('grade-items', GradeItemController::class);
+Route::get('grade-items/{gradeItem}/enter-grades', [GradeItemController::class, 'enterGrades'])->name('grade-items.enter-grades');
+Route::post('grade-items/{gradeItem}/save-grades', [GradeItemController::class, 'saveGrades'])->name('grade-items.save-grades');
+
+// Academic Reports
+Route::get('academic-reports', [AcademicReportController::class, 'index'])->name('academic-reports.index');
+Route::post('academic-reports/export-pdf', [AcademicReportController::class, 'exportPdf'])->name('academic-reports.export-pdf');
+Route::get('academic-reports/class-ranking', [AcademicReportController::class, 'classRanking'])->name('academic-reports.class-ranking');
+
+// Academic Grades Routes
+Route::middleware(['auth', 'verified'])->prefix('dashboard')->group(function () {
+    Route::resource('grades', \App\Http\Controllers\GradeController::class);
+    
+    // Add this route to redirect from academic-grades.index to grades.index
+    Route::get('academic-grades', function() {
+        return redirect()->route('grades.index');
+    })->name('academic-grades.index');
 });

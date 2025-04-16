@@ -1,3 +1,8 @@
+@php
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Auth;
+@endphp
+
 @extends('layouts.app')
 
 @section('content')
@@ -210,14 +215,29 @@
                         <i class="bx bx-plus-circle"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><h6 class="dropdown-header">Aksi Cepat</h6></li>
+                        <li><h6 class="dropdown-header">Data Akademik</h6></li>
                         <li><a class="dropdown-item" href="{{ route('students.create') }}"><i class="bx bx-user-plus"></i> Tambah Siswa</a></li>
                         <li><a class="dropdown-item" href="{{ route('teachers.create') }}"><i class="bx bx-user-voice"></i> Tambah Guru</a></li>
-                        <li><a class="dropdown-item" href="{{ route('announcements.create') }}"><i class="bx bx-bell-plus"></i> Buat Pengumuman</a></li>
-                        <li><a class="dropdown-item" href="{{ route('schedules.create') }}"><i class="bx bx-calendar-plus"></i> Buat Jadwal</a></li>
-                        <li><a class="dropdown-item" href="{{ route('academic-calendar.create') }}"><i class="bx bx-calendar-event"></i> Tambah Agenda Kalender</a></li>
+                        <li><a class="dropdown-item" href="{{ route('classes.create') }}"><i class="bx bx-buildings"></i> Tambah Kelas</a></li>
+                        <li><a class="dropdown-item" href="{{ route('subjects.create') }}"><i class="bx bx-book-alt"></i> Tambah Mata Pelajaran</a></li>
+                        
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ route('classes.create') }}"><i class="bx bx-plus-circle"></i> Kelas Baru</a></li>
+                        <li><h6 class="dropdown-header">Kegiatan Akademik</h6></li>
+                        <li><a class="dropdown-item" href="{{ route('attendance.create') }}"><i class="bx bx-check-square"></i> Isi Absensi Siswa</a></li>
+                        <li><a class="dropdown-item" href="{{ route('teacher-attendance.create') }}"><i class="bx bx-user-check"></i> Isi Absensi Guru</a></li>
+                        <li><a class="dropdown-item" href="{{ route('schedules.create') }}"><i class="bx bx-calendar-plus"></i> Buat Jadwal</a></li>
+                        
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Informasi & Laporan</h6></li>
+                        <li><a class="dropdown-item" href="{{ route('announcements.create') }}"><i class="bx bx-bell-plus"></i> Buat Pengumuman</a></li>
+                        <li><a class="dropdown-item" href="{{ route('academic-calendar.create') }}"><i class="bx bx-calendar-event"></i> Tambah Agenda Kalender</a></li>
+                        <li><a class="dropdown-item" href="{{ route('attendance.report') }}"><i class="bx bx-bar-chart-alt-2"></i> Laporan Kehadiran Siswa</a></li>
+                        <li><a class="dropdown-item" href="{{ route('teacher-attendance.report') }}"><i class="bx bx-line-chart"></i> Laporan Kehadiran Guru</a></li>
+                        
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Sistem</h6></li>
+                        <li><a class="dropdown-item" href="{{ route('settings.index') }}"><i class="bx bx-cog"></i> Pengaturan</a></li>
+                        <li><a class="dropdown-item" href="{{ route('documentation.api') }}"><i class="bx bx-help-circle"></i> Dokumentasi API</a></li>
                     </ul>
                 </div>
                 
@@ -228,73 +248,29 @@
                 
                 <!-- Notifications -->
                 <div class="notifications dropdown">
-                    <button class="btn-icon" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn-icon" data-bs-toggle="dropdown" aria-expanded="false" id="notificationDropdown">
                         <i class="bx bx-bell"></i>
-                        <span class="badge">5</span>
+                        <span class="badge notification-badge" id="notification-badge">0</span>
                     </button>
                     <div class="dropdown-menu notifications-dropdown dropdown-menu-end">
                         <div class="notifications-header">
                             <h6>Notifikasi</h6>
-                            <a href="#" class="mark-all-read">Tandai sudah dibaca</a>
+                            <a href="#" class="mark-all-read" id="markAllReadBtn">Tandai sudah dibaca</a>
                         </div>
-                        <div class="notifications-body">
-                            <div class="notification-item unread">
-                                <div class="notification-icon bg-primary-light text-primary">
-                                    <i class="bx bx-user-plus"></i>
+                        <div class="notifications-body" id="notificationsContainer">
+                            <div class="text-center py-5" id="notification-loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
                                 </div>
-                                <div class="notification-content">
-                                    <p class="notification-text">5 siswa baru telah terdaftar</p>
-                                    <span class="notification-time">30 menit yang lalu</span>
-                                </div>
-                                <button class="notification-action"><i class="bx bx-dots-vertical-rounded"></i></button>
+                                <p class="mt-2 small text-muted">Memuat notifikasi...</p>
                             </div>
-                            
-                            <div class="notification-item unread">
-                                <div class="notification-icon bg-success-light text-success">
-                                    <i class="bx bx-calendar-check"></i>
-                                </div>
-                                <div class="notification-content">
-                                    <p class="notification-text">Jadwal semester ganjil telah diterbitkan</p>
-                                    <span class="notification-time">2 jam yang lalu</span>
-                                </div>
-                                <button class="notification-action"><i class="bx bx-dots-vertical-rounded"></i></button>
-                            </div>
-                            
-                            <div class="notification-item">
-                                <div class="notification-icon bg-warning-light text-warning">
-                                    <i class="bx bx-error-circle"></i>
-                                </div>
-                                <div class="notification-content">
-                                    <p class="notification-text">Pengumpulan nilai semester terakhir besok</p>
-                                    <span class="notification-time">12 jam yang lalu</span>
-                                </div>
-                                <button class="notification-action"><i class="bx bx-dots-vertical-rounded"></i></button>
-                            </div>
-                            
-                            <div class="notification-item">
-                                <div class="notification-icon bg-info-light text-info">
-                                    <i class="bx bx-bell"></i>
-                                </div>
-                                <div class="notification-content">
-                                    <p class="notification-text">Rapat guru akan diadakan hari Jumat</p>
-                                    <span class="notification-time">1 hari yang lalu</span>
-                                </div>
-                                <button class="notification-action"><i class="bx bx-dots-vertical-rounded"></i></button>
-                            </div>
-                            
-                            <div class="notification-item">
-                                <div class="notification-icon bg-danger-light text-danger">
-                                    <i class="bx bx-calendar-exclamation"></i>
-                                </div>
-                                <div class="notification-content">
-                                    <p class="notification-text">Ujian semester dimulai dalam 2 minggu</p>
-                                    <span class="notification-time">2 hari yang lalu</span>
-                                </div>
-                                <button class="notification-action"><i class="bx bx-dots-vertical-rounded"></i></button>
+                            <div class="text-center py-5" id="notification-empty" style="display: none;">
+                                <i class="bx bx-bell-off text-muted" style="font-size: 2rem;"></i>
+                                <p class="mt-2 mb-0">Tidak ada notifikasi</p>
                             </div>
                         </div>
                         <div class="notifications-footer">
-                            <a href="{{ url('/notifications') }}" class="btn btn-sm btn-light w-100">Lihat Semua Notifikasi</a>
+                            <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light w-100">Lihat Semua Notifikasi</a>
                         </div>
                     </div>
                 </div>
@@ -385,45 +361,65 @@
     --primary: #0066b3;
     --primary-dark: #004c87;
     --primary-light: #e6f2ff;
+    --primary-hover: #0056a6;
     --secondary: #ffc107;
+    --secondary-light: #fff3cd;
     --success: #28a745;
+    --success-light: #d4edda;
     --danger: #dc3545;
+    --danger-light: #f8d7da;
     --warning: #fd7e14;
+    --warning-light: #fff3cd;
     --info: #17a2b8;
+    --info-light: #d1ecf1;
     --dark: #343a40;
     --light: #f8f9fa;
+    --gray: #6c757d;
+    --gray-light: #e9ecef;
     --body-bg: #f5f7fa;
     --sidebar-bg: #ffffff;
+    --white: #ffffff;
     --sidebar-width: 280px;
     --sidebar-collapsed-width: 70px;
     --header-height: 70px;
     --footer-height: 50px;
-    --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    --card-shadow-hover: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --card-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12);
     --transition-speed: 0.3s;
     --border-radius: 0.5rem;
-    --font-main: 'Nunito', sans-serif;
+    --border-radius-sm: 0.25rem;
+    --border-radius-lg: 0.75rem;
+    --font-main: 'Nunito', 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+    --text-color: #495057;
+    --text-muted: #6c757d;
+    --border-color: #e9ecef;
 }
 
 .dark-mode {
     --primary: #4d94ff;
     --primary-dark: #0066cc;
     --primary-light: #1a2e44;
+    --primary-hover: #5a9dff;
     --body-bg: #121212;
     --sidebar-bg: #1e1e2d;
+    --white: #1e1e2d;
     --light: #2a2a3c;
     --dark: #f8f9fa;
-    --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --card-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.4);
     --text-color: #e4e6ef;
     --text-muted: #9899ac;
+    --gray-light: #32324a;
     --border-color: #2b2b40;
 }
 
 body {
     font-family: var(--font-main);
     background-color: var(--body-bg);
-    transition: background-color var(--transition-speed);
+    color: var(--text-color);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
     overflow-x: hidden;
+    letter-spacing: 0.2px;
 }
 
 .dashboard-wrapper {
@@ -440,10 +436,10 @@ body {
     left: 0;
     top: 0;
     background-color: var(--sidebar-bg);
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.07);
     display: flex;
     flex-direction: column;
-    transition: all var(--transition-speed);
+    transition: all var(--transition-speed) ease;
     z-index: 1000;
     overflow-y: auto;
     scrollbar-width: thin;
@@ -454,12 +450,16 @@ body {
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.15);
     border-radius: 10px;
 }
 
+.dark-mode .sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
 .sidebar-header {
-    padding: 1.5rem;
+    padding: 1.75rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -480,18 +480,23 @@ body {
     height: 50px;
     border-radius: 50%;
     overflow: hidden;
-    margin-right: 10px;
+    margin-right: 12px;
     background: var(--primary-light);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 10px rgba(0, 102, 179, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 102, 179, 0.2);
 }
 
 .school-logo {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.logo-wrapper:hover .school-logo {
+    transform: scale(1.1);
 }
 
 .school-info {
@@ -502,75 +507,64 @@ body {
 .school-name {
     color: var(--primary);
     font-weight: 700;
-    margin-bottom: 0;
-    font-size: 1rem;
+    margin-bottom: 2px;
+    font-size: 1.1rem;
 }
 
 .school-location {
     color: var(--text-muted);
     font-size: 0.7rem;
     font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
-.user-profile-preview {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1.5rem;
+/* Updated settings link style */
+.settings-link {
+    margin: 0 1rem 1.5rem;
+    transition: transform 0.2s ease;
+}
+
+.settings-link a {
     background-color: var(--primary-light);
-    margin: 0 1rem 1rem;
     border-radius: var(--border-radius);
-}
-
-.user-avatar {
     position: relative;
-    margin-right: 0.75rem;
+    overflow: hidden;
 }
 
-.user-avatar img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-}
-
-.status-indicator {
+.settings-link a::before {
+    content: '';
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid var(--primary-light);
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: 0.5s;
 }
 
-.status-indicator.online {
-    background-color: var(--success);
+.settings-link a:hover::before {
+    left: 100%;
 }
 
-.user-info {
-    flex: 1;
-}
-
-.user-name {
-    color: var(--primary-dark);
-    font-weight: 600;
-    margin-bottom: 0;
-    font-size: 0.9rem;
-}
-
-.user-role {
-    color: var(--text-muted);
-    font-size: 0.75rem;
+.settings-link:hover {
+    transform: translateY(-3px);
 }
 
 .sidebar-search {
-    padding: 0 1.5rem 1rem;
+    padding: 0 1.5rem 1.25rem;
 }
 
 .sidebar-search .input-group {
     background-color: var(--light);
     border-radius: var(--border-radius);
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.sidebar-search .input-group:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(0, 102, 179, 0.15);
 }
 
 .sidebar-search .input-group-text {
@@ -584,6 +578,7 @@ body {
     background-color: transparent;
     padding-left: 0;
     font-size: 0.85rem;
+    color: var(--text-color);
 }
 
 .sidebar-search .form-control:focus {
@@ -602,28 +597,53 @@ body {
 }
 
 .nav-item {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.35rem;
     border-radius: var(--border-radius);
-    transition: background-color var(--transition-speed);
+    transition: background-color var(--transition-speed), transform 0.2s ease;
+}
+
+.nav-item:hover {
+    transform: translateX(3px);
 }
 
 .nav-link {
     display: flex;
     align-items: center;
     color: var(--dark);
-    padding: 0.75rem 1rem;
+    padding: 0.8rem 1rem;
     border-radius: var(--border-radius);
     font-size: 0.9rem;
     font-weight: 500;
     text-decoration: none;
     transition: all var(--transition-speed);
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.nav-item:hover .nav-link::after {
+    width: 100%;
 }
 
 .nav-link i {
     font-size: 1.25rem;
     margin-right: 0.75rem;
-    color: var (--text-muted);
-    transition: color var(--transition-speed);
+    color: var(--text-muted);
+    transition: color var(--transition-speed), transform 0.2s ease;
+}
+
+.nav-item:hover .nav-link i {
+    transform: translateY(-2px);
 }
 
 .nav-item:hover .nav-link {
@@ -633,6 +653,7 @@ body {
 .nav-item.active .nav-link {
     background-color: var(--primary-light);
     color: var(--primary);
+    font-weight: 600;
 }
 
 .nav-item.active .nav-link i, 
@@ -641,12 +662,12 @@ body {
 }
 
 .nav-divider {
-    padding: 1rem 1.5rem 0.5rem;
+    padding: 1.25rem 1.5rem 0.5rem;
     font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
 }
 
 .has-submenu .submenu-toggle {
@@ -668,7 +689,7 @@ body {
     margin: 0;
     max-height: 0;
     overflow: hidden;
-    transition: max-height var(--transition-speed);
+    transition: max-height var(--transition-speed) ease;
 }
 
 .has-submenu.open .submenu-content {
@@ -698,11 +719,13 @@ body {
 
 .submenu-content li:hover a {
     background-color: var(--light);
+    transform: translateX(3px);
 }
 
 .submenu-content li.active a {
     color: var(--primary);
     background-color: var(--primary-light);
+    font-weight: 600;
 }
 
 .submenu-content li.active a i {
@@ -713,6 +736,7 @@ body {
     font-size: 0.65rem;
     padding: 0.25rem 0.65rem;
     font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .badge.pulse {
@@ -729,7 +753,7 @@ body {
     border-radius: 50%;
     background-color: inherit;
     opacity: 0.7;
-    animation: pulse 1.5s infinite;
+    animation: pulse 1.8s infinite;
     z-index: -1;
 }
 
@@ -739,21 +763,22 @@ body {
         opacity: 0.7;
     }
     70% {
-        transform: scale(1.5);
+        transform: scale(1.7);
         opacity: 0;
     }
     100% {
-        transform: scale(1.5);
+        transform: scale(1.7);
         opacity: 0;
     }
 }
 
 .sidebar-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--light);
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-top: auto;
 }
 
 .app-version {
@@ -767,32 +792,61 @@ body {
     align-items: center;
     justify-content: center;
     background-color: var(--danger-light);
-    color: var (--danger);
+    color: var(--danger);
     border: none;
     border-radius: var(--border-radius);
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-speed);
     width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.btn-logout::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn-logout:hover::before {
+    left: 100%;
 }
 
 .btn-logout i {
-    margin-right: 0.5rem;
+    margin-right: 0.75rem;
     font-size: 1.25rem;
+    transition: transform 0.3s ease;
 }
 
 .btn-logout:hover {
     background-color: var(--danger);
     color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.25);
+}
+
+.btn-logout:hover i {
+    transform: translateX(-3px);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.25);
 }
 
 /* Main Content Styles */
 .main-content {
     flex: 1;
     margin-left: var(--sidebar-width);
-    transition: margin-left var(--transition-speed);
+    transition: margin-left var(--transition-speed) ease;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -802,7 +856,7 @@ body {
 .top-navbar {
     height: var(--header-height);
     background-color: var(--white);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 15px rgba(0,0,0,0.04);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -836,6 +890,7 @@ body {
 .btn-toggle-sidebar:hover {
     background-color: var(--light);
     color: var(--primary);
+    transform: rotate(180deg);
 }
 
 .page-title h1 {
@@ -852,6 +907,11 @@ body {
 .breadcrumb-item a {
     color: var(--primary);
     text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
 }
 
 .breadcrumb-item.active {
@@ -893,8 +953,8 @@ body {
 }
 
 .btn-icon {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -904,14 +964,36 @@ body {
     border: none;
     cursor: pointer;
     font-size: 1.25rem;
-    margin-left: 0.5rem;
+    margin-left: 0.7rem;
     position: relative;
     transition: all var(--transition-speed);
+    overflow: hidden;
+}
+
+.btn-icon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 102, 179, 0.1), transparent);
+    transition: 0.5s;
+}
+
+.btn-icon:hover::before {
+    left: 100%;
 }
 
 .btn-icon:hover {
     background-color: var(--light);
     color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.btn-icon:active {
+    transform: translateY(0);
 }
 
 .notifications .badge {
@@ -924,6 +1006,7 @@ body {
     color: white;
     border-radius: 50%;
     padding: 0.25rem 0.45rem;
+    box-shadow: 0 3px 5px rgba(220, 53, 69, 0.2);
 }
 
 .notifications-dropdown {
@@ -932,27 +1015,47 @@ body {
     border: none;
     border-radius: var(--border-radius);
     overflow: hidden;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .notifications-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     background-color: var(--light);
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .notifications-header h6 {
     margin-bottom: 0;
     font-weight: 600;
+    color: var(--dark);
 }
 
 .mark-all-read {
     font-size: 0.8rem;
     color: var(--primary);
     text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.mark-all-read:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
 }
 
 .notifications-body {
@@ -964,9 +1067,10 @@ body {
 .notification-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-    transition: background-color var(--transition-speed);
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color var(--transition-speed), transform 0.2s ease;
+    cursor: pointer;
 }
 
 .notification-item:last-child {
@@ -979,17 +1083,24 @@ body {
 
 .notification-item:hover {
     background-color: var(--light);
+    transform: translateY(-2px);
 }
 
 .notification-icon {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: var(--border-radius);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 1rem;
     flex-shrink: 0;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.notification-item:hover .notification-icon {
+    transform: scale(1.1);
 }
 
 .notification-icon i {
@@ -1004,11 +1115,14 @@ body {
     margin-bottom: 0.25rem;
     font-size: 0.85rem;
     color: var(--dark);
+    font-weight: 500;
+    line-height: 1.4;
 }
 
 .notification-time {
     font-size: 0.75rem;
     color: var(--text-muted);
+    display: block;
 }
 
 .notification-action {
@@ -1018,17 +1132,33 @@ body {
     margin-left: 0.5rem;
     cursor: pointer;
     opacity: 0;
-    transition: opacity var(--transition-speed);
+    transition: opacity var(--transition-speed), color 0.2s ease, transform 0.2s ease;
 }
 
 .notification-item:hover .notification-action {
     opacity: 1;
 }
 
+.notification-action:hover {
+    color: var(--primary);
+    transform: rotate(90deg);
+}
+
 .notifications-footer {
-    padding: 0.75rem;
+    padding: 0.75rem 1rem;
     background-color: var(--light);
-    border-top: 1px solid rgba(0,0,0,0.05);
+    border-top: 1px solid var(--border-color);
+}
+
+.notifications-footer .btn {
+    transition: all 0.2s ease;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.notifications-footer .btn:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
 }
 
 .user-menu-toggle {
@@ -1038,7 +1168,7 @@ body {
     border: none;
     cursor: pointer;
     padding: 0.5rem 0.75rem;
-    border-radius: var (--border-radius);
+    border-radius: var(--border-radius);
     transition: all var(--transition-speed);
 }
 
@@ -1047,10 +1177,16 @@ body {
 }
 
 .user-avatar {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     margin-right: 0.75rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.user-menu-toggle:hover .user-avatar {
+    transform: scale(1.1);
 }
 
 .avatar-sm {
@@ -1063,49 +1199,85 @@ body {
     color: var(--text-muted);
     font-size: 1.25rem;
     margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.user-menu-toggle:hover i {
+    transform: rotate(180deg);
 }
 
 .dropdown-header {
     background-color: var(--light);
     padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .dropdown-divider {
     margin: 0.25rem 0;
+    border-top-color: var(--border-color);
 }
 
 .dropdown-item {
-    padding: 0.6rem 1.5rem;
+    padding: 0.7rem 1.5rem;
     font-size: 0.9rem;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.dropdown-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 102, 179, 0.05), transparent);
+    transition: 0.5s;
+}
+
+.dropdown-item:hover::before {
+    left: 100%;
+}
+
+.dropdown-item:hover {
+    background-color: var(--light);
+    color: var(--primary);
+    transform: translateX(5px);
 }
 
 .dropdown-item i {
     font-size: 1.1rem;
     color: var(--text-muted);
+    margin-right: 0.5rem;
+    transition: transform 0.2s ease;
 }
 
 .dropdown-item:hover i {
-    color: inherit;
+    color: var(--primary);
+    transform: translateY(-2px);
 }
 
 /* Page Content */
 .page-content {
     flex: 1;
-    padding: 1.5rem 1.5rem calc(var(--footer-height) + 1.5rem);
+    padding: 1.75rem 1.75rem calc(var(--footer-height) + 1.75rem);
 }
 
 /* Footer */
 .footer {
     height: var(--footer-height);
     background-color: var(--white);
-    border-top: 1px solid rgba(0,0,0,0.05);
-    padding: 0 1.5rem;
+    border-top: 1px solid var(--border-color);
+    padding: 0 1.75rem;
     display: flex;
     align-items: center;
     position: absolute;
     bottom: 0;
     width: 100%;
     transition: all var(--transition-speed);
+    font-size: 0.85rem;
 }
 
 /* Theme & Colors */
@@ -1149,21 +1321,46 @@ body {
     color: var(--info) !important;
 }
 
+/* Alert Styling */
+.alert {
+    border-radius: var(--border-radius);
+    border-left-width: 4px;
+    padding: 1rem 1rem 1rem 1.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background-color: var(--success-light);
+    border-left-color: var(--success);
+}
+
+.alert-danger {
+    background-color: var(--danger-light);
+    border-left-color: var(--danger);
+}
+
+.alert .btn-close {
+    font-size: 0.8rem;
+    padding: 0.5rem;
+    background-size: 0.8rem;
+}
+
 /* Responsive Styling */
 @media (max-width: 991.98px) {
     :root {
         --sidebar-width: 0;
     }
-    
+       
     .sidebar {
         transform: translateX(-100%);
     }
-    
+       
     .sidebar.expanded {
         transform: translateX(0);
         width: 280px;
     }
-    
+        
     .main-content {
         margin-left: 0;
     }
@@ -1191,7 +1388,11 @@ body {
     }
     
     .page-content {
-        padding: 1rem 1rem calc(var(--footer-height) + 1rem);
+        padding: 1.25rem 1.25rem calc(var(--footer-height) + 1.25rem);
+    }
+    
+    .alert {
+        padding: 0.75rem;
     }
 }
 
@@ -1237,7 +1438,7 @@ body {
     background-color: var(--white);
     box-shadow: var(--card-shadow);
     border-radius: var(--border-radius);
-    padding: 0.5rem;
+    padding: 0.75rem 0.5rem;
     z-index: 100;
     visibility: hidden;
     opacity: 0;
@@ -1251,7 +1452,7 @@ body {
 
 .sidebar-collapsed .nav-divider {
     text-align: center;
-    padding: 1rem 0 0.5rem;
+    padding: 1.25rem 0 0.75rem;
 }
 
 .sidebar-collapsed .nav-divider::after {
@@ -1314,7 +1515,7 @@ body {
 .dark-mode .nav-link,
 .dark-mode .page-title h1,
 .dark-mode .notification-text {
-    color: var (--text-color);
+    color: var(--text-color);
 }
 
 .dark-mode .btn-icon,
@@ -1357,13 +1558,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const body = document.body;
     
-    sidebarToggle.addEventListener('click', function() {
-        if (window.innerWidth < 992) {
-            sidebar.classList.toggle('expanded');
-        } else {
-            body.classList.toggle('sidebar-collapsed');
-        }
-    });
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function() {
+            if (window.innerWidth < 992) {
+                sidebar.classList.toggle('expanded');
+                
+                // Add click outside listener if sidebar is expanded
+                if (sidebar.classList.contains('expanded')) {
+                    setTimeout(() => {
+                        document.addEventListener('click', closeSidebarOnClickOutside);
+                    }, 10);
+                }
+            } else {
+                body.classList.toggle('sidebar-collapsed');
+            }
+        });
+    }
     
     // Submenu toggle
     const submenuToggles = document.querySelectorAll('.submenu-toggle');
@@ -1377,50 +1587,66 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Close other open submenus
+            if (!parent.classList.contains('open')) {
+                document.querySelectorAll('.has-submenu.open').forEach(openSubmenu => {
+                    if (openSubmenu !== parent) {
+                        openSubmenu.classList.remove('open');
+                    }
+                });
+            }
+                
             parent.classList.toggle('open');
         });
     });
     
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = themeToggle.querySelector('i');
-    
-    // Check if user has already set a preference
-    if (localStorage.getItem('darkMode') === 'enabled') {
-        body.classList.add('dark-mode');
-        themeIcon.classList.remove('bx-moon');
-        themeIcon.classList.add('bx-sun');
-    }
-    
-    themeToggle.addEventListener('click', function() {
-        body.classList.toggle('dark-mode');
+    if (themeToggle) {
+        const themeIcon = themeToggle.querySelector('i');
         
-        if (body.classList.contains('dark-mode')) {
-            localStorage.setItem('darkMode', 'enabled');
-            themeIcon.classList.remove('bx-moon');
-            themeIcon.classList.add('bx-sun');
-        } else {
-            localStorage.setItem('darkMode', 'disabled');
-            themeIcon.classList.remove('bx-sun');
-            themeIcon.classList.add('bx-moon');
+        // Check if user has already set a preference
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            body.classList.add('dark-mode');
+            if (themeIcon) {
+                themeIcon.classList.remove('bx-moon');
+                themeIcon.classList.add('bx-sun');
+            }
         }
-    });
+        
+        themeToggle.addEventListener('click', function() {
+            body.classList.toggle('dark-mode');
+             
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('darkMode', 'enabled');
+                if (themeIcon) {
+                    themeIcon.classList.remove('bx-moon');
+                    themeIcon.classList.add('bx-sun');
+                }
+            } else {
+                localStorage.setItem('darkMode', 'disabled');
+                if (themeIcon) {
+                    themeIcon.classList.remove('bx-sun');
+                    themeIcon.classList.add('bx-moon');
+                }
+            }
+        });
+    }
     
     // Handle window resize
     window.addEventListener('resize', function() {
         if (window.innerWidth < 992) {
             body.classList.remove('sidebar-collapsed');
-            if (sidebar.classList.contains('expanded')) {
-                document.addEventListener('click', closeSidebarOnClickOutside);
-            }
         } else {
-            sidebar.classList.remove('expanded');
-            document.removeEventListener('click', closeSidebarOnClickOutside);
+            if (sidebar) {
+                sidebar.classList.remove('expanded');
+                document.removeEventListener('click', closeSidebarOnClickOutside);
+            }
         }
     });
     
     function closeSidebarOnClickOutside(event) {
-        if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+        if (sidebar && sidebarToggle && !sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
             sidebar.classList.remove('expanded');
             document.removeEventListener('click', closeSidebarOnClickOutside);
         }
@@ -1439,8 +1665,12 @@ document.addEventListener('DOMContentLoaded', function() {
     notificationActions.forEach(action => {
         action.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             const notification = this.closest('.notification-item');
             notification.classList.toggle('unread');
+            
+            // Update notification badge count
+            updateNotificationBadge();
         });
     });
     
@@ -1455,17 +1685,66 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Update notification badge
-            const notificationBadge = document.querySelector('.notifications .badge');
-            if (notificationBadge) {
-                notificationBadge.style.display = 'none';
-            }
+            updateNotificationBadge();
         });
     }
+    
+    // Function to update notification badge
+    function updateNotificationBadge() {
+        const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+        const notificationBadge = document.querySelector('.notifications .badge');
+        
+        if (notificationBadge) {
+            if (unreadCount > 0) {
+                notificationBadge.textContent = unreadCount;
+                notificationBadge.style.display = '';
+            } else {
+                notificationBadge.style.display = 'none';
+            }
+        }
+    }
+    
+    // Initialize notification badge
+    updateNotificationBadge();
+    
+    // Add functionality for sidebar search
+    const sidebarSearch = document.querySelector('.sidebar-search input');
+    if (sidebarSearch) {
+        sidebarSearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const navItems = document.querySelectorAll('.sidebar-nav .nav-item:not(.nav-divider)');
+            
+            navItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Prevent dropdown menus from closing when clicking inside
+    document.querySelectorAll('.dropdown-menu').forEach(dropdown => {
+        dropdown.addEventListener('click', function(event) {
+            if (event.target.tagName !== 'A' && event.target.tagName !== 'BUTTON') {
+                event.stopPropagation();
+            }
+        });
+    });
+    
+    // Close alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    });
 });
 </script>
-
-<script>
-    // Print all session data for debugging
-    console.log('All sessions:', @json(session()->all()));
-</script>
+<script src="{{ asset('js/sidebar-fix.js') }}"></script>
+<!-- Add this in the head section of the layout -->
+<link rel="stylesheet" href="{{ asset('css/settings.css') }}">
 @endsection

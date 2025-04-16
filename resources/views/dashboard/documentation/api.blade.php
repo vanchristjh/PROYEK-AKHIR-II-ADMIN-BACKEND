@@ -44,9 +44,9 @@
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "email": "student@example.com",
-    "password": "password",
-    "device_name": "Flutter Mobile App"
+    "email" => "student@example.com",
+    "password" => "password",
+    "device_name" => "Flutter Mobile App"
 }</code></pre>
                             </div>
                         </div>
@@ -57,16 +57,16 @@
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "user": {
-        "id": 1,
-        "name": "Student Name",
-        "email": "student@example.com",
-        "role": "student",
-        "profile_photo_url": "https://example.com/storage/profile-photos/image.jpg"
+    "user" => {
+        "id" => 1,
+        "name" => "Student Name",
+        "email" => "student@example.com",
+        "role" => "student",
+        "profile_photo_url" => "https://example.com/storage/profile-photos/image.jpg"
         // other user attributes
     },
-    "token": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "message": "Login berhasil"
+    "token" => "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "message" => "Login berhasil"
 }</code></pre>
                             </div>
                         </div>
@@ -91,7 +91,7 @@
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "message": "Logout berhasil"
+    "message" => "Logout berhasil"
 }</code></pre>
                             </div>
                         </div>
@@ -119,20 +119,20 @@
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "students": [
+    "students" => [
         {
-            "id": 1,
-            "name": "Student Name",
-            "email": "student@example.com",
-            "role": "student",
-            "nis": "123456",
-            "nisn": "123456789",
-            "class": "XI-A",
-            "profile_photo_url": "https://example.com/storage/profile-photos/image.jpg"
+            "id" => 1,
+            "name" => "Student Name",
+            "email" => "student@example.com",
+            "role" => "student",
+            "nis" => "123456",
+            "nisn" => "123456789",
+            "class" => "XI-A",
+            "profile_photo_url" => "https://example.com/storage/profile-photos/image.jpg"
             // other student attributes
         }
     ],
-    "count": 1
+    "count" => 1
 }</code></pre>
                             </div>
                         </div>
@@ -157,15 +157,15 @@
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "student": {
-        "id": 1,
-        "name": "Student Name",
-        "email": "student@example.com",
-        "role": "student",
-        "nis": "123456",
-        "nisn": "123456789",
-        "class": "XI-A",
-        "profile_photo_url": "https://example.com/storage/profile-photos/image.jpg"
+    "student" => {
+        "id" => 1,
+        "name" => "Student Name",
+        "email" => "student@example.com",
+        "role" => "student",
+        "nis" => "123456",
+        "nisn" => "123456789",
+        "class" => "XI-A",
+        "profile_photo_url" => "https://example.com/storage/profile-photos/image.jpg"
         // other student attributes
     }
 }</code></pre>
@@ -192,9 +192,9 @@
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "name": "Updated Name",
-    "phone_number": "08123456789",
-    "address": "Updated Address"
+    "name" => "Updated Name",
+    "phone_number" => "08123456789",
+    "address" => "Updated Address"
 }</code></pre>
                             </div>
                         </div>
@@ -205,8 +205,8 @@
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "message": "Data siswa berhasil diperbarui",
-    "student": {
+    "message" => "Data siswa berhasil diperbarui",
+    "student" => {
         // updated student data
     }
 }</code></pre>
@@ -243,9 +243,9 @@ id: 1</code></pre>
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "message": "Foto profil siswa berhasil diperbarui",
-    "profile_photo": "profile-photos/image.jpg",
-    "profile_photo_url": "https://example.com/storage/profile-photos/image.jpg"
+    "message" => "Foto profil siswa berhasil diperbarui",
+    "profile_photo" => "profile-photos/image.jpg",
+    "profile_photo_url" => "https://example.com/storage/profile-photos/image.jpg"
 }</code></pre>
                             </div>
                         </div>
@@ -273,20 +273,20 @@ id: 1</code></pre>
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "teachers": [
+    "teachers" => [
         {
-            "id": 2,
-            "name": "Teacher Name",
-            "email": "teacher@example.com",
-            "role": "teacher",
-            "nip": "987654",
-            "nuptk": "987654321",
-            "subject": "Mathematics",
-            "profile_photo_url": "https://example.com/storage/profile-photos/image.jpg"
+            "id" => 2,
+            "name" => "Teacher Name",
+            "email" => "teacher@example.com",
+            "role" => "teacher",
+            "nip" => "987654",
+            "nuptk" => "987654321",
+            "subject" => "Mathematics",
+            "profile_photo_url" => "https://example.com/storage/profile-photos/image.jpg"
             // other teacher attributes
         }
     ],
-    "count": 1
+    "count" => 1
 }</code></pre>
                             </div>
                         </div>
@@ -311,15 +311,15 @@ id: 1</code></pre>
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "teacher": {
-        "id": 2,
-        "name": "Teacher Name",
-        "email": "teacher@example.com",
-        "role": "teacher",
-        "nip": "987654",
-        "nuptk": "987654321",
-        "subject": "Mathematics",
-        "profile_photo_url": "https://example.com/storage/profile-photos/image.jpg"
+    "teacher" => {
+        "id" => 2,
+        "name" => "Teacher Name",
+        "email" => "teacher@example.com",
+        "role" => "teacher",
+        "nip" => "987654",
+        "nuptk" => "987654321",
+        "subject" => "Mathematics",
+        "profile_photo_url" => "https://example.com/storage/profile-photos/image.jpg"
         // other teacher attributes
     }
 }</code></pre>
@@ -346,9 +346,9 @@ id: 1</code></pre>
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "name": "Updated Name",
-    "phone_number": "08123456789",
-    "address": "Updated Address"
+    "name" => "Updated Name",
+    "phone_number" => "08123456789",
+    "address" => "Updated Address"
 }</code></pre>
                             </div>
                         </div>
@@ -359,8 +359,8 @@ id: 1</code></pre>
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "message": "Data guru berhasil diperbarui",
-    "teacher": {
+    "message" => "Data guru berhasil diperbarui",
+    "teacher" => {
         // updated teacher data
     }
 }</code></pre>
@@ -397,9 +397,9 @@ id: 2</code></pre>
                             </div>
                             <div class="card-body">
 <pre class="mb-0"><code>{
-    "message": "Foto profil guru berhasil diperbarui",
-    "profile_photo": "profile-photos/image.jpg",
-    "profile_photo_url": "https://example.com/storage/profile-photos/image.jpg"
+    "message" => "Foto profil guru berhasil diperbarui",
+    "profile_photo" => "profile-photos/image.jpg",
+    "profile_photo_url" => "https://example.com/storage/profile-photos/image.jpg"
 }</code></pre>
                             </div>
                         </div>
@@ -472,27 +472,27 @@ id: 2</code></pre>
                                 <tr>
                                     <td class="text-center"><span class="badge bg-danger">401</span></td>
                                     <td>Unauthorized (invalid or expired token)</td>
-                                    <td><code>{"message": "Unauthenticated."}</code></td>
+                                    <td><code>{"message" => "Unauthenticated."}</code></td>
                                 </tr>
                                 <tr>
                                     <td class="text-center"><span class="badge bg-danger">403</span></td>
                                     <td>Forbidden (insufficient permissions)</td>
-                                    <td><code>{"message": "Unauthorized"}</code></td>
+                                    <td><code>{"message" => "Unauthorized"}</code></td>
                                 </tr>
                                 <tr>
                                     <td class="text-center"><span class="badge bg-danger">404</span></td>
                                     <td>Not Found (resource doesn't exist)</td>
-                                    <td><code>{"message": "Siswa tidak ditemukan"}</code></td>
+                                    <td><code>{"message" => "Siswa tidak ditemukan"}</code></td>
                                 </tr>
                                 <tr>
                                     <td class="text-center"><span class="badge bg-danger">422</span></td>
                                     <td>Validation Error (invalid input)</td>
-                                    <td><code>{"message": "Validasi gagal", "errors": {...}}</code></td>
+                                    <td><code>{"message" => "Validasi gagal", "errors" => {...}}</code></td>
                                 </tr>
                                 <tr>
                                     <td class="text-center"><span class="badge bg-danger">500</span></td>
                                     <td>Server Error</td>
-                                    <td><code>{"message": "Server Error"}</code></td>
+                                    <td><code>{"message" => "Server Error"}</code></td>
                                 </tr>
                             </tbody>
                         </table>

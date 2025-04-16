@@ -35,47 +35,70 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="name" class="form-label">Nama Kelas <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
-                                    <small class="text-muted">Contoh: X-IPA 1, XI-IPS 2, etc.</small>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="regenerateButton" title="Regenerasi nama kelas">
+                                            <i class="bx bx-refresh"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Contoh: X-IPA 1, XI-IPS 2, dll.</small>
+                                    @error('name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="level" class="form-label">Tingkat <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="level" name="level" required>
+                                    <select class="form-select @error('level') is-invalid @enderror" id="level" name="level" required>
                                         <option value="" selected disabled>Pilih Tingkat Kelas</option>
                                         <option value="X" {{ old('level') == 'X' ? 'selected' : '' }}>Kelas X</option>
                                         <option value="XI" {{ old('level') == 'XI' ? 'selected' : '' }}>Kelas XI</option>
                                         <option value="XII" {{ old('level') == 'XII' ? 'selected' : '' }}>Kelas XII</option>
                                     </select>
+                                    @error('level')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="type" class="form-label">Jurusan <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="type" name="type" required>
+                                    <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
                                         <option value="" selected disabled>Pilih Jurusan</option>
                                         <option value="IPA" {{ old('type') == 'IPA' ? 'selected' : '' }}>IPA</option>
                                         <option value="IPS" {{ old('type') == 'IPS' ? 'selected' : '' }}>IPS</option>
                                         <option value="Bahasa" {{ old('type') == 'Bahasa' ? 'selected' : '' }}>Bahasa</option>
                                     </select>
+                                    @error('type')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="capacity" class="form-label">Kapasitas <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="capacity" name="capacity" value="{{ old('capacity', 30) }}" min="1" max="40" required>
+                                    <input type="number" class="form-control @error('capacity') is-invalid @enderror" id="capacity" name="capacity" value="{{ old('capacity', 30) }}" min="1" max="40" required>
+                                    @error('capacity')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="room" class="form-label">Ruang Kelas</label>
-                                    <input type="text" class="form-control" id="room" name="room" value="{{ old('room') }}">
+                                    <input type="text" class="form-control @error('room') is-invalid @enderror" id="room" name="room" value="{{ old('room') }}" placeholder="Contoh: R101">
+                                    @error('room')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="academic_year" class="form-label">Tahun Akademik</label>
-                                    <select class="form-select" id="academic_year" name="academic_year">
+                                    <select class="form-select @error('academic_year') is-invalid @enderror" id="academic_year" name="academic_year">
                                         <option value="" selected disabled>Pilih Tahun Akademik</option>
                                         <option value="2023/2024" {{ old('academic_year') == '2023/2024' ? 'selected' : '' }}>2023/2024</option>
                                         <option value="2024/2025" {{ old('academic_year') == '2024/2025' ? 'selected' : '' }}>2024/2025</option>
                                     </select>
+                                    @error('academic_year')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 
                                 <div class="col-md-12">
@@ -109,7 +132,19 @@
                                 
                                 <div class="col-md-12">
                                     <label for="description" class="form-label">Deskripsi</label>
-                                    <textarea class="form-control" id="description" name="description" rows="3">{{ old('description') }}</textarea>
+                                    <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="3" placeholder="Deskripsi singkat tentang kelas ini (opsional)">{{ old('description') }}</textarea>
+                                    @error('description')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoGenerateClass" checked>
+                                        <label class="form-check-label" for="autoGenerateClass">
+                                            Otomatis perbarui nama kelas saat memilih tingkat dan jurusan
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -141,28 +176,78 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Auto-generate class name when level and type are selected
+        // References to form elements
         const levelSelect = document.getElementById('level');
         const typeSelect = document.getElementById('type');
         const nameInput = document.getElementById('name');
+        const regenerateButton = document.getElementById('regenerateButton');
+        const autoGenerateCheckbox = document.getElementById('autoGenerateClass');
         
-        function updateClassName() {
+        let userEdited = false;
+        let classCounter = 1;
+        
+        // Track if user manually edits the class name
+        nameInput.addEventListener('input', function() {
+            userEdited = true;
+        });
+        
+        // Function to generate class name based on level and type with incremented number
+        function generateClassName() {
             const level = levelSelect.value;
             const type = typeSelect.value;
             
             if (level && type) {
-                // Check if the name is empty or follows the pattern "X-IPA 1" or similar
+                // Try to extract the existing number pattern if present
                 const currentName = nameInput.value;
-                const isDefaultPattern = /^(X|XI|XII)-(IPA|IPS|Bahasa) \d+$/.test(currentName);
+                const numberMatch = currentName.match(/(\d+)$/);
                 
-                if (!currentName || isDefaultPattern) {
-                    nameInput.value = `${level}-${type} 1`;
+                // If name has this format "X-IPA 1", extract the number, otherwise use our counter
+                if (currentName.includes(`${level}-${type}`) && numberMatch) {
+                    return `${level}-${type} ${numberMatch[1]}`;
+                } else {
+                    return `${level}-${type} ${classCounter}`;
+                }
+            }
+            return null;
+        }
+        
+        // Function to update class name
+        function updateClassName() {
+            if (!userEdited || autoGenerateCheckbox.checked) {
+                const newClassName = generateClassName();
+                if (newClassName) {
+                    nameInput.value = newClassName;
+                    userEdited = false;
                 }
             }
         }
         
+        // Event handlers
         levelSelect.addEventListener('change', updateClassName);
         typeSelect.addEventListener('change', updateClassName);
+        
+        // Regenerate button handler
+        regenerateButton.addEventListener('click', function() {
+            // Increment counter for a new class number suggestion
+            classCounter++;
+            const newClassName = generateClassName();
+            if (newClassName) {
+                nameInput.value = newClassName;
+                userEdited = false;
+            }
+        });
+        
+        // Auto-generate toggle handler
+        autoGenerateCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                updateClassName();
+            }
+        });
+        
+        // Initialize class name if level and type are already selected
+        if (levelSelect.value && typeSelect.value) {
+            updateClassName();
+        }
     });
 </script>
 @endsection

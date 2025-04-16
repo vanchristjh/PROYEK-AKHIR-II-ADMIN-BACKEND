@@ -1,5 +1,9 @@
 @extends('layouts.dashboard')
 
+@php
+use Illuminate\Support\Str;
+@endphp
+
 @section('page-title', 'Kalender Akademik')
 
 @section('page-actions')

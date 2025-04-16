@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Str; // Added import for Str class
 
 class User extends Authenticatable
 {
@@ -131,6 +132,14 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Subject::class, 'subject_teacher', 'teacher_id', 'subject_id')
                     ->withTimestamps();
+    }
+    
+    /**
+     * Get the notifications associated with the user.
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
     }
     
     /**

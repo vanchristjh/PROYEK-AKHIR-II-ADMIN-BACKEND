@@ -21,7 +21,7 @@
         </div>
         @endif
 
-        <form action="{{ route('announcements.update', $announcement) }}" method="POST">
+        <form action="{{ route('announcements.update', $announcement) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             
@@ -72,6 +72,26 @@
                                 <input type="datetime-local" class="form-control" id="expired_at" name="expired_at" 
                                     value="{{ old('expired_at', $announcement->expired_at ? $announcement->expired_at->format('Y-m-d\TH:i') : '') }}">
                                 <small class="text-muted">Kosongkan jika pengumuman tidak memiliki batas waktu.</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="attachment" class="form-label">Lampiran (Opsional)</label>
+                                <input type="file" class="form-control" id="attachment" name="attachment">
+                                @if($announcement->attachment_path)
+                                <div class="mt-2">
+                                    <span class="badge bg-info"><i class="bx bx-paperclip me-1"></i> File terlampir</span>
+                                    <a href="{{ asset('storage/'.$announcement->attachment_path) }}" target="_blank" class="ms-2 small">
+                                        Lihat lampiran
+                                    </a>
+                                    <div class="form-check mt-1">
+                                        <input class="form-check-input" type="checkbox" id="remove_attachment" name="remove_attachment" value="1">
+                                        <label class="form-check-label small text-danger" for="remove_attachment">
+                                            Hapus lampiran saat ini
+                                        </label>
+                                    </div>
+                                </div>
+                                @endif
+                                <small class="text-muted">Format yang didukung: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Maks. 5MB)</small>
                             </div>
                         </div>
                     </div>

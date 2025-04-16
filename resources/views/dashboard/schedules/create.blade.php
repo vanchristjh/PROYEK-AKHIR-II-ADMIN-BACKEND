@@ -50,12 +50,26 @@
                                     <label for="teacher_id" class="form-label">Guru <span class="text-danger">*</span></label>
                                     <select class="form-select @error('teacher_id') is-invalid @enderror" id="teacher_id" name="teacher_id" required>
                                         <option value="">-- Pilih Guru --</option>
-                                        @foreach($teachers as $teacher)
-                                            <option value="{{ $teacher->id }}" {{ old('teacher_id', $selectedTeacherId ?? '') == $teacher->id ? 'selected' : '' }}>
-                                                {{ $teacher->name }}
-                                            </option>
-                                        @endforeach
+                                        <optgroup label="Guru Mata Pelajaran">
+                                            @foreach($teachers->where('position', 'Guru')->sortBy('name') as $teacher)
+                                                <option value="{{ $teacher->id }}" 
+                                                    {{ old('teacher_id', $selectedTeacherId ?? '') == $teacher->id ? 'selected' : '' }}
+                                                    data-subject="{{ $teacher->subject }}">
+                                                    {{ $teacher->name }} {{ $teacher->subject ? '(' . $teacher->subject . ')' : '' }}
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                        <optgroup label="Staff dan Lainnya">
+                                            @foreach($teachers->whereIn('position', ['Kepala Sekolah', 'Staff Administrasi'])->sortBy('name') as $teacher)
+                                                <option value="{{ $teacher->id }}" 
+                                                    {{ old('teacher_id', $selectedTeacherId ?? '') == $teacher->id ? 'selected' : '' }}
+                                                    data-subject="{{ $teacher->subject }}">
+                                                    {{ $teacher->name }} {{ $teacher->subject ? '(' . $teacher->subject . ')' : '' }}
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
                                     </select>
+                                    <div id="teacherInfo" class="form-text"></div>
                                     @error('teacher_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -68,6 +82,7 @@
                                 @error('subject')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div id="teacherInfo" class="mt-2"></div>
                             </div>
                             
                             <div class="row mb-3">
@@ -163,7 +178,7 @@
                                     <option value="60" {{ old('notify_before') == '60' ? 'selected' : '' }}>1 jam sebelumnya</option>
                                 </select>
                                 
-                                <div class="mt-2">
+                                <div class="mt-3">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="notify_email" name="notify_email" value="1" {{ old('notify_email') ? 'checked' : '' }}>
                                         <label class="form-check-label" for="notify_email">Kirim ke Email</label>
@@ -176,16 +191,16 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="d-grid gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bx bx-save me-1"></i> Simpan Jadwal
-                        </button>
-                        <a href="{{ route('schedules.index') }}" class="btn btn-outline-secondary">
-                            <i class="bx bx-x me-1"></i> Batal
-                        </a>
-                    </div>
                 </div>
+            </div>
+            
+            <div class="d-grid gap-2 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bx bx-save me-1"></i> Simpan Jadwal
+                </button>
+                <a href="{{ route('schedules.index') }}" class="btn btn-outline-secondary">
+                    <i class="bx bx-x me-1"></i> Batal
+                </a>
             </div>
         </form>
     </div>
@@ -195,119 +210,132 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Auto-fill subject based on selected teacher
+        // Enhanced auto-fill subject based on selected teacher
         const teacherSelect = document.getElementById('teacher_id');
         const subjectInput = document.getElementById('subject');
+        const teacherInfo = document.getElementById('teacherInfo');
         
-        teacherSelect.addEventListener('change', function() {
-            const teacherId = this.value;
-            if (teacherId) {
-                // Get teacher's subject via AJAX
-                fetch(`/api/teachers/${teacherId}/subject`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.subject) {
-                            subjectInput.value = data.subject;
-                        }
-                    })
-                    .catch(error => console.error('Error fetching teacher subject:', error));
+        if (teacherSelect && subjectInput) {
+            // Initial check for pre-selected teacher
+            const initialOption = teacherSelect.options[teacherSelect.selectedIndex];
+            if (initialOption && initialOption.value && initialOption.getAttribute('data-subject')) {
+                const subjectFromOption = initialOption.getAttribute('data-subject');
+                if (subjectFromOption && !subjectInput.value) {
+                    subjectInput.value = subjectFromOption;
+                }
             }
-        });
         
-        // Toggle notification options visibility
+            teacherSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption && selectedOption.value) {
+                    // Try to get subject from option data attribute first (faster)
+                    const subjectFromOption = selectedOption.getAttribute('data-subject');
+                    
+                    if (subjectFromOption) {
+                        subjectInput.value = subjectFromOption;
+                        // Add visual feedback
+                        subjectInput.classList.add('border-success');
+                        setTimeout(() => subjectInput.classList.remove('border-success'), 2000);
+                        
+                        if (teacherInfo) {
+                            teacherInfo.innerHTML = '<i class="bx bx-check-circle text-success"></i> Mata pelajaran diisi otomatis';
+                            setTimeout(() => teacherInfo.innerHTML = '', 3000);
+                        }
+                    } else {
+                        // Fallback to AJAX if data attribute isn't available
+                        const teacherId = this.value;
+                        if (teacherId) {
+                            // Show loading state
+                            subjectInput.value = 'Memuat data...';
+                            subjectInput.disabled = true;
+                            
+                            // Get teacher's subject via AJAX
+                            fetch(`/api/teachers/${teacherId}/subject`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    subjectInput.disabled = false;
+                                    if (data.subject) {
+                                        subjectInput.value = data.subject;
+                                        
+                                        if (teacherInfo) {
+                                            teacherInfo.innerHTML = '<i class="bx bx-check-circle text-success"></i> Mata pelajaran diisi dari data guru';
+                                            setTimeout(() => teacherInfo.innerHTML = '', 3000);
+                                        }
+                                    } else {
+                                        subjectInput.value = '';
+                                        if (teacherInfo) {
+                                            teacherInfo.innerHTML = '<i class="bx bx-info-circle text-info"></i> Guru ini belum memiliki mata pelajaran terkait';
+                                        }
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching teacher subject:', error);
+                                    subjectInput.disabled = false;
+                                    subjectInput.value = '';
+                                    if (teacherInfo) {
+                                        teacherInfo.innerHTML = '<i class="bx bx-error-circle text-danger"></i> Gagal memuat data mata pelajaran';
+                                    }
+                                });
+                        }
+                    }
+                }
+            });
+        }
+
+        // Toggle notification options visibility with animation
         const enableNotificationCheckbox = document.getElementById('enable_notification');
         const notificationOptions = document.getElementById('notification_options');
         
-        enableNotificationCheckbox.addEventListener('change', function() {
-            notificationOptions.style.display = this.checked ? 'block' : 'none';
-        });
-        
-        // Validate end time is after start time
-        const startTimeInput = document.getElementById('start_time');
-        const endTimeInput = document.getElementById('end_time');
-        
-        endTimeInput.addEventListener('change', function() {
-            if (startTimeInput.value && endTimeInput.value) {
-                if (endTimeInput.value <= startTimeInput.value) {
-                    endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
-                } else {
-                    endTimeInput.setCustomValidity('');
-                }
-            }
-        });
-        
-        startTimeInput.addEventListener('change', function() {
-            if (startTimeInput.value && endTimeInput.value) {
-                if (endTimeInput.value <= startTimeInput.value) {
-                    endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
-                } else {
-                    endTimeInput.setCustomValidity('');
-                }
-            }
-        });
-
-        // Initialize Select2
-        if (typeof $.fn.select2 !== 'undefined') {
-            $('.select2').select2({
-                theme: 'bootstrap-5',
-                width: '100%'
+        if (enableNotificationCheckbox && notificationOptions) {
+            enableNotificationCheckbox.addEventListener('change', function() {
+                notificationOptions.style.display = this.checked ? 'block' : 'none';
             });
         }
         
-        // Initialize Flatpickr for date pickers
-        if (typeof flatpickr !== 'undefined') {
-            flatpickr(".datepicker", {
-                dateFormat: "Y-m-d",
-                allowInput: true,
-                altInput: true,
-                altFormat: "d M Y"
-            });
-        }
-        
-        // Time slot validation
+        // Time validation
         const startTimeInput = document.getElementById('start_time');
         const endTimeInput = document.getElementById('end_time');
         
-        startTimeInput.addEventListener('change', function() {
-            if (startTimeInput.value && endTimeInput.value) {
+        function validateTimes() {
+            if (startTimeInput && endTimeInput && startTimeInput.value && endTimeInput.value) {
                 if (endTimeInput.value <= startTimeInput.value) {
                     endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
                     showTimeError("Waktu selesai harus setelah waktu mulai");
+                    return false;
                 } else {
                     endTimeInput.setCustomValidity('');
                     hideTimeError();
+                    return true;
                 }
             }
-        });
-        
-        endTimeInput.addEventListener('change', function() {
-            if (startTimeInput.value && endTimeInput.value) {
-                if (endTimeInput.value <= startTimeInput.value) {
-                    endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
-                    showTimeError("Waktu selesai harus setelah waktu mulai");
-                } else {
-                    endTimeInput.setCustomValidity('');
-                    hideTimeError();
-                }
-            }
-        });
+            return true;
+        }
         
         function showTimeError(message) {
-            const errorDiv = document.getElementById('time-error') || document.createElement('div');
-            errorDiv.id = 'time-error';
-            errorDiv.className = 'alert alert-danger mt-2';
-            errorDiv.textContent = message;
+            // Implementation for showing time error
+            const errorContainer = document.getElementById('time-error') || 
+                (() => {
+                    const div = document.createElement('div');
+                    div.id = 'time-error';
+                    div.className = 'alert alert-danger mt-2';
+                    endTimeInput.parentNode.appendChild(div);
+                    return div;
+                })();
             
-            if (!document.getElementById('time-error')) {
-                endTimeInput.parentNode.appendChild(errorDiv);
-            }
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
         }
         
         function hideTimeError() {
-            const errorDiv = document.getElementById('time-error');
-            if (errorDiv) {
-                errorDiv.remove();
+            const errorContainer = document.getElementById('time-error');
+            if (errorContainer) {
+                errorContainer.style.display = 'none';
             }
+        }
+        
+        if (startTimeInput && endTimeInput) {
+            startTimeInput.addEventListener('change', validateTimes);
+            endTimeInput.addEventListener('change', validateTimes);
         }
     });
 </script>

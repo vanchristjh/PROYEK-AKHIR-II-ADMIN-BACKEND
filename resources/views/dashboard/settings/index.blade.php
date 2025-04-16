@@ -11,16 +11,16 @@
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
-                    <a href="{{ route('settings.account') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ Request::routeIs('settings.account') ? 'active' : '' }}">
+                    <a href="{{ route('settings.account') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ request()->routeIs('settings.account') ? 'active' : '' }}">
                         <i class="bx bx-user me-3"></i> Akun
                     </a>
-                    <a href="{{ route('settings.notifications') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ Request::routeIs('settings.notifications') ? 'active' : '' }}">
+                    <a href="{{ route('settings.notifications') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ request()->routeIs('settings.notifications') ? 'active' : '' }}">
                         <i class="bx bx-bell me-3"></i> Notifikasi
                     </a>
-                    <a href="{{ route('settings.appearance') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ Request::routeIs('settings.appearance') ? 'active' : '' }}">
+                    <a href="{{ route('settings.appearance') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ request()->routeIs('settings.appearance') ? 'active' : '' }}">
                         <i class="bx bx-palette me-3"></i> Tampilan
                     </a>
-                    <a href="{{ route('settings.system') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ Request::routeIs('settings.system') ? 'active' : '' }}">
+                    <a href="{{ route('settings.system') }}" class="list-group-item list-group-item-action d-flex align-items-center {{ request()->routeIs('settings.system') ? 'active' : '' }}">
                         <i class="bx bx-cog me-3"></i> Sistem
                     </a>
                 </div>

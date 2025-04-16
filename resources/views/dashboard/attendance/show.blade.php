@@ -1,5 +1,10 @@
 @extends('layouts.dashboard')
 
+@php
+    // Define $attendance as an alias for $session to fix undefined variable error
+    $attendance = $session ?? null;
+@endphp
+
 @section('page-title', 'Detail Absensi')
 
 @section('page-actions')
@@ -107,9 +112,14 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Daftar Kehadiran Siswa</h5>
-                <a href="{{ route('attendance.export', $session->id) }}" class="btn btn-sm btn-outline-primary">
-                    <i class="bx bx-download me-1"></i> Ekspor
-                </a>
+                <div>
+                    <button onclick="printAttendanceData()" class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="bx bx-printer me-1"></i> Cetak
+                    </button>
+                    <a href="{{ route('attendance.export', $session->id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bx bx-download me-1"></i> Ekspor
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -217,5 +227,169 @@
             }
         });
     });
+
+    // Print function for attendance records
+    function printAttendanceData() {
+        const printWindow = window.open('', '_blank');
+        
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Laporan Absensi - {{ $session->class->name ?? 'Kelas' }}</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .table th, .table td { padding: 8px; }
+                    .badge { font-weight: bold; }
+                    .badge-success { background-color: #28a745; color: white; }
+                    .badge-info { background-color: #17a2b8; color: white; }
+                    .badge-warning { background-color: #ffc107; color: black; }
+                    .badge-danger { background-color: #dc3545; color: white; }
+                    .badge-secondary { background-color: #6c757d; color: white; }
+                    @media print {
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h3>LAPORAN ABSENSI SISWA</h3>
+                    <h4>SMA NEGERI 1 GIRSANG SIPANGAN BOLON</h4>
+                    <hr>
+                </div>
+                
+                <div class="mb-3">
+                    <h5>Informasi Sesi</h5>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th width="200">Kelas</th>
+                                <td>{{ $session->class->name ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Mata Pelajaran</th>
+                                <td>{{ $session->subject->name ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Tanggal</th>
+                                <td>{{ \Carbon\Carbon::parse($session->date)->format('d F Y') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Waktu</th>
+                                <td>{{ \Carbon\Carbon::parse($session->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($session->end_time)->format('H:i') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td>{{ $session->is_completed ? 'Selesai' : 'Belum Selesai' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Catatan</th>
+                                <td>{{ $session->notes ?? '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h5>Daftar Kehadiran Siswa</h5>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Siswa</th>
+                            <th>NIS</th>
+                            <th>Status</th>
+                            <th>Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($attendances ?? [] as $index => $attendance)
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ $attendance->student->name ?? 'N/A' }}</td>
+                            <td>{{ $attendance->student->nis ?? '-' }}</td>
+                            <td>
+                                @switch($attendance->status)
+                                    @case('hadir')
+                                        <span class="badge badge-success">Hadir</span>
+                                        @break
+                                    @case('izin')
+                                        <span class="badge badge-warning">Izin</span>
+                                        @break
+                                    @case('sakit')
+                                        <span class="badge badge-info">Sakit</span>
+                                        @break
+                                    @case('alpa')
+                                        <span class="badge badge-danger">Alpa</span>
+                                        @break
+                                    @case('terlambat')
+                                        <span class="badge badge-secondary">Terlambat</span>
+                                        @break
+                                    @default
+                                        <span class="badge">{{ $attendance->status }}</span>
+                                @endswitch
+                            </td>
+                            <td>{{ $attendance->notes ?? '-' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="text-center">Belum ada data kehadiran</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                
+                <div class="mt-4">
+                    <h5>Ringkasan</h5>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th>Hadir</th>
+                                <td>{{ $attendanceSummary['hadir'] ?? 0 }} siswa ({{ round(($attendanceSummary['hadir'] ?? 0) / ($attendanceSummary['total'] ?? 1) * 100) }}%)</td>
+                            </tr>
+                            <tr>
+                                <th>Sakit</th>
+                                <td>{{ $attendanceSummary['sakit'] ?? 0 }} siswa ({{ round(($attendanceSummary['sakit'] ?? 0) / ($attendanceSummary['total'] ?? 1) * 100) }}%)</td>
+                            </tr>
+                            <tr>
+                                <th>Izin</th>
+                                <td>{{ $attendanceSummary['izin'] ?? 0 }} siswa ({{ round(($attendanceSummary['izin'] ?? 0) / ($attendanceSummary['total'] ?? 1) * 100) }}%)</td>
+                            </tr>
+                            <tr>
+                                <th>Alpa</th>
+                                <td>{{ $attendanceSummary['alpa'] ?? 0 }} siswa ({{ round(($attendanceSummary['alpa'] ?? 0) / ($attendanceSummary['total'] ?? 1) * 100) }}%)</td>
+                            </tr>
+                            <tr>
+                                <th>Terlambat</th>
+                                <td>{{ $attendanceSummary['terlambat'] ?? 0 }} siswa ({{ round(($attendanceSummary['terlambat'] ?? 0) / ($attendanceSummary['total'] ?? 1) * 100) }}%)</td>
+                            </tr>
+                            <tr>
+                                <th>Total</th>
+                                <td>{{ $attendanceSummary['total'] ?? 0 }} siswa</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-5 d-flex justify-content-between">
+                    <div>
+                        <p>Dicetak pada: {{ now()->format('d F Y H:i') }}</p>
+                    </div>
+                    <div>
+                        <p>Penanggung jawab,<br><br><br>{{ auth()->user()->name }}</p>
+                    </div>
+                </div>
+                
+                <div class="no-print mt-3 text-center">
+                    <button class="btn btn-primary" onclick="window.print()">Cetak</button>
+                    <button class="btn btn-secondary" onclick="window.close()">Tutup</button>
+                </div>
+            </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        printWindow.focus();
+    }
 </script>
 @endsection

@@ -148,4 +148,101 @@ class TeacherController extends Controller
         return redirect()->route('teachers.index')
             ->with('success', 'Akun guru berhasil dihapus.');
     }
-} 
+
+    /**
+     * Export teachers data to Excel/CSV.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function exportExcel()
+    {
+        try {
+            // Get teacher data
+            $teachers = User::where('role', 'teacher')
+                ->get();
+                
+            // Prepare CSV headers
+            $filename = 'data_guru_' . date('Y-m-d') . '.csv';
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0',
+            ];
+            
+            $handle = fopen('php://output', 'w');
+            
+            // Add UTF-8 BOM to fix special characters in Excel
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Add header row
+            fputcsv($handle, [
+                'NIP',
+                'NUPTK',
+                'Nama',
+                'Jenis Kelamin',
+                'Email',
+                'Mata Pelajaran',
+                'Jabatan',
+                'Pendidikan Terakhir',
+            ]);
+            
+            // Add data rows
+            foreach ($teachers as $teacher) {
+                $gender = ($teacher->gender == 'male' || $teacher->gender == 'L') ? 'Laki-laki' : 'Perempuan';
+                
+                fputcsv($handle, [
+                    $teacher->nip ?? '-',
+                    $teacher->nuptk ?? '-',
+                    $teacher->name,
+                    $gender,
+                    $teacher->email,
+                    $teacher->subject ?? '-',
+                    $teacher->position ?? '-',
+                    $teacher->education_level ?? '-',
+                ]);
+            }
+            
+            fclose($handle);
+            
+            return response()->make('', 200, $headers);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error exporting data: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export teachers data to PDF.
+     * 
+     * @return \Illuminate\Http\Response
+     */
+    public function exportPdf()
+    {
+        try {
+            // Get teacher data
+            $teachers = User::where('role', 'teacher')
+                ->get();
+                
+            // Generate PDF using DomPDF
+            $pdf = \PDF::loadView('exports.teachers-pdf', [
+                'teachers' => $teachers,
+                'date' => now()->format('d F Y')
+            ]);
+            
+            // Set options
+            $pdf->setOptions([
+                'defaultFont' => 'dejavu serif',
+                'isRemoteEnabled' => true
+            ]);
+            
+            // Set paper size to landscape A4
+            $pdf->setPaper('a4', 'landscape');
+            
+            // Download the PDF file
+            return $pdf->download('data_guru_'.date('Y-m-d').'.pdf');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error exporting PDF: ' . $e->getMessage());
+        }
+    }
+}

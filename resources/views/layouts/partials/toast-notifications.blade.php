@@ -43,7 +43,7 @@
                 toastElement = document.getElementById('infoToast');
                 messageElement = document.getElementById('infoToastMessage');
                 break;
-            case 'success':
+            case 'success': 
             default:
                 toastElement = document.getElementById('successToast');
                 messageElement = document.getElementById('toastMessage');

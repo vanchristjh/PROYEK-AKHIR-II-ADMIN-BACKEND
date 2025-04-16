@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Str; // Added import for Str class
 
 class AppServiceProvider extends ServiceProvider
 {

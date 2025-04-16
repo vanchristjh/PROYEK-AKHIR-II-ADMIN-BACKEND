@@ -180,7 +180,7 @@ class FormSuccessHandler {
 }
 
 // Initialize for success message indicator
-window.PAGE_HAS_SUCCESS_MESSAGE = {{ session('success') ? 'true' : 'false' }};
+window.PAGE_HAS_SUCCESS_MESSAGE = {{ session('success') ? 'true' => 'false' }};
 
 // Add necessary styles
 document.head.insertAdjacentHTML('beforeend', `

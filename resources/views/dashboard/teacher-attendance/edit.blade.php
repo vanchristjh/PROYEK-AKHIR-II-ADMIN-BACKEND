@@ -1,5 +1,10 @@
 @extends('layouts.dashboard')
 
+@php
+    // Define $attendance as an alias for $session or $teacherAttendance to fix undefined variable error
+    $attendance = $session ?? $teacherAttendance ?? null;
+@endphp
+
 @section('page-title', 'Isi Absensi Guru')
 
 @section('page-actions')
@@ -134,7 +139,7 @@
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
                     <h5 class="card-title mb-3">Aksi Cepat</h5>
-                    <div class="btn-group mb-3">
+                    <div class="btn-group gap-2 mb-3">
                         <button type="button" id="select-all-hadir" class="btn btn-outline-success">
                             <i class="bx bx-check-all me-1"></i> Semua Hadir
                         </button>
@@ -144,15 +149,25 @@
                         <button type="button" id="select-all-sakit" class="btn btn-outline-info">
                             <i class="bx bx-check-all me-1"></i> Semua Sakit
                         </button>
-                        <button type="button" id="clear-all" class="btn btn-outline-secondary">
-                            <i class="bx bx-reset me-1"></i> Reset
+                        <button type="button" id="select-all-alpa" class="btn btn-outline-danger">
+                            <i class="bx bx-check-all me-1"></i> Semua Alpa
+                        </button>
+                        <button type="button" id="select-all-terlambat" class="btn btn-outline-secondary">
+                            <i class="bx bx-check-all me-1"></i> Semua Terlambat
                         </button>
                     </div>
+                    <button type="button" id="clear-all" class="btn btn-outline-secondary">
+                        <i class="bx bx-reset me-1"></i> Reset
+                    </button>
                 </div>
             </div>
             
+            <div id="batch-action-feedback" class="mt-3 alert alert-info d-none">
+                <i class="bx bx-info-circle me-1"></i> <span id="feedback-message"></span>
+            </div>
+            
             <div class="mt-4">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between flex-wrap gap-3">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="is_completed" name="is_completed" value="1" {{ $session->is_completed ? 'checked' : '' }}>
                         <label class="form-check-label" for="is_completed">
@@ -189,67 +204,254 @@
         const selectAllHadir = document.getElementById('select-all-hadir');
         const selectAllIzin = document.getElementById('select-all-izin');
         const selectAllSakit = document.getElementById('select-all-sakit');
+        const selectAllAlpa = document.getElementById('select-all-alpa');
+        const selectAllTerlambat = document.getElementById('select-all-terlambat');
         const clearAll = document.getElementById('clear-all');
+        const batchFeedback = document.getElementById('batch-action-feedback');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        // Function to handle batch actions
+        function handleBatchAction(selector, status, message, alertClass) {
+            const radios = document.querySelectorAll(selector);
+            if (radios.length === 0) {
+                showFeedback('Tidak ada guru yang tersedia', 'warning');
+                return false;
+            }
+            
+            radios.forEach(radio => {
+                radio.checked = true;
+                addVisualFeedback(radio.closest('tr'));
+            });
+            
+            showBatchFeedback(message, alertClass);
+            return true;
+        }
+        
+        // Display feedback in the batch action section
+        function showBatchFeedback(message, type = 'info') {
+            if (batchFeedback && feedbackMessage) {
+                feedbackMessage.textContent = message;
+                
+                // Remove all alert classes and add the appropriate one
+                batchFeedback.classList.remove('d-none', 'alert-info', 'alert-success', 'alert-warning', 'alert-danger', 'alert-secondary');
+                batchFeedback.classList.add('alert-' + type);
+                
+                // Auto hide after 5 seconds
+                setTimeout(() => {
+                    batchFeedback.classList.add('d-none');
+                }, 5000);
+            }
+            
+            // Also show toast if available
+            showFeedback(message, type);
+        }
         
         if (selectAllHadir) {
             selectAllHadir.addEventListener('click', function() {
-                document.querySelectorAll('[id^="hadir-"]').forEach(radio => {
-                    radio.checked = true;
-                });
+                handleBatchAction('[id^="hadir-"]', 'hadir', 'Semua guru ditandai hadir', 'success');
             });
         }
         
         if (selectAllIzin) {
             selectAllIzin.addEventListener('click', function() {
-                document.querySelectorAll('[id^="izin-"]').forEach(radio => {
-                    radio.checked = true;
-                });
+                handleBatchAction('[id^="izin-"]', 'izin', 'Semua guru ditandai izin', 'info');
             });
         }
         
         if (selectAllSakit) {
             selectAllSakit.addEventListener('click', function() {
-                document.querySelectorAll('[id^="sakit-"]').forEach(radio => {
-                    radio.checked = true;
-                });
+                handleBatchAction('[id^="sakit-"]', 'sakit', 'Semua guru ditandai sakit', 'info');
+            });
+        }
+        
+        if (selectAllAlpa) {
+            selectAllAlpa.addEventListener('click', function() {
+                handleBatchAction('[id^="alpa-"]', 'alpa', 'Semua guru ditandai alpa', 'warning');
+            });
+        }
+        
+        if (selectAllTerlambat) {
+            selectAllTerlambat.addEventListener('click', function() {
+                handleBatchAction('[id^="terlambat-"]', 'terlambat', 'Semua guru ditandai terlambat', 'secondary');
             });
         }
         
         if (clearAll) {
             clearAll.addEventListener('click', function() {
-                document.querySelectorAll('.btn-check').forEach(radio => {
-                    radio.checked = false;
-                });
+                const radios = document.querySelectorAll('.btn-check');
+                if (radios.length === 0) {
+                    showFeedback('Tidak ada data kehadiran untuk direset', 'warning');
+                    return;
+                }
+                
+                if (confirm('Apakah Anda yakin ingin mereset semua status kehadiran?')) {
+                    radios.forEach(radio => {
+                        radio.checked = false;
+                    });
+                    showBatchFeedback('Status kehadiran berhasil direset', 'secondary');
+                    
+                    // Remove visual indicators
+                    document.querySelectorAll('.changed-row').forEach(row => {
+                        row.classList.remove('bg-light', 'changed-row');
+                    });
+                    
+                    document.querySelectorAll('.change-indicator').forEach(indicator => {
+                        indicator.remove();
+                    });
+                }
             });
         }
-
-        // Form submission with animation
+        
+        // Form submission with animation and validation
         const attendanceForm = document.getElementById('attendanceForm');
         const saveButton = document.getElementById('saveButton');
         
         if (attendanceForm) {
             attendanceForm.addEventListener('submit', function(e) {
+                // Validate that all teachers have a status selected
+                const teachersWithoutStatus = [];
+                document.querySelectorAll('tbody tr').forEach(row => {
+                    const teacherName = row.querySelector('td:nth-child(3)')?.textContent;
+                    if (teacherName && teacherName.trim() !== '') {
+                        const hasSelectedStatus = Array.from(row.querySelectorAll('.btn-check')).some(radio => radio.checked);
+                        if (!hasSelectedStatus) {
+                            teachersWithoutStatus.push(teacherName);
+                        }
+                    }
+                });
+                
+                if (teachersWithoutStatus.length > 0) {
+                    e.preventDefault();
+                    const message = `Mohon pilih status kehadiran untuk guru berikut: ${teachersWithoutStatus.join(', ')}`;
+                    showBatchFeedback(message, 'danger');
+                    alert(message);
+                    return false;
+                }
+                
                 if (saveButton) {
                     // Change button text and add spinner
                     saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
                     saveButton.disabled = true;
                 }
+                
+                // Add saving animation to the form
+                attendanceForm.classList.add('saving');
+                return true;
             });
         }
-
-        // Highlight changed items
+        
+        // Highlight changed items and keyboard shortcuts
         const statusOptions = document.querySelectorAll('.btn-check');
         statusOptions.forEach(option => {
             option.addEventListener('change', function() {
-                const cardElement = this.closest('.attendance-card');
-                if (cardElement) {
-                    cardElement.classList.add('border-primary');
-                    setTimeout(() => {
-                        cardElement.classList.remove('border-primary');
-                    }, 1000);
-                }
+                addVisualFeedback(this.closest('tr'));
             });
+        });
+        
+        // Add visual feedback when a row is changed
+        function addVisualFeedback(row) {
+            if (row) {
+                row.classList.add('bg-light');
+                row.classList.add('changed-row');
+                
+                // Create or update visual indicator
+                let indicator = row.querySelector('.change-indicator');
+                if (!indicator) {
+                    const cell = row.querySelector('td:last-child');
+                    if (cell) {
+                        indicator = document.createElement('span');
+                        indicator.className = 'change-indicator badge bg-primary ms-2 fade-in';
+                        indicator.innerHTML = '<i class="bx bx-check"></i> Diubah';
+                        cell.appendChild(indicator);
+                    }
+                }
+            }
+        }
+        
+        // Show feedback to user
+        function showFeedback(message, type = 'info') {
+            if (typeof bootstrap !== 'undefined' && typeof bootstrap.Toast !== 'undefined') {
+                const toastElement = document.getElementById(`${type}Toast`) || document.getElementById('infoToast');
+                if (toastElement) {
+                    const messageElement = document.getElementById(`${type}ToastMessage`) || document.getElementById('infoToastMessage');
+                    if (messageElement) messageElement.textContent = message;
+                    const toast = new bootstrap.Toast(toastElement);
+                    toast.show();
+                } else {
+                    console.log(`[${type.toUpperCase()}]: ${message}`);
+                }
+            } else {
+                console.log(`[${type.toUpperCase()}]: ${message}`);
+            }
+        }
+        
+        // Add keyboard shortcuts for faster attendance input
+        document.addEventListener('keydown', function(e) {
+            // Only activate if no input/textarea is focused
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                // Ctrl+H = All Present
+                if (e.ctrlKey && e.key === 'h') {
+                    e.preventDefault();
+                    selectAllHadir && selectAllHadir.click();
+                }
+                
+                // Ctrl+R = Reset All
+                if (e.ctrlKey && e.key === 'r') {
+                    e.preventDefault();
+                    clearAll && clearAll.click();
+                }
+            }
         });
     });
 </script>
+
+<style>
+    .saving {
+        position: relative;
+    }
+    
+    .saving::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-image: linear-gradient(to right, transparent, var(--primary, #0066b3), transparent);
+        background-size: 200% 100%;
+        animation: loading 2s infinite;
+        z-index: 1000;
+    }
+    
+    .changed-row {
+        transition: background-color 0.3s ease;
+    }
+    
+    .change-indicator {
+        animation: fadeIn 0.5s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes loading {
+        0% { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
+    }
+    
+    /* Add responsive styles */
+    @media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .btn-group .btn {
+            border-radius: 0.25rem !important;
+            margin-bottom: 0.25rem;
+        }
+    }
+</style>
 @endsection

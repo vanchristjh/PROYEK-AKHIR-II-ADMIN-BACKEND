@@ -164,7 +164,7 @@
                 <div class="border rounded p-3 mt-3 bg-light">
                     <h5 class="mb-2">{{ $announcement->title }}</h5>
                     <div class="small content-preview">
-                        {!! Str::limit(strip_tags($announcement->content), 150) !!}
+                        {!! \Illuminate\Support\Str::limit(strip_tags($announcement->content), 150) !!}
                     </div>
                     <div class="mt-2 d-flex justify-content-between">
                         <small class="text-muted">{{ $announcement->published_at ? $announcement->published_at->format('d M Y') : 'Belum dipublikasikan' }}</small>

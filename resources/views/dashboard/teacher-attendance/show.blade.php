@@ -1,5 +1,10 @@
 @extends('layouts.dashboard')
 
+@php
+    // Define $attendance as an alias for $session or $teacherAttendance to fix undefined variable error
+    $attendance = $session ?? $teacherAttendance ?? null;
+@endphp
+
 @section('page-title', 'Detail Absensi Guru')
 
 @section('page-actions')

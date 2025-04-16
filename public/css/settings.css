@@ -1,0 +1,99 @@
+/**
+ * Settings pages common styles
+ */
+
+/* Form controls focus styling */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+}
+
+/* Appearance options styling */
+.appearance-option {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.appearance-option:hover {
+    border-color: var(--primary) !important;
+    background-color: rgba(var(--primary-rgb), 0.05);
+}
+
+.appearance-option .form-check-input {
+    margin-top: 0;
+    float: none;
+}
+
+.form-check-input:checked + .form-check-label .color-preview,
+.form-check-input:checked + .form-check-label .theme-preview,
+.form-check-input:checked + .form-check-label .layout-preview {
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.form-check-input:checked + .form-check-label {
+    font-weight: 500;
+}
+
+/* Animation for highlighting changes */
+.highlight-change {
+    animation: highlight-pulse 3s ease-in-out;
+}
+
+@keyframes highlight-pulse {
+    0%, 100% { 
+        background-color: transparent; 
+    }
+    20%, 80% { 
+        background-color: rgba(var(--primary-rgb), 0.1); 
+        border-color: var(--primary) !important;
+    }
+}
+
+/* Form switches styling */
+.form-switch .form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Avatar upload styling */
+.avatar-upload {
+    text-align: center;
+}
+
+.avatar-preview {
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.avatar-preview:hover {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Better focus for buttons */
+.btn:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+}
+
+/* Toast notification styling */
+.toast-container {
+    z-index: 1050;
+}
+
+/* Add primary color with RGB for opacity support */
+:root {
+    --primary-rgb: 0, 102, 179;
+    --primary: #0066b3;
+}
+
+/* Theme preview colors */
+.bg-primary {
+    background-color: var(--primary) !important;
+}
+
+/* Settings sidebar active item */
+.list-group-item.active {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}

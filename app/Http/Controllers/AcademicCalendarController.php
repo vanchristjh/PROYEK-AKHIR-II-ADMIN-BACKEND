@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AcademicCalendar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str; // Add this line
 
 class AcademicCalendarController extends Controller
 {
