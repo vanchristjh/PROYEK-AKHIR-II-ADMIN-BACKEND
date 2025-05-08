@@ -98,6 +98,22 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     // Attendance management
     Route::resource('attendance', App\Http\Controllers\Guru\AttendanceController::class);
     
+    // AJAX routes for dependent dropdowns
+    Route::get('subjects/{subject}/classrooms', function (App\Models\Subject $subject) {
+        $teacher = auth()->user();
+        
+        // Get classrooms where this subject is taught
+        $classrooms = $subject->classrooms;
+        
+        // Format data for frontend
+        return response()->json($classrooms->map(function($classroom) {
+            return [
+                'id' => $classroom->id,
+                'name' => $classroom->name,
+            ];
+        }));
+    })->name('guru.subjects.classrooms');
+    
     // Grades management
     Route::resource('grades', App\Http\Controllers\Guru\GradeController::class);
     
@@ -108,10 +124,18 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     
     // AJAX routes for dependent dropdowns
     Route::get('subjects/{subject}/classrooms', function (App\Models\Subject $subject) {
-        // Return only classrooms where this teacher teaches this subject
-        $classrooms = $subject->classrooms()->whereHas('subjects.teachers', function($query) {
-            $query->where('user_id', auth()->id());
-        })->get();
+        $teacher = auth()->user();
+        
+        // Check if teacher has this subject
+        $teachesSubject = $teacher->teacherSubjects->contains($subject->id);
+        
+        if ($teachesSubject) {
+            // Return all classrooms that have this subject
+            $classrooms = $subject->classrooms;
+        } else {
+            // If they don't teach the subject, show no classrooms
+            $classrooms = collect();
+        }
         
         return response()->json($classrooms);
     });

@@ -18,7 +18,7 @@ class ScheduleController extends Controller
         $teacher = Auth::user();
         
         // Get all subjects taught by this teacher
-        $subjectIds = $teacher->teacherSubjects()->pluck('id');
+        $subjectIds = $teacher->teacherSubjects()->pluck('subjects.id');
         
         if ($subjectIds->isEmpty()) {
             return view('guru.schedule.index', [

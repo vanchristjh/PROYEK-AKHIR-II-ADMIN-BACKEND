@@ -125,6 +125,7 @@ class AnnouncementController extends Controller
                 'audience' => 'required|in:all,teachers,students',
                 'attachment' => 'nullable|file|max:10240', // 10MB max
                 'publish_date' => 'nullable|date',
+                'expiry_date' => 'nullable|date|after_or_equal:publish_date',
             ]);
 
             if ($validator->fails()) {
@@ -139,6 +140,11 @@ class AnnouncementController extends Controller
             // Set publish date to now if not provided
             if (empty($data['publish_date'])) {
                 $data['publish_date'] = now();
+            }
+            
+            // Set is_important to false if not provided
+            if (!isset($data['is_important'])) {
+                $data['is_important'] = false;
             }
             
             // Handle file upload if provided
@@ -177,6 +183,7 @@ class AnnouncementController extends Controller
                 'audience' => 'required|in:all,teachers,students',
                 'attachment' => 'nullable|file|max:10240', // 10MB max
                 'publish_date' => 'nullable|date',
+                'expiry_date' => 'nullable|date|after_or_equal:publish_date',
                 'remove_attachment' => 'nullable|boolean',
             ]);
 

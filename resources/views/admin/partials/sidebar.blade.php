@@ -88,8 +88,6 @@
                 @if(request()->routeIs('admin.announcements.*'))
                     <span class="absolute inset-y-0 left-0 w-1 bg-red-400 rounded-tr-md rounded-br-md"></span>
                 @endif
-                <!-- Optional notification badge -->
-                <span class="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center" style="display: none;">3</span>
             </a>
         </li>
     </ul>
@@ -99,15 +97,15 @@
 <div class="sidebar-section mb-2">
     <div class="sidebar-section-header px-4 py-2 text-xs font-semibold text-indigo-200 uppercase tracking-wider flex items-center">
         <span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-2"></span>
-        Pengaturan
+        Sistem
     </div>
     <ul class="sidebar-items">
-        <li>
+        <li class="relative">
             <a href="#" class="sidebar-item text-indigo-100 hover:text-white transition-all duration-200 flex items-center rounded-lg px-4 py-2.5 group">
                 <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-amber-700/50 transition-all duration-200">
-                    <i class="fas fa-cogs text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
+                    <i class="fas fa-cog text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
                 </div>
-                <span class="ml-3">Sistem</span>
+                <span class="ml-3">Pengaturan</span>
             </a>
         </li>
     </ul>

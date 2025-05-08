@@ -129,7 +129,7 @@
         @forelse($assignments ?? [] as $assignment)
             <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100/80 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 group">
                 <!-- Assignment Status Badge -->
-                <div class="p-1 {{ $assignment->isExpired() && !$assignment->isSubmitted() ? 'bg-red-500' : ($assignment->isSubmitted() ? 'bg-green-500' : 'bg-yellow-500') }}"></div>
+                <div class="p-1 {{ $assignment->isExpired() && $assignment->submissions->isEmpty() ? 'bg-red-500' : ($assignment->submissions->isNotEmpty() ? 'bg-green-500' : 'bg-yellow-500') }}"></div>
                 
                 <!-- Assignment Content -->
                 <div class="p-5">
@@ -137,10 +137,10 @@
                         <div class="flex-1">
                             <div class="flex items-center mb-3">
                                 <span class="inline-flex items-center justify-center h-10 w-10 rounded-lg 
-                                    {{ $assignment->isExpired() && !$assignment->isSubmitted() ? 'bg-red-100 text-red-600' : 
-                                      ($assignment->isSubmitted() ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600') }}">
-                                    <i class="fas fa-{{ $assignment->isExpired() && !$assignment->isSubmitted() ? 'exclamation-circle' : 
-                                                     ($assignment->isSubmitted() ? 'check-circle' : 'clock') }} text-xl"></i>
+                                    {{ $assignment->isExpired() && $assignment->submissions->isEmpty() ? 'bg-red-100 text-red-600' : 
+                                      ($assignment->submissions->isNotEmpty() ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600') }}">
+                                    <i class="fas fa-{{ $assignment->isExpired() && $assignment->submissions->isEmpty() ? 'exclamation-circle' : 
+                                                     ($assignment->submissions->isNotEmpty() ? 'check-circle' : 'clock') }} text-xl"></i>
                                 </span>
                                 <div class="ml-3">
                                     <h3 class="text-lg font-medium text-gray-800">{{ $assignment->title }}</h3>
@@ -164,9 +164,9 @@
                                     </div>
                                     
                                     <!-- Submission Status -->
-                                    <div class="{{ $assignment->isSubmitted() ? 'bg-green-100 text-green-800' : ($assignment->isExpired() ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }} px-3 py-1 rounded-full flex items-center">
-                                        <i class="fas fa-{{ $assignment->isSubmitted() ? 'check-circle' : ($assignment->isExpired() ? 'times-circle' : 'hourglass-half') }} mr-1.5"></i>
-                                        <span>{{ $assignment->isSubmitted() ? 'Selesai' : ($assignment->isExpired() ? 'Terlewat' : 'Belum dikerjakan') }}</span>
+                                    <div class="{{ $assignment->submissions->isNotEmpty() ? 'bg-green-100 text-green-800' : ($assignment->isExpired() ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }} px-3 py-1 rounded-full flex items-center">
+                                        <i class="fas fa-{{ $assignment->submissions->isNotEmpty() ? 'check-circle' : ($assignment->isExpired() ? 'times-circle' : 'hourglass-half') }} mr-1.5"></i>
+                                        <span>{{ $assignment->submissions->isNotEmpty() ? 'Selesai' : ($assignment->isExpired() ? 'Terlewat' : 'Belum dikerjakan') }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -174,12 +174,12 @@
                         
                         <!-- Countdown or Completed Time -->
                         <div class="mt-3 md:mt-0 md:ml-4 flex flex-col items-center justify-center">
-                            @if($assignment->isSubmitted())
+                            @if($assignment->submissions->isNotEmpty())
                                 <div class="text-center">
                                     <div class="text-sm font-medium text-green-700 mb-1">Diserahkan pada</div>
                                     <div class="bg-green-50 rounded-lg px-4 py-2 text-center mb-3">
-                                        <p class="text-sm font-medium text-green-800">{{ $assignment->submission->created_at->format('d M Y') }}</p>
-                                        <p class="text-xs text-green-600">{{ $assignment->submission->created_at->format('H:i') }}</p>
+                                        <p class="text-sm font-medium text-green-800">{{ $assignment->submissions->first()->created_at->format('d M Y') }}</p>
+                                        <p class="text-xs text-green-600">{{ $assignment->submissions->first()->created_at->format('H:i') }}</p>
                                     </div>
                                 </div>
                             @elseif($assignment->isExpired())
@@ -200,7 +200,7 @@
                             
                             <!-- Action Button -->
                             <a href="{{ route('siswa.assignments.show', $assignment->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg transition-all duration-300 flex items-center justify-center min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50">
-                                @if($assignment->isSubmitted())
+                                @if($assignment->submissions->isNotEmpty())
                                     <i class="fas fa-eye mr-2"></i> Lihat
                                 @else
                                     <i class="fas fa-pencil-alt mr-2"></i> Kerjakan

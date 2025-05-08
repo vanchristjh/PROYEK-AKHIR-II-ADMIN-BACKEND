@@ -4,6 +4,10 @@
 
 @section('header', 'Dashboard Admin')
 
+@section('navigation')
+    @include('admin.partials.sidebar')
+@endsection
+
 @section('content')
     <!-- Welcome Banner with enhanced gradient, animations and floating elements -->
     <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 animate-gradient-x rounded-xl shadow-xl p-8 mb-8 text-white relative overflow-hidden group transform transition-all hover:-translate-y-1 hover:shadow-2xl duration-500">
@@ -918,13 +922,19 @@
         animateCounters();
         
         // Refresh data functionality
-        document.getElementById('refresh-data-btn').addEventListener('click', function() {
-            fetchUpdatedStats();
-            this.classList.add('animate-spin');
-            setTimeout(() => {
-                this.classList.remove('animate-spin');
-            }, 1000);
-        });
+        const refreshBtn = document.getElementById('refresh-data-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                fetchUpdatedStats();
+                this.classList.add('animate-spin');
+                setTimeout(() => {
+                    this.classList.remove('animate-spin');
+                }, 1000);
+            });
+        }
+        
+        // Setup auto-refresh every 5 minutes
+        setInterval(fetchUpdatedStats, 5 * 60 * 1000);
     });
     
     function animateCounters() {
@@ -984,7 +994,7 @@
     }
     
     function updateRecentUsersList(users) {
-        const userList = document.querySelector('#recent-users-list');
+        const userList = document.querySelector('.user-list-container');
         if (!userList) return;
         
         userList.innerHTML = '';
@@ -1033,7 +1043,7 @@
     }
     
     function updateRecentClassroomsList(classrooms) {
-        const classroomList = document.querySelector('#recent-classrooms-list');
+        const classroomList = document.querySelector('.classroom-list-container');
         if (!classroomList) return;
         
         classroomList.innerHTML = '';
@@ -1080,7 +1090,7 @@
     }
     
     function updateRecentSubjectsList(subjects) {
-        const subjectList = document.querySelector('#recent-subjects-list');
+        const subjectList = document.querySelector('.subject-list-container');
         if (!subjectList) return;
         
         subjectList.innerHTML = '';
@@ -1126,7 +1136,7 @@
     }
     
     function updateAnnouncementsList(announcements) {
-        const announcementsList = document.querySelector('#announcements-list');
+        const announcementsList = document.querySelector('.announcement-list-container');
         if (!announcementsList) return;
         
         announcementsList.innerHTML = '';

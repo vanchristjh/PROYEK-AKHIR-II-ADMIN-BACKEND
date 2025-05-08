@@ -14,19 +14,28 @@
                     <p class="text-gray-600 mb-4">{{ Str::limit($announcement->content, 150) }}</p>
                     <div class="flex flex-wrap text-sm text-gray-500 gap-x-4 gap-y-2">
                         <div class="flex items-center">
-                            <i class="fas fa-user-circle mr-1"></i>
+                            <i class="fas fa-user-circle mr-1 text-indigo-500"></i>
                             {{ $announcement->author->name ?? 'Unknown' }}
                         </div>
                         <div class="flex items-center">
-                            <i class="fas fa-calendar mr-1"></i>
+                            <i class="fas fa-calendar-check mr-1 text-green-500"></i>
                             {{ $announcement->publish_date->format('d M Y') }}
                         </div>
+                        @if($announcement->expiry_date)
                         <div class="flex items-center">
-                            <i class="fas fa-users mr-1"></i>
+                            <i class="fas fa-calendar-times mr-1 text-amber-500"></i>
+                            {{ $announcement->expiry_date->format('d M Y') }}
+                        </div>
+                        @endif
+                        <div class="flex items-center">
+                            <i class="fas fa-users mr-1 text-blue-500"></i>
                             <span>
                                 @switch($announcement->audience)
                                     @case('all')
                                         Semua
+                                        @break
+                                    @case('administrators')
+                                        Admin
                                         @break
                                     @case('teachers')
                                         Guru

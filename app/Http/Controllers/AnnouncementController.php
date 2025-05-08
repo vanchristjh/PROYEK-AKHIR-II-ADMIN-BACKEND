@@ -80,7 +80,8 @@ class AnnouncementController extends Controller
             'is_important' => 'boolean',
             'audience' => 'required|in:all,administrators,teachers,students',
             'attachment' => 'nullable|file|max:10240',
-            'publish_date' => 'nullable|date|after_or_equal:today',
+            'publish_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
         ]);
         
         $data = $request->except(['attachment']);
@@ -92,6 +93,9 @@ class AnnouncementController extends Controller
         if (empty($data['publish_date'])) {
             $data['publish_date'] = now();
         }
+        
+        // Set is_important to false if not checked
+        $data['is_important'] = isset($data['is_important']) ? (bool)$data['is_important'] : false;
         
         // Handle file upload if provided
         if ($request->hasFile('attachment')) {
@@ -163,9 +167,27 @@ class AnnouncementController extends Controller
             'audience' => 'required|in:all,administrators,teachers,students',
             'attachment' => 'nullable|file|max:10240',
             'publish_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
+            'remove_attachment' => 'nullable|boolean',
         ]);
         
-        $data = $request->except(['attachment']);
+        $data = $request->except(['attachment', 'remove_attachment']);
+        
+        // Set is_important to false if not checked
+        $data['is_important'] = isset($data['is_important']) ? (bool)$data['is_important'] : false;
+        
+        // Handle remove attachment request
+        if ($request->has('remove_attachment') && $request->remove_attachment) {
+            if ($announcement->attachment) {
+                Storage::disk('public')->delete($announcement->attachment);
+                $data['attachment'] = null;
+                
+                // Also check for attachment_path field
+                if (Schema::hasColumn('announcements', 'attachment_path')) {
+                    $data['attachment_path'] = null;
+                }
+            }
+        }
         
         // Handle file upload if provided
         if ($request->hasFile('attachment')) {
@@ -174,7 +196,14 @@ class AnnouncementController extends Controller
                 Storage::disk('public')->delete($announcement->attachment);
             }
             
-            $data['attachment'] = $request->file('attachment')->store('announcements', 'public');
+            $attachmentPath = $request->file('attachment')->store('announcements', 'public');
+            
+            // Check which field to use for attachment
+            if (Schema::hasColumn('announcements', 'attachment')) {
+                $data['attachment'] = $attachmentPath;
+            } else if (Schema::hasColumn('announcements', 'attachment_path')) {
+                $data['attachment_path'] = $attachmentPath;
+            }
         }
         
         $announcement->update($data);
@@ -232,6 +261,28 @@ class AnnouncementController extends Controller
         $filename = Str::afterLast($attachmentPath, '/');
         
         return response()->download($path, $filename);
+    }
+    
+    /**
+     * Download the attachment for the specified announcement
+     */
+    public function download(Announcement $announcement)
+    {
+        // Check if attachment exists
+        if (!$announcement->attachment) {
+            abort(404, 'File tidak ditemukan');
+        }
+        
+        // Check if user is allowed to download this attachment
+        $user = Auth::user();
+        $userRoleTargeted = ($announcement->audience === 'all' || 
+                            $announcement->audience === $user->role->slug . 's');
+                            
+        if (!$user->isAdmin() && !$userRoleTargeted && $announcement->author_id !== $user->id) {
+            return redirect()->route('unauthorized');
+        }
+        
+        return Storage::disk('public')->download($announcement->attachment, basename($announcement->attachment));
     }
     
     /**

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Attendance extends Model
 {
@@ -13,11 +14,8 @@ class Attendance extends Model
     protected $fillable = [
         'classroom_id',
         'subject_id',
-        'teacher_id',
-        'student_id',
+        'recorded_by',
         'date',
-        'status', // present, absent, late, excused
-        'notes',
     ];
 
     protected $casts = [
@@ -29,15 +27,7 @@ class Attendance extends Model
      */
     public function teacher(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'teacher_id');
-    }
-
-    /**
-     * Get the student whose attendance is recorded
-     */
-    public function student(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(User::class, 'recorded_by');
     }
 
     /**
@@ -57,30 +47,10 @@ class Attendance extends Model
     }
 
     /**
-     * Get the status badge color based on attendance status
+     * Get the detailed attendance records for all students
      */
-    public function getStatusBadgeAttribute()
+    public function records(): HasMany
     {
-        return match($this->status) {
-            'present' => 'bg-green-100 text-green-800',
-            'absent' => 'bg-red-100 text-red-800',
-            'late' => 'bg-yellow-100 text-yellow-800',
-            'excused' => 'bg-blue-100 text-blue-800',
-            default => 'bg-gray-100 text-gray-800',
-        };
-    }
-
-    /**
-     * Get the status label
-     */
-    public function getStatusLabelAttribute()
-    {
-        return match($this->status) {
-            'present' => 'Hadir',
-            'absent' => 'Tidak Hadir',
-            'late' => 'Terlambat',
-            'excused' => 'Izin',
-            default => 'Unknown',
-        };
+        return $this->hasMany(AttendanceRecord::class);
     }
 }

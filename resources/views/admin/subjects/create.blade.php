@@ -37,156 +37,129 @@
         <div class="absolute -right-10 -top-10 opacity-10">
             <i class="fas fa-book text-9xl"></i>
         </div>
-        <div class="relative z-10">
+        <div class="relative">
             <h2 class="text-2xl font-bold mb-2">Tambah Mata Pelajaran Baru</h2>
-            <p class="text-amber-100">Buat mata pelajaran baru dan tetapkan guru pengajar.</p>
+            <p class="text-amber-100 mb-4">Isi detail mata pelajaran baru di bawah ini</p>
+            <div class="flex items-center">
+                <a href="{{ route('admin.subjects.index') }}" class="flex items-center text-sm text-white hover:text-amber-200 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    <span>Kembali ke Daftar Mata Pelajaran</span>
+                </a>
+            </div>
         </div>
     </div>
-    
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100/50 transform transition hover:shadow-md">
-        <div class="p-6">
-            <form action="{{ route('admin.subjects.store') }}" method="POST" class="animate-fade-in">
-                @csrf
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group mb-5">
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Mata Pelajaran</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-book-open text-gray-400"></i>
-                            </div>
-                            <input type="text" name="name" id="name" value="{{ old('name') }}" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50 transition-shadow duration-300" required>
-                        </div>
-                        @error('name')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <!-- Form errors -->
+        @if ($errors->any())
+            <div class="bg-red-100 border-l-4 border-red-600 text-red-700 p-4 mb-6 rounded-md">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle mt-0.5"></i>
                     </div>
-                    
-                    <div class="form-group mb-5">
-                        <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Kode Mata Pelajaran</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-hashtag text-gray-400"></i>
-                            </div>
-                            <input type="text" name="code" id="code" value="{{ old('code') }}" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50 transition-shadow duration-300" required>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">Kode unik untuk mata pelajaran ini (maksimal 10 karakter)</p>
-                        @error('code')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <div class="form-group mb-5 md:col-span-2">
-                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute top-3 left-3 flex items-start pointer-events-none">
-                                <i class="fas fa-align-left text-gray-400"></i>
-                            </div>
-                            <textarea name="description" id="description" rows="4" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50 transition-shadow duration-300">{{ old('description') }}</textarea>
-                        </div>
-                        @error('description')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <div class="form-group mb-5 md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Guru Pengajar</label>
-                        <div class="mt-1 bg-amber-50 p-5 rounded-xl border border-amber-100 max-h-64 overflow-y-auto">
-                            @if($teachers->isNotEmpty())
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    @foreach($teachers as $teacher)
-                                        <div class="flex items-center p-2 rounded-lg hover:bg-amber-100/50 transition-colors">
-                                            <input type="checkbox" id="teacher-{{ $teacher->id }}" name="teachers[]" value="{{ $teacher->id }}" 
-                                                class="rounded border-amber-300 text-amber-600 shadow-sm focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50"
-                                                {{ (is_array(old('teachers')) && in_array($teacher->id, old('teachers'))) ? 'checked' : '' }}>
-                                            <label for="teacher-{{ $teacher->id }}" class="ml-2 flex items-center cursor-pointer">
-                                                <div class="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center text-amber-700 mr-2">
-                                                    {{ strtoupper(substr($teacher->name, 0, 1)) }}
-                                                </div>
-                                                <div>
-                                                    <p class="text-sm font-medium text-gray-700">{{ $teacher->name }}</p>
-                                                    <p class="text-xs text-gray-500">{{ $teacher->email }}</p>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <div class="flex items-center justify-center py-8 text-center">
-                                    <div>
-                                        <div class="text-amber-400 text-3xl mb-2">
-                                            <i class="fas fa-exclamation-circle"></i>
-                                        </div>
-                                        <p class="text-gray-500">Tidak ada guru tersedia. Silakan buat akun guru terlebih dahulu.</p>
-                                        <a href="{{ route('admin.users.create') }}" class="text-amber-600 hover:text-amber-800 text-sm mt-2 inline-block">
-                                            <i class="fas fa-plus-circle mr-1"></i> Tambah guru baru
-                                        </a>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                        @error('teachers')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-700">Ada beberapa kesalahan pada inputan Anda:</p>
+                        <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                 </div>
-                
-                <div class="border-t border-gray-200 mt-8 pt-5">
-                    <div class="flex justify-end">
-                        <a href="{{ route('admin.subjects.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-300">
-                            <i class="fas fa-times mr-2"></i> Batal
-                        </a>
-                        <button type="submit" class="ml-3 px-6 py-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                            <i class="fas fa-save mr-2"></i> Simpan Mata Pelajaran
-                        </button>
+            </div>
+        @endif
+
+        <!-- Create form -->
+        <form action="{{ route('admin.subjects.store') }}" method="POST" class="space-y-6">
+            @csrf
+
+            <!-- Subject code -->
+            <div>
+                <label for="code" class="block text-sm font-medium text-gray-700 mb-1">
+                    Kode Mata Pelajaran <span class="text-red-600">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-code text-gray-400"></i>
                     </div>
+                    <input type="text" name="code" id="code" value="{{ old('code') }}" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 sm:text-sm" placeholder="Contoh: MTK01" required>
                 </div>
-            </form>
-        </div>
+                <p class="mt-1 text-sm text-gray-500">
+                    Kode mata pelajaran harus unik dan menggunakan huruf kapital dan angka.
+                </p>
+            </div>
+
+            <!-- Subject name -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                    Nama Mata Pelajaran <span class="text-red-600">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-book-open text-gray-400"></i>
+                    </div>
+                    <input type="text" name="name" id="name" value="{{ old('name') }}" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 sm:text-sm" placeholder="Nama mata pelajaran" required>
+                </div>
+            </div>
+
+            <!-- Subject description -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                    Deskripsi
+                </label>
+                <div class="relative">
+                    <div class="absolute top-3 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-align-left text-gray-400"></i>
+                    </div>
+                    <textarea name="description" id="description" rows="4" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 sm:text-sm" placeholder="Deskripsi singkat tentang mata pelajaran ini">{{ old('description') }}</textarea>
+                </div>
+            </div>
+
+            <!-- Assign teachers -->
+            <div>
+                <label for="teachers" class="block text-sm font-medium text-gray-700 mb-1">
+                    Guru Pengajar
+                </label>
+                <div class="relative mt-1">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-chalkboard-teacher text-gray-400"></i>
+                    </div>
+                    <select name="teachers[]" id="teachers" multiple class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 sm:text-sm" size="5">
+                        @foreach ($teachers as $teacher)
+                            <option value="{{ $teacher->id }}" {{ in_array($teacher->id, old('teachers', [])) ? 'selected' : '' }}>
+                                {{ $teacher->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <p class="mt-1 text-sm text-gray-500">
+                    Tahan tombol Ctrl (Windows) atau Command (Mac) untuk memilih beberapa guru
+                </p>
+            </div>
+
+            <!-- Form actions -->
+            <div class="flex items-center justify-end space-x-3 pt-5 border-t border-gray-200">
+                <a href="{{ route('admin.subjects.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                    <i class="fas fa-times mr-2"></i>
+                    Batal
+                </a>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                    <i class="fas fa-save mr-2"></i>
+                    Simpan
+                </button>
+            </div>
+        </form>
     </div>
 @endsection
-
-@push('styles')
-<style>
-    .animate-fade-in {
-        animation: fade-in 0.6s ease-in-out;
-    }
-    
-    @keyframes fade-in {
-        0% {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .form-group:focus-within label {
-        color: #d97706;
-    }
-    
-    .form-group:focus-within i {
-        color: #d97706;
-    }
-</style>
-@endpush
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animate form groups when focused
-        document.querySelectorAll('.form-group input, .form-group select, .form-group textarea').forEach(element => {
-            element.addEventListener('focus', function() {
-                this.closest('.form-group').classList.add('focused');
-            });
-            
-            element.addEventListener('blur', function() {
-                this.closest('.form-group').classList.remove('focused');
-            });
+        // Auto-capitalize subject code as the user types
+        const codeInput = document.getElementById('code');
+        codeInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
         });
     });
 </script>

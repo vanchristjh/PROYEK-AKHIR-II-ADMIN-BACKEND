@@ -49,11 +49,17 @@ class MaterialController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'subject_id' => 'required|exists:subjects,id',
+            'classroom_id' => 'required|array', // Validate that classroom_id is provided as an array
+            'classroom_id.*' => 'exists:classrooms,id', // Validate that each classroom_id exists
             'attachment' => 'nullable|file|max:20480', // 20MB max
         ]);
         
-        // Handle classroom selection
-        $classroomIds = $request->classroom_id;
+        // Extract classroom IDs from the validated data
+        $classroomIds = $validated['classroom_id'];
+        
+        // Use the first classroom ID as the primary classroom_id field
+        // This is needed because the materials table has a non-nullable classroom_id field
+        $validated['classroom_id'] = $classroomIds[0] ?? null;
         
         // Initialize file_path to null by default
         $validated['file_path'] = null;
@@ -67,9 +73,10 @@ class MaterialController extends Controller
         $validated['teacher_id'] = Auth::id();
         $validated['publish_date'] = now(); // Set default publish date to now
         
+        // Create the material with the first classroom_id
         $material = Material::create($validated);
         
-        // Attach classrooms if selected
+        // Attach all selected classrooms to the material (many-to-many relationship)
         if (!empty($classroomIds)) {
             $material->classrooms()->attach($classroomIds);
         }
@@ -108,11 +115,16 @@ class MaterialController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'subject_id' => 'required|exists:subjects,id',
+            'classroom_id' => 'required|array',
+            'classroom_id.*' => 'exists:classrooms,id',
             'attachment' => 'nullable|file|max:20480', // 20MB max
         ]);
         
-        // Handle classroom selection
-        $classroomIds = $request->classroom_id;
+        // Extract classroom IDs
+        $classroomIds = $validated['classroom_id'];
+        
+        // Use the first classroom ID as the primary classroom_id field
+        $validated['classroom_id'] = $classroomIds[0] ?? null;
         
         // Handle attachment upload
         if ($request->hasFile('attachment')) {
@@ -127,8 +139,8 @@ class MaterialController extends Controller
         
         $material->update($validated);
         
-        // Sync classrooms
-        if (is_array($classroomIds)) {
+        // Sync classrooms for many-to-many relationship
+        if (!empty($classroomIds)) {
             $material->classrooms()->sync($classroomIds);
         } else {
             $material->classrooms()->detach();

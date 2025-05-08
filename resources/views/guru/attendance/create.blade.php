@@ -6,38 +6,51 @@
 
 @section('navigation')
     <li>
-        <a href="{{ route('guru.dashboard') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-tachometer-alt text-lg w-6 text-indigo-300"></i>
+        <a href="{{ route('guru.dashboard') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
+            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-indigo-700 transition-all duration-200">
+                <i class="fas fa-tachometer-alt text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
+            </div>
             <span class="ml-3">Dashboard</span>
         </a>
     </li>
     <li>
-        <a href="{{ route('guru.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-book text-lg w-6 text-indigo-300"></i>
+        <a href="{{ route('guru.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
+            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-green-700/50 transition-all duration-200">
+                <i class="fas fa-book text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
+            </div>
             <span class="ml-3">Materi Pelajaran</span>
         </a>
     </li>
     <li>
-        <a href="{{ route('guru.assignments.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-tasks text-lg w-6 text-indigo-300"></i>
+        <a href="{{ route('guru.assignments.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
+            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-green-700/50 transition-all duration-200">
+                <i class="fas fa-tasks text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
+            </div>
             <span class="ml-3">Tugas</span>
         </a>
     </li>
     <li>
-        <a href="{{ route('guru.grades.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-star text-lg w-6 text-indigo-300"></i>
+        <a href="{{ route('guru.grades.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
+            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-purple-700/50 transition-all duration-200">
+                <i class="fas fa-star text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
+            </div>
             <span class="ml-3">Penilaian</span>
         </a>
     </li>
     <li>
-        <a href="{{ route('guru.attendance.index') }}" class="sidebar-item sidebar-active flex items-center rounded-lg px-4 py-3 text-white">
-            <i class="fas fa-clipboard-check text-lg w-6"></i>
+        <a href="{{ route('guru.attendance.index') }}" class="sidebar-item sidebar-active flex items-center rounded-lg px-4 py-2.5 group relative text-white">
+            <div class="p-1.5 rounded-lg bg-purple-800 transition-all duration-200">
+                <i class="fas fa-clipboard-check text-lg w-5 h-5 flex items-center justify-center text-white"></i>
+            </div>
             <span class="ml-3">Kehadiran</span>
+            <span class="absolute inset-y-0 left-0 w-1 bg-purple-400 rounded-tr-md rounded-br-md"></span>
         </a>
     </li>
     <li>
-        <a href="{{ route('guru.announcements.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-bullhorn text-lg w-6 text-indigo-300"></i>
+        <a href="{{ route('guru.announcements.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
+            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-red-700/50 transition-all duration-200">
+                <i class="fas fa-bullhorn text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
+            </div>
             <span class="ml-3">Pengumuman</span>
         </a>
     </li>
@@ -213,41 +226,23 @@
                             const row = document.createElement('tr');
                             row.innerHTML = `
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                            ${student.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">${student.name}</div>
-                                            <div class="text-sm text-gray-500">${student.username}</div>
-                                        </div>
-                                    </div>
-                                    <input type="hidden" name="students[${student.id}][id]" value="${student.id}">
+                                    <div class="text-sm font-medium text-gray-900">${student.name}</div>
+                                    <div class="text-xs text-gray-500">${student.nis || 'NIS tidak tersedia'}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex space-x-3">
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="students[${student.id}][status]" value="present" class="form-radio h-5 w-5 text-green-600" checked>
-                                            <span class="ml-2 text-gray-700">Hadir</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="students[${student.id}][status]" value="absent" class="form-radio h-5 w-5 text-red-600">
-                                            <span class="ml-2 text-gray-700">Absen</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="students[${student.id}][status]" value="late" class="form-radio h-5 w-5 text-yellow-600">
-                                            <span class="ml-2 text-gray-700">Terlambat</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="students[${student.id}][status]" value="excused" class="form-radio h-5 w-5 text-blue-600">
-                                            <span class="ml-2 text-gray-700">Izin</span>
-                                        </label>
-                                    </div>
+                                    <select name="status[${student.id}]" class="rounded-lg border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50 w-full" required>
+                                        <option value="present">Hadir</option>
+                                        <option value="absent">Tidak Hadir</option>
+                                        <option value="sick">Sakit</option>
+                                        <option value="permitted">Izin</option>
+                                        <option value="late">Terlambat</option>
+                                    </select>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <input type="text" name="students[${student.id}][notes]" class="w-full rounded-md border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50">
-                                </td>
-                            `;
+                                    <input type="text" name="notes[${student.id}]" placeholder="Masukkan keterangan (opsional)" 
+                                        class="rounded-lg border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50 w-full">
+                                </td>`;
+                            
                             studentsList.appendChild(row);
                         });
                         
@@ -257,6 +252,11 @@
                 studentsContainer.classList.add('hidden');
             }
         });
+
+        // If subject already selected, load classrooms
+        if (subjectSelect.value) {
+            subjectSelect.dispatchEvent(new Event('change'));
+        }
     });
 </script>
 @endpush

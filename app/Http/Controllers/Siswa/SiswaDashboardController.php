@@ -46,17 +46,17 @@ class SiswaDashboardController extends Controller
         
         $completedAssignments = Submission::where('student_id', $user->id)->count();
         
-        $totalMaterials = Material::whereHas('subjects.classrooms', function($query) use ($user) {
+        $totalMaterials = Material::whereHas('subject.classrooms', function($query) use ($user) {
             $query->where('classrooms.id', $user->classroom_id);
         })->count();
         
         // Calculate attendance rate
         $totalAttendanceRecords = Attendance::where('classroom_id', $user->classroom_id)->count();
-        $userAttendancePresent = Attendance::where([
-            'classroom_id' => $user->classroom_id,
-            'student_id' => $user->id,
-            'status' => 'present'
-        ])->count();
+        $userAttendancePresent = Attendance::where('classroom_id', $user->classroom_id)
+            ->whereHas('records', function($query) use ($user) {
+                $query->where('student_id', $user->id)
+                      ->where('status', 'present');
+            })->count();
         
         $attendanceRate = $totalAttendanceRecords > 0 ? 
             round(($userAttendancePresent / $totalAttendanceRecords) * 100) . '%' : '100%';
@@ -94,7 +94,7 @@ class SiswaDashboardController extends Controller
             ->get();
             
         // Get recent materials
-        $recentMaterials = Material::whereHas('subjects.classrooms', function($query) use ($user) {
+        $recentMaterials = Material::whereHas('subject.classrooms', function($query) use ($user) {
                 $query->where('classrooms.id', $user->classroom_id);
             })
             ->with(['subject'])
@@ -146,17 +146,17 @@ class SiswaDashboardController extends Controller
         
         $completedAssignments = Submission::where('student_id', $user->id)->count();
         
-        $totalMaterials = Material::whereHas('subjects.classrooms', function($query) use ($user) {
+        $totalMaterials = Material::whereHas('subject.classrooms', function($query) use ($user) {
             $query->where('classrooms.id', $user->classroom_id);
         })->count();
         
         // Calculate attendance rate
         $totalAttendanceRecords = Attendance::where('classroom_id', $user->classroom_id)->count();
-        $userAttendancePresent = Attendance::where([
-            'classroom_id' => $user->classroom_id,
-            'student_id' => $user->id,
-            'status' => 'present'
-        ])->count();
+        $userAttendancePresent = Attendance::where('classroom_id', $user->classroom_id)
+            ->whereHas('records', function($query) use ($user) {
+                $query->where('student_id', $user->id)
+                      ->where('status', 'present');
+            })->count();
         
         $attendanceRate = $totalAttendanceRecords > 0 ? 
             round(($userAttendancePresent / $totalAttendanceRecords) * 100) . '%' : '100%';
@@ -224,7 +224,7 @@ class SiswaDashboardController extends Controller
             });
             
         // Get recent materials
-        $recentMaterials = Material::whereHas('subjects.classrooms', function($query) use ($user) {
+        $recentMaterials = Material::whereHas('subject.classrooms', function($query) use ($user) {
                 $query->where('classrooms.id', $user->classroom_id);
             })
             ->with(['subject'])

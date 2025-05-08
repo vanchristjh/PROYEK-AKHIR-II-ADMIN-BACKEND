@@ -13,9 +13,22 @@ class SubjectController extends Controller
     /**
      * Display a listing of subjects
      */
-    public function index()
+    public function index(Request $request)
     {
-        $subjects = Subject::latest()->paginate(10);
+        $query = Subject::query();
+        
+        // Add search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhere('code', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%");
+            });
+        }
+        
+        $subjects = $query->latest()->paginate(10);
+        $subjects->appends($request->all()); // Keep search parameters on pagination
         
         return view('admin.subjects.index', compact('subjects'));
     }
@@ -37,25 +50,59 @@ class SubjectController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:10', 'unique:subjects'],
+            'code' => [
+                'required', 
+                'string', 
+                'max:10', 
+                'unique:subjects', 
+                'regex:/^[A-Z0-9]+$/'
+            ],
             'description' => ['nullable', 'string'],
             'teachers' => ['nullable', 'array'],
             'teachers.*' => ['exists:users,id,role_id,2'], // Ensure we only attach teacher users
+        ], [
+            'code.regex' => 'The code format is invalid. Use uppercase letters and numbers only.',
+            'teachers.*.exists' => 'One or more selected teachers are invalid.'
         ]);
         
-        $subject = Subject::create([
-            'name' => $validated['name'],
-            'code' => $validated['code'],
-            'description' => $validated['description'] ?? null,
-        ]);
+        try {
+            $subject = Subject::create([
+                'name' => $validated['name'],
+                'code' => $validated['code'],
+                'description' => $validated['description'] ?? null,
+            ]);
+            
+            // Assign teachers if provided
+            if (!empty($validated['teachers'])) {
+                $subject->teachers()->attach($validated['teachers']);
+            }
+            
+            return redirect()->route('admin.subjects.index')
+                ->with('success', 'Mata pelajaran berhasil dibuat!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat membuat mata pelajaran: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Display the specified subject details
+     */
+    public function show(Subject $subject)
+    {
+        $subject->load(['teachers', 'classrooms', 'assignments', 'materials']);
         
-        // Assign teachers if provided
-        if (!empty($validated['teachers'])) {
-            $subject->teachers()->attach($validated['teachers']);
+        // Get students count for each classroom
+        $classroomStudentCounts = [];
+        foreach ($subject->classrooms as $classroom) {
+            $classroomStudentCounts[$classroom->id] = User::where('classroom_id', $classroom->id)
+                ->whereHas('role', function($q) {
+                    $q->where('slug', 'siswa');
+                })->count();
         }
         
-        return redirect()->route('admin.subjects.index')
-            ->with('success', 'Subject created successfully!');
+        return view('admin.subjects.show', compact('subject', 'classroomStudentCounts'));
     }
 
     /**
@@ -76,23 +123,38 @@ class SubjectController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:10', Rule::unique('subjects')->ignore($subject->id)],
+            'code' => [
+                'required', 
+                'string', 
+                'max:10', 
+                Rule::unique('subjects')->ignore($subject->id),
+                'regex:/^[A-Z0-9]+$/'
+            ],
             'description' => ['nullable', 'string'],
             'teachers' => ['nullable', 'array'],
             'teachers.*' => ['exists:users,id'],
+        ], [
+            'code.regex' => 'The code format is invalid. Use uppercase letters and numbers only.',
+            'teachers.*.exists' => 'One or more selected teachers are invalid.'
         ]);
         
-        $subject->update([
-            'name' => $validated['name'],
-            'code' => $validated['code'],
-            'description' => $validated['description'] ?? null,
-        ]);
-        
-        // Sync teachers
-        $subject->teachers()->sync($validated['teachers'] ?? []);
-        
-        return redirect()->route('admin.subjects.index')
-            ->with('success', 'Subject updated successfully!');
+        try {
+            $subject->update([
+                'name' => $validated['name'],
+                'code' => $validated['code'],
+                'description' => $validated['description'] ?? null,
+            ]);
+            
+            // Sync teachers
+            $subject->teachers()->sync($validated['teachers'] ?? []);
+            
+            return redirect()->route('admin.subjects.index')
+                ->with('success', 'Mata pelajaran berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat memperbarui mata pelajaran: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -100,12 +162,42 @@ class SubjectController extends Controller
      */
     public function destroy(Subject $subject)
     {
-        // Detach all teachers
-        $subject->teachers()->detach();
-        
-        $subject->delete();
-        
-        return redirect()->route('admin.subjects.index')
-            ->with('success', 'Subject deleted successfully!');
+        try {
+            // Check for related data that might cause issues
+            $assignmentsCount = $subject->assignments()->count();
+            $materialsCount = $subject->materials()->count();
+            
+            if ($assignmentsCount > 0 || $materialsCount > 0) {
+                $message = 'Mata pelajaran tidak dapat dihapus karena masih memiliki ';
+                $relatedData = [];
+                
+                if ($assignmentsCount > 0) {
+                    $relatedData[] = $assignmentsCount . ' tugas';
+                }
+                
+                if ($materialsCount > 0) {
+                    $relatedData[] = $materialsCount . ' materi';
+                }
+                
+                $message .= implode(' dan ', $relatedData) . ' terkait.';
+                
+                return redirect()->route('admin.subjects.index')
+                    ->with('error', $message);
+            }
+            
+            // Detach all teachers
+            $subject->teachers()->detach();
+            
+            // Detach all classrooms
+            $subject->classrooms()->detach();
+            
+            $subject->delete();
+            
+            return redirect()->route('admin.subjects.index')
+                ->with('success', 'Mata pelajaran berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.subjects.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus mata pelajaran: ' . $e->getMessage());
+        }
     }
 }

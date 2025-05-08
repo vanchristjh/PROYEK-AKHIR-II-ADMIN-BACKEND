@@ -7,7 +7,10 @@ use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\Classroom;
 use App\Models\Subject;
+use App\Models\User;
+use App\Models\AttendanceRecord;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
@@ -16,8 +19,10 @@ class AttendanceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Attendance::with(['classroom', 'subject', 'details.student'])
-            ->where('recorded_by', Auth::id()); // Changed from teacher_id to recorded_by
+        $teacher = Auth::user();
+        
+        $query = Attendance::with(['classroom', 'subject'])
+            ->where('recorded_by', $teacher->id);
         
         // Apply filters if provided
         if ($request->filled('classroom')) {
@@ -29,15 +34,20 @@ class AttendanceController extends Controller
         }
         
         if ($request->filled('date')) {
-            $query->where('date', $request->date);
+            $query->whereDate('date', $request->date);
         }
         
         $attendances = $query->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
         
-        $classrooms = Auth::user()->teachingClassrooms() ?? collect([]);
-        $subjects = Auth::user()->teacherSubjects ?? collect([]);
+        // Get classrooms where the teacher teaches
+        $classrooms = Classroom::whereHas('subjects.teachers', function($query) use ($teacher) {
+            $query->where('user_id', $teacher->id);
+        })->get();
+        
+        // Get subjects taught by the teacher
+        $subjects = $teacher->teacherSubjects;
         
         return view('guru.attendance.index', compact('attendances', 'classrooms', 'subjects'));
     }
@@ -47,9 +57,15 @@ class AttendanceController extends Controller
      */
     public function create()
     {
-        $user = Auth::user();
-        $classrooms = $user->teachingClassrooms()->distinct()->get();
-        $subjects = $user->teacherSubjects;
+        $teacher = Auth::user();
+        
+        // Get classrooms where the teacher teaches
+        $classrooms = Classroom::whereHas('subjects.teachers', function($query) use ($teacher) {
+            $query->where('user_id', $teacher->id);
+        })->get();
+        
+        // Get subjects taught by the teacher
+        $subjects = $teacher->teacherSubjects;
         
         return view('guru.attendance.create', compact('classrooms', 'subjects'));
     }
@@ -64,12 +80,12 @@ class AttendanceController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'date' => 'required|date',
             'status' => 'required|array',
-            'status.*' => 'required|in:present,absent,late,excused',
+            'status.*' => 'required|in:present,absent,late,sick,permitted',
             'notes' => 'nullable|array',
             'notes.*' => 'nullable|string|max:255',
         ]);
         
-        $user = Auth::user();
+        $teacher = Auth::user();
         $classroomId = $request->classroom_id;
         $subjectId = $request->subject_id;
         $date = $request->date;
@@ -77,38 +93,84 @@ class AttendanceController extends Controller
         // Check if attendance already exists for this date, class and subject
         $existingAttendance = Attendance::where('classroom_id', $classroomId)
                                       ->where('subject_id', $subjectId)
-                                      ->where('date', $date)
-                                      ->where('recorded_by', $user->id) // Changed from teacher_id to recorded_by
+                                      ->whereDate('date', $date)
+                                      ->where('recorded_by', $teacher->id)
                                       ->exists();
                                       
         if ($existingAttendance) {
             return redirect()->back()->with('error', 'Attendance for this class, subject and date already exists.');
         }
         
-        // Get the students from the classroom
-        $students = User::whereHas('role', function($q) {
-                $q->where('slug', 'siswa');
-            })
-            ->where('classroom_id', $classroomId)
-            ->get();
+        DB::beginTransaction();
+        
+        try {
+            // Create the main attendance record
+            $attendance = Attendance::create([
+                'date' => $date,
+                'classroom_id' => $classroomId,
+                'subject_id' => $subjectId,
+                'recorded_by' => $teacher->id,
+            ]);
             
-        // Save attendance for each student
-        foreach ($students as $student) {
-            if (isset($request->status[$student->id])) {
-                Attendance::create([
-                    'date' => $date,
-                    'classroom_id' => $classroomId,
-                    'subject_id' => $subjectId,
-                    'recorded_by' => $user->id, // Changed from teacher_id to recorded_by
-                    'student_id' => $student->id,
-                    'status' => $request->status[$student->id],
-                    'notes' => $request->notes[$student->id] ?? null,
-                ]);
+            // Get the students from the classroom
+            $students = User::whereHas('role', function($q) {
+                    $q->where('slug', 'siswa');
+                })
+                ->where('classroom_id', $classroomId)
+                ->get();
+                
+            // Save attendance for each student
+            foreach ($students as $student) {
+                if (isset($request->status[$student->id])) {
+                    AttendanceRecord::create([
+                        'attendance_id' => $attendance->id,
+                        'student_id' => $student->id,
+                        'status' => $request->status[$student->id],
+                        'notes' => $request->notes[$student->id] ?? null,
+                    ]);
+                }
             }
+            
+            DB::commit();
+            
+            return redirect()->route('guru.attendance.index')
+                            ->with('success', 'Attendance recorded successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to record attendance: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display the specified attendance record.
+     */
+    public function show($id)
+    {
+        $attendance = Attendance::with(['classroom', 'subject', 'records.student'])
+            ->findOrFail($id);
+            
+        // Ensure the teacher owns this attendance record
+        if ($attendance->recorded_by !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
         }
         
-        return redirect()->route('guru.attendance.index')
-                         ->with('success', 'Attendance recorded successfully.');
+        return view('guru.attendance.show', compact('attendance'));
+    }
+
+    /**
+     * Show the form for editing the specified attendance record.
+     */
+    public function edit($id)
+    {
+        $attendance = Attendance::with(['classroom', 'subject', 'records.student'])
+            ->findOrFail($id);
+            
+        // Ensure the teacher owns this attendance record
+        if ($attendance->recorded_by !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        return view('guru.attendance.edit', compact('attendance'));
     }
 
     /**
@@ -117,22 +179,74 @@ class AttendanceController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:present,absent,late,excused',
-            'notes' => 'nullable|string|max:255',
+            'status' => 'required|array',
+            'status.*' => 'required|in:present,absent,late,sick,permitted',
+            'notes' => 'nullable|array',
+            'notes.*' => 'nullable|string|max:255',
         ]);
         
         $attendance = Attendance::findOrFail($id);
         
         // Ensure the teacher owns this attendance record
-        if ($attendance->recorded_by !== Auth::id()) { // Changed from teacher_id to recorded_by
+        if ($attendance->recorded_by !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
         
-        $attendance->status = $request->status;
-        $attendance->notes = $request->notes;
-        $attendance->save();
+        DB::beginTransaction();
         
-        return redirect()->route('guru.attendance.index')
-                         ->with('success', 'Attendance updated successfully.');
+        try {
+            // Update each student's attendance record
+            foreach ($request->status as $studentId => $status) {
+                AttendanceRecord::updateOrCreate(
+                    [
+                        'attendance_id' => $attendance->id,
+                        'student_id' => $studentId
+                    ],
+                    [
+                        'status' => $status,
+                        'notes' => $request->notes[$studentId] ?? null
+                    ]
+                );
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('guru.attendance.index')
+                            ->with('success', 'Attendance updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to update attendance: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Remove the specified attendance record.
+     */
+    public function destroy($id)
+    {
+        $attendance = Attendance::findOrFail($id);
+        
+        // Ensure the teacher owns this attendance record
+        if ($attendance->recorded_by !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            // Delete all associated attendance records first
+            $attendance->records()->delete();
+            
+            // Then delete the main attendance record
+            $attendance->delete();
+            
+            DB::commit();
+            
+            return redirect()->route('guru.attendance.index')
+                            ->with('success', 'Attendance deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to delete attendance: ' . $e->getMessage());
+        }
     }
 }

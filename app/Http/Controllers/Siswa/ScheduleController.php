@@ -24,16 +24,16 @@ class ScheduleController extends Controller
         
         $schedules = Schedule::where('classroom_id', $user->classroom_id)
                            ->with(['subject', 'teacher'])
-                           ->orderBy('day')
+                           ->orderBy('day_of_week') // Changed 'day' to 'day_of_week'
                            ->orderBy('start_time')
                            ->get();
         
         // Group schedules by day
-        $schedulesByDay = $schedules->groupBy('day');
+        $schedulesByDay = $schedules->groupBy('day_of_week'); // Changed 'day' to 'day_of_week'
         
         // Define days for proper ordering
-        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        $dayNames = Schedule::getDaysOfWeek(); // Changed from $days to $dayNames and used Schedule model
         
-        return view('siswa.schedule.index', compact('schedulesByDay', 'days'));
+        return view('siswa.schedule.index', compact('schedulesByDay', 'dayNames')); // Changed 'days' to 'dayNames'
     }
 }

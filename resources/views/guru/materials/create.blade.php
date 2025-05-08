@@ -51,7 +51,7 @@
     
     <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100/50 transform transition hover:shadow-md">
         <div class="p-6">
-            <form action="{{ route('guru.materials.store') }}" method="POST" enctype="multipart/form-data" class="animate-fade-in">
+            <form action="{{ route('guru.materials.store') }}" method="POST" enctype="multipart/form-data" class="animate-fade-in" id="materialForm">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-group mb-5 md:col-span-2">
@@ -215,6 +215,250 @@
                 
                 this.textContent = isAllSelected ? 'Pilih Semua' : 'Batal Pilih';
             });
+        }
+
+        const subjectSelect = document.getElementById('subject_id');
+        const classroomSelect = document.getElementById('classroom_id');
+        const materialTypeSelect = document.getElementById('material_type');
+        const fileInput = document.getElementById('file_path');
+        const contentInput = document.getElementById('content');
+        const contentContainer = document.getElementById('content-container');
+        const fileContainer = document.getElementById('file-container');
+        const filePreview = document.getElementById('file-preview');
+        const linkInput = document.getElementById('link');
+        const linkContainer = document.getElementById('link-container');
+        const form = document.getElementById('materialForm');
+        const errorContainer = document.getElementById('error-container');
+        
+        // When subject changes, update classrooms
+        subjectSelect.addEventListener('change', function() {
+            const subjectId = this.value;
+            if (subjectId) {
+                // Clear classroom select
+                classroomSelect.innerHTML = '<option value="">Pilih Kelas</option>';
+                
+                // Show loading indicator
+                const loadingOption = document.createElement('option');
+                loadingOption.textContent = 'Memuat kelas...';
+                loadingOption.disabled = true;
+                classroomSelect.appendChild(loadingOption);
+                
+                // Get classrooms for this subject
+                fetch(`/guru/subjects/${subjectId}/classrooms`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Remove loading option
+                        classroomSelect.removeChild(loadingOption);
+                        
+                        if (data.length === 0) {
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.textContent = 'Tidak ada kelas untuk mata pelajaran ini';
+                            option.disabled = true;
+                            classroomSelect.appendChild(option);
+                        } else {
+                            data.forEach(classroom => {
+                                const option = document.createElement('option');
+                                option.value = classroom.id;
+                                option.textContent = classroom.name;
+                                classroomSelect.appendChild(option);
+                            });
+                            
+                            // If there was a previously selected classroom, try to reselect it
+                            const oldClassroomId = "{{ old('classroom_id') }}";
+                            if (oldClassroomId) {
+                                classroomSelect.value = oldClassroomId;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        classroomSelect.innerHTML = '<option value="">Error memuat kelas</option>';
+                    });
+            } else {
+                classroomSelect.innerHTML = '<option value="">Pilih Kelas</option>';
+            }
+        });
+        
+        // When material type changes, show/hide appropriate inputs
+        materialTypeSelect.addEventListener('change', function() {
+            const value = this.value;
+            
+            if (value === 'text') {
+                contentContainer.classList.remove('hidden');
+                fileContainer.classList.add('hidden');
+                linkContainer.classList.add('hidden');
+            } else if (value === 'file') {
+                contentContainer.classList.add('hidden');
+                fileContainer.classList.remove('hidden');
+                linkContainer.classList.add('hidden');
+            } else if (value === 'link') {
+                contentContainer.classList.add('hidden');
+                fileContainer.classList.add('hidden');
+                linkContainer.classList.remove('hidden');
+            }
+        });
+        
+        // File input preview
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
+                const fileName = file.name;
+                const fileType = file.type;
+                
+                // Clear previous preview
+                filePreview.innerHTML = '';
+                
+                // Determine appropriate icon based on file type
+                let iconClass = 'fa-file';
+                let colorClass = 'text-gray-500';
+                
+                if (fileType.includes('pdf')) {
+                    iconClass = 'fa-file-pdf';
+                    colorClass = 'text-red-500';
+                } else if (fileType.includes('word') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+                    iconClass = 'fa-file-word';
+                    colorClass = 'text-blue-500';
+                } else if (fileType.includes('spreadsheet') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+                    iconClass = 'fa-file-excel';
+                    colorClass = 'text-green-500';
+                } else if (fileType.includes('presentation') || fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) {
+                    iconClass = 'fa-file-powerpoint';
+                    colorClass = 'text-orange-500';
+                } else if (fileType.includes('image')) {
+                    iconClass = 'fa-file-image';
+                    colorClass = 'text-purple-500';
+                } else if (fileType.includes('zip') || fileType.includes('archive') || fileName.endsWith('.zip')) {
+                    iconClass = 'fa-file-archive';
+                    colorClass = 'text-yellow-500';
+                } else if (fileType.includes('video')) {
+                    iconClass = 'fa-file-video';
+                    colorClass = 'text-pink-500';
+                }
+                
+                // Create file preview element
+                const previewEl = document.createElement('div');
+                previewEl.className = 'flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200 mt-2';
+                previewEl.innerHTML = `
+                    <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <i class="fas ${iconClass} ${colorClass} text-xl"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <div class="text-sm font-medium text-gray-900 truncate" title="${fileName}">${fileName}</div>
+                        <div class="text-xs text-gray-500">${fileSize} MB</div>
+                    </div>
+                    <button type="button" id="remove-file" class="text-gray-400 hover:text-red-500 focus:outline-none">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                filePreview.appendChild(previewEl);
+                
+                // Add remove button functionality
+                document.getElementById('remove-file').addEventListener('click', function() {
+                    fileInput.value = '';
+                    filePreview.innerHTML = '';
+                });
+                
+                // Validate file size
+                if (file.size > 20 * 1024 * 1024) { // 20MB
+                    showError('File terlalu besar. Ukuran maksimal adalah 20MB.');
+                } else {
+                    clearError();
+                }
+            }
+        });
+        
+        // Link validation
+        linkInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            if (value && !isValidUrl(value)) {
+                showError('URL tidak valid. Pastikan dimulai dengan http:// atau https://');
+            } else {
+                clearError();
+            }
+        });
+        
+        // Form validation
+        form.addEventListener('submit', function(event) {
+            clearError();
+            let hasError = false;
+            
+            // Title validation
+            const title = document.getElementById('title').value.trim();
+            if (!title) {
+                showError('Judul materi tidak boleh kosong');
+                hasError = true;
+            }
+            
+            // Check material type specific validations
+            const materialType = materialTypeSelect.value;
+            
+            if (materialType === 'text') {
+                const content = contentInput.value.trim();
+                if (!content) {
+                    showError('Konten materi tidak boleh kosong');
+                    hasError = true;
+                }
+            } else if (materialType === 'file') {
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    showError('Pilih file untuk diunggah');
+                    hasError = true;
+                } else if (fileInput.files[0].size > 20 * 1024 * 1024) { // 20MB
+                    showError('File terlalu besar. Ukuran maksimal adalah 20MB.');
+                    hasError = true;
+                }
+            } else if (materialType === 'link') {
+                const link = linkInput.value.trim();
+                if (!link) {
+                    showError('URL tidak boleh kosong');
+                    hasError = true;
+                } else if (!isValidUrl(link)) {
+                    showError('URL tidak valid. Pastikan dimulai dengan http:// atau https://');
+                    hasError = true;
+                }
+            }
+            
+            if (hasError) {
+                event.preventDefault();
+            }
+        });
+        
+        // Initialize based on existing values
+        if (subjectSelect.value) {
+            subjectSelect.dispatchEvent(new Event('change'));
+        }
+        
+        materialTypeSelect.dispatchEvent(new Event('change'));
+        
+        // Helper functions
+        function showError(message) {
+            errorContainer.innerHTML = `
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-md">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">${message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function clearError() {
+            errorContainer.innerHTML = '';
+        }
+        
+        function isValidUrl(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch (e) {
+                return false;
+            }
         }
     });
 </script>

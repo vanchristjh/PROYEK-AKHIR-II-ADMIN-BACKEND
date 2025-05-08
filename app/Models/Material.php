@@ -35,10 +35,16 @@ class Material extends Model
         return $this->belongsTo(Subject::class);
     }
 
-    // Classroom this material is for
+    // Classroom this material is for (one-to-one relationship)
     public function classroom()
     {
         return $this->belongsTo(Classroom::class);
+    }
+    
+    // Classrooms this material is for (many-to-many relationship)
+    public function classrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_material');
     }
     
     // File extension attribute

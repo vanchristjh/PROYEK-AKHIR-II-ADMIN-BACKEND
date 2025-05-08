@@ -5,139 +5,159 @@
 @section('header', 'Detail Pengumuman')
 
 @section('navigation')
-    <li>
-        <a href="{{ route('guru.dashboard') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-tachometer-alt text-lg w-6 text-indigo-300"></i>
-            <span class="ml-3">Dashboard</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('guru.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-book text-lg w-6 text-indigo-300"></i>
-            <span class="ml-3">Materi Pelajaran</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('guru.assignments.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-tasks text-lg w-6 text-indigo-300"></i>
-            <span class="ml-3">Tugas</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('guru.grades.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-star text-lg w-6 text-indigo-300"></i>
-            <span class="ml-3">Penilaian</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('guru.attendance.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-clipboard-check text-lg w-6 text-indigo-300"></i>
-            <span class="ml-3">Kehadiran</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('guru.announcements.index') }}" class="sidebar-item sidebar-active flex items-center rounded-lg px-4 py-3 text-white">
-            <i class="fas fa-bullhorn text-lg w-6"></i>
-            <span class="ml-3">Pengumuman</span>
-        </a>
-    </li>
+    @include('guru.partials.sidebar')
 @endsection
 
 @section('content')
-    <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center space-x-2">
-            <a href="{{ route('guru.announcements.index') }}" class="text-indigo-600 hover:text-indigo-900 flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Kembali
-            </a>
-            <span class="text-gray-500">/</span>
-            <h2 class="text-xl font-semibold text-gray-800">Detail Pengumuman</h2>
-        </div>
-        <div class="flex space-x-2">
-            <a href="{{ route('guru.announcements.edit', $announcement) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <i class="fas fa-edit mr-2"></i> Edit
-            </a>
-            <form action="{{ route('guru.announcements.destroy', $announcement) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengumuman ini?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                    <i class="fas fa-trash-alt mr-2"></i> Hapus
-                </button>
-            </form>
-        </div>
+    <div class="mb-6">
+        <a href="{{ route('guru.announcements.index') }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition-colors">
+            <i class="fas fa-chevron-left mr-2 text-sm"></i>
+            <span>Kembali ke Daftar Pengumuman</span>
+        </a>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100/50 mb-6">
+        <div class="p-6 border-b border-gray-100 {{ $announcement->is_important ? 'bg-gradient-to-r from-red-50 to-white' : 'bg-gradient-to-r from-blue-50 to-white' }}">
             <div class="flex items-start justify-between">
-                <div>
-                    <h3 class="text-xl font-semibold text-gray-900 flex items-center">
-                        {{ $announcement->title }}
-                        @if($announcement->is_important)
-                            <span class="ml-2 px-2 py-0.5 bg-red-100 text-red-800 text-xs font-medium rounded-full">
-                                <i class="fas fa-exclamation-circle mr-1"></i> Penting
-                            </span>
-                        @endif
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-600">
-                        Dipublikasikan {{ $announcement->publish_date->format('d M Y, H:i') }}
-                    </p>
+                <div class="flex items-start">
+                    <div class="{{ $announcement->is_important ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600' }} p-3 rounded-full mr-4">
+                        <i class="fas {{ $announcement->is_important ? 'fa-exclamation-circle' : 'fa-bullhorn' }} text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                            {{ $announcement->title }}
+                            @if($announcement->is_important)
+                                <span class="ml-3 px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Penting</span>
+                            @endif
+                        </h1>
+                        <div class="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-day mr-1"></i>
+                                {{ $announcement->publish_date->format('d M Y') }}
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-user mr-1"></i>
+                                {{ $announcement->author->name ?? 'Unknown' }}
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-users mr-1"></i>
+                                @if($announcement->audience === 'all')
+                                    Semua Pengguna
+                                @elseif($announcement->audience === 'students')
+                                    Siswa
+                                @elseif($announcement->audience === 'teachers')
+                                    Guru
+                                @endif
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-right text-sm text-gray-500">
-                    <p>Untuk: 
-                        @if($announcement->audience === 'all')
-                            <span class="font-medium">Semua</span>
-                        @elseif($announcement->audience === 'teachers')
-                            <span class="font-medium">Guru</span>
-                        @elseif($announcement->audience === 'students')
-                            <span class="font-medium">Siswa</span>
-                        @endif
-                    </p>
-                    @if($announcement->expiry_date)
-                        <p class="mt-1">Kedaluwarsa: {{ $announcement->expiry_date->format('d M Y, H:i') }}</p>
-                    @endif
+
+                @if($announcement->author_id == auth()->id())
+                <div class="flex space-x-2">
+                    <a href="{{ route('guru.announcements.edit', $announcement) }}" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center gap-1">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <form action="{{ route('guru.announcements.destroy', $announcement) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengumuman ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex items-center gap-1">
+                            <i class="fas fa-trash-alt"></i> Hapus
+                        </button>
+                    </form>
                 </div>
+                @endif
             </div>
         </div>
-
+        
         <div class="p-6">
             <div class="prose max-w-none">
                 {!! nl2br(e($announcement->content)) !!}
             </div>
-
+            
             @if($announcement->attachment)
-                <div class="mt-8 pt-6 border-t border-gray-200">
-                    <h4 class="text-lg font-medium text-gray-900 mb-4">Lampiran</h4>
-                    <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="w-10 h-10 flex-shrink-0 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
-                            @php
-                                $ext = pathinfo($announcement->attachment, PATHINFO_EXTENSION);
-                                $iconClass = 'fa-file';
-                                
-                                if (in_array($ext, ['pdf'])) {
-                                    $iconClass = 'fa-file-pdf text-red-500';
-                                } elseif (in_array($ext, ['doc', 'docx'])) {
-                                    $iconClass = 'fa-file-word text-blue-500';
-                                } elseif (in_array($ext, ['xls', 'xlsx'])) {
-                                    $iconClass = 'fa-file-excel text-green-500';
-                                } elseif (in_array($ext, ['ppt', 'pptx'])) {
-                                    $iconClass = 'fa-file-powerpoint text-orange-500';
-                                } elseif (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
-                                    $iconClass = 'fa-file-image text-purple-500';
-                                } elseif (in_array($ext, ['zip', 'rar'])) {
-                                    $iconClass = 'fa-file-archive text-yellow-500';
-                                }
-                            @endphp
-                            <i class="fas {{ $iconClass }} text-xl"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h5 class="text-sm font-medium text-gray-900">{{ basename($announcement->attachment) }}</h5>
-                            <a href="{{ Storage::url($announcement->attachment) }}" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-900 mt-1 inline-flex items-center">
-                                <i class="fas fa-download mr-1"></i> Unduh Lampiran
-                            </a>
-                        </div>
+            <div class="mt-8 pt-6 border-t border-gray-100">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Lampiran</h3>
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
+                        @php
+                            $extension = pathinfo(storage_path('app/public/' . $announcement->attachment), PATHINFO_EXTENSION);
+                            $iconClass = 'fa-file';
+                            
+                            if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg'])) {
+                                $iconClass = 'fa-file-image';
+                            } elseif (in_array($extension, ['pdf'])) {
+                                $iconClass = 'fa-file-pdf';
+                            } elseif (in_array($extension, ['doc', 'docx'])) {
+                                $iconClass = 'fa-file-word';
+                            } elseif (in_array($extension, ['xls', 'xlsx'])) {
+                                $iconClass = 'fa-file-excel';
+                            } elseif (in_array($extension, ['ppt', 'pptx'])) {
+                                $iconClass = 'fa-file-powerpoint';
+                            }
+                        @endphp
+                        <i class="fas {{ $iconClass }} text-indigo-600"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-medium text-gray-900 truncate">
+                            {{ basename($announcement->attachment) }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {{ strtoupper($extension) }} File
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <a href="{{ asset('storage/' . $announcement->attachment) }}" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors inline-flex items-center" target="_blank">
+                            <i class="fas fa-download mr-1"></i>
+                            <span>Unduh</span>
+                        </a>
                     </div>
                 </div>
+            </div>
             @endif
         </div>
     </div>
+    
+    <div class="bg-gray-50 border border-gray-100 rounded-lg p-4 text-sm text-gray-600">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+            <p>Pengumuman ini dipublikasikan pada {{ $announcement->publish_date->format('d F Y') }} dan terakhir diperbarui pada {{ $announcement->updated_at->format('d F Y H:i') }}</p>
+        </div>
+    </div>
 @endsection
+
+@push('styles')
+<style>
+    .prose {
+        line-height: 1.75;
+    }
+    
+    .prose p {
+        margin-top: 1.25em;
+        margin-bottom: 1.25em;
+    }
+    
+    .prose strong {
+        font-weight: 600;
+    }
+    
+    .prose ul {
+        list-style-type: disc;
+        margin-top: 1.25em;
+        margin-bottom: 1.25em;
+        padding-left: 1.625em;
+    }
+    
+    .prose ol {
+        list-style-type: decimal;
+        margin-top: 1.25em;
+        margin-bottom: 1.25em;
+        padding-left: 1.625em;
+    }
+    
+    .prose li {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+</style>
+@endpush

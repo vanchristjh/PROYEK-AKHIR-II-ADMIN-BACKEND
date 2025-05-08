@@ -82,6 +82,13 @@
                     <p class="text-xs text-gray-500 mt-1">Kosongkan untuk publikasi langsung</p>
                 </div>
                 
+                <!-- Expiry Date -->
+                <div>
+                    <label for="expiry_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kedaluwarsa</label>
+                    <input type="datetime-local" name="expiry_date" id="expiry_date" value="{{ old('expiry_date') }}" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ada batas waktu.</p>
+                </div>
+                
                 <!-- Attachment -->
                 <div>
                     <label for="attachment" class="block text-sm font-medium text-gray-700 mb-1">File Lampiran</label>

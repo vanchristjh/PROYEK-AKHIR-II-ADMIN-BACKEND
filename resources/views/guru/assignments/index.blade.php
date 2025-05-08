@@ -278,22 +278,6 @@
         animation: fade-in 0.6s ease-in-out;
     }
     
-    .animate-item {
-        animation: item-appear 0.5s ease-out forwards;
-        opacity: 0;
-    }
-    
-    @keyframes item-appear {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
     @keyframes fade-in {
         0% {
             opacity: 0;
@@ -304,32 +288,58 @@
             transform: translateY(0);
         }
     }
+    
+    .animate-item {
+        opacity: 0;
+        animation: fade-in 0.5s ease-out forwards;
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-    function confirmDelete(assignmentTitle, deleteUrl) {
-        const modal = document.getElementById('deleteModal');
-        const modalDescription = document.getElementById('modal-description');
-        const deleteForm = document.getElementById('deleteForm');
-        
-        modalDescription.textContent = `Apakah Anda yakin ingin menghapus tugas "${assignmentTitle}"? Semua data terkait termasuk pengumpulan tugas siswa akan terhapus.`;
-        deleteForm.action = deleteUrl;
-        modal.classList.remove('hidden');
-    }
-    
     document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('deleteModal');
+        const deleteModal = document.getElementById('deleteModal');
         const modalOverlay = document.getElementById('modalOverlay');
         const cancelDelete = document.getElementById('cancelDelete');
+        const deleteForm = document.getElementById('deleteForm');
         
-        modalOverlay.addEventListener('click', function() {
-            modal.classList.add('hidden');
-        });
+        // Function to show delete confirmation modal
+        window.confirmDelete = function(title, url) {
+            // Update the form action URL
+            deleteForm.action = url;
+            
+            // Update modal content with the assignment title
+            document.getElementById('modal-description').textContent = 
+                `Apakah Anda yakin ingin menghapus tugas "${title}"? Semua data terkait termasuk pengumpulan tugas siswa akan terhapus.`;
+            
+            // Show the modal
+            deleteModal.classList.remove('hidden');
+            
+            // Prevent body scrolling
+            document.body.style.overflow = 'hidden';
+        }
         
-        cancelDelete.addEventListener('click', function() {
-            modal.classList.add('hidden');
+        // Close modal when clicking cancel or overlay
+        if (cancelDelete) {
+            cancelDelete.addEventListener('click', closeModal);
+        }
+        
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', closeModal);
+        }
+        
+        // Function to close modal
+        function closeModal() {
+            deleteModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && !deleteModal.classList.contains('hidden')) {
+                closeModal();
+            }
         });
     });
 </script>

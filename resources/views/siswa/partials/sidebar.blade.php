@@ -50,12 +50,12 @@
         </li>
         <li>
             <a href="{{ route('siswa.assignments.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200 {{ request()->routeIs('siswa.assignments.*') ? 'sidebar-active' : '' }}">
-                <div class="p-1.5 rounded-lg {{ request()->routeIs('siswa.assignments.*') ? 'bg-amber-800' : 'bg-indigo-700/50 group-hover:bg-amber-700/50' }} transition-all duration-200">
+                <div class="p-1.5 rounded-lg {{ request()->routeIs('siswa.assignments.*') ? 'bg-yellow-700' : 'bg-indigo-700/50 group-hover:bg-yellow-700/50' }} transition-all duration-200">
                     <i class="fas fa-tasks text-lg w-5 h-5 flex items-center justify-center {{ request()->routeIs('siswa.assignments.*') ? 'text-white' : 'text-indigo-300 group-hover:text-white' }}"></i>
                 </div>
                 <span class="ml-3">Tugas</span>
                 @if(request()->routeIs('siswa.assignments.*'))
-                    <span class="absolute inset-y-0 left-0 w-1 bg-amber-400 rounded-tr-md rounded-br-md"></span>
+                    <span class="absolute inset-y-0 left-0 w-1 bg-yellow-400 rounded-tr-md rounded-br-md"></span>
                 @endif
             </a>
         </li>
@@ -92,7 +92,7 @@
     <ul class="sidebar-items space-y-1 px-3">
         <li>
             <a href="{{ route('siswa.announcements.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200 {{ request()->routeIs('siswa.announcements.*') ? 'sidebar-active' : '' }}">
-                <div class="p-1.5 rounded-lg {{ request()->routeIs('siswa.announcements.*') ? 'bg-red-800' : 'bg-indigo-700/50 group-hover:bg-red-700/50' }} transition-all duration-200">
+                <div class="p-1.5 rounded-lg {{ request()->routeIs('siswa.announcements.*') ? 'bg-red-700' : 'bg-indigo-700/50 group-hover:bg-red-700/50' }} transition-all duration-200">
                     <i class="fas fa-bullhorn text-lg w-5 h-5 flex items-center justify-center {{ request()->routeIs('siswa.announcements.*') ? 'text-white' : 'text-indigo-300 group-hover:text-white' }}"></i>
                 </div>
                 <span class="ml-3">Pengumuman</span>

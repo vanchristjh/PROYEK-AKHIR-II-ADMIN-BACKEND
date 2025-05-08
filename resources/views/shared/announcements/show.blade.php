@@ -151,25 +151,39 @@
     </div>
 
     <!-- Display actions or related information -->
-    <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 border border-gray-200 flex items-center">
-        <i class="fas fa-info-circle text-indigo-500 mr-2"></i>
-        <span>Pengumuman ini dipublikasikan pada {{ $announcement->publish_date->format('d F Y') }} dan dapat dilihat oleh 
-            <span class="font-medium">
-                @switch($announcement->audience)
-                    @case('all')
-                        Semua Pengguna
-                        @break
-                    @case('administrators')
-                        Administrator
-                        @break
-                    @case('teachers')
-                        Guru
-                        @break
-                    @case('students')
-                        Siswa
-                        @break
-                @endswitch
+    <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 border border-gray-200">
+        <div class="flex items-center mb-2">
+            <i class="fas fa-calendar-check text-indigo-500 mr-2"></i>
+            <span>Dipublikasikan pada {{ $announcement->publish_date->format('d F Y, H:i') }}</span>
+        </div>
+        
+        @if($announcement->expiry_date)
+        <div class="flex items-center mb-2">
+            <i class="fas fa-calendar-times text-amber-500 mr-2"></i>
+            <span>Kedaluwarsa pada {{ $announcement->expiry_date->format('d F Y, H:i') }}</span>
+        </div>
+        @endif
+        
+        <div class="flex items-center">
+            <i class="fas fa-users text-blue-500 mr-2"></i>
+            <span>Dapat dilihat oleh 
+                <span class="font-medium">
+                    @switch($announcement->audience)
+                        @case('all')
+                            Semua Pengguna
+                            @break
+                        @case('administrators')
+                            Administrator
+                            @break
+                        @case('teachers')
+                            Guru
+                            @break
+                        @case('students')
+                            Siswa
+                            @break
+                    @endswitch
+                </span>
             </span>
-        </span>
+        </div>
     </div>
 @endsection

@@ -13,16 +13,14 @@ return new class extends Migration
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('student_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('subject_id')->constrained()->onDelete('cascade');
             $table->foreignId('classroom_id')->constrained()->onDelete('cascade');
-            $table->date('date');
-            $table->enum('status', ['present', 'absent', 'late', 'sick', 'permitted'])->default('present');
-            $table->text('notes')->nullable();
+            $table->foreignId('subject_id')->constrained()->onDelete('cascade');
             $table->foreignId('recorded_by')->constrained('users')->onDelete('cascade');
+            $table->date('date');
             $table->timestamps();
-
-            $table->unique(['student_id', 'subject_id', 'date']);
+            
+            // Make the combination of classroom, subject, and date unique
+            $table->unique(['classroom_id', 'subject_id', 'date']);
         });
     }
 
