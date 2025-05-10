@@ -35,6 +35,18 @@
             <span class="ml-3">Pengumuman</span>
         </a>
     </li>
+    <li>
+        <a href="{{ route('admin.profile.edit') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
+            <i class="fas fa-user-circle text-lg w-6 text-indigo-300"></i>
+            <span class="ml-3">Profil Saya</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('admin.settings.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
+            <i class="fas fa-cog text-lg w-6 text-indigo-300"></i>
+            <span class="ml-3">Pengaturan</span>
+        </a>
+    </li>
 @endsection
 
 @section('content')

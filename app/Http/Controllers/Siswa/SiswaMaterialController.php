@@ -3,93 +3,85 @@
 namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\Material;
 use App\Models\Subject;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\Classroom;
 
 class SiswaMaterialController extends Controller
 {
     /**
-     * Display all materials available to the student
+     * Display a listing of materials for students.
      */
     public function index(Request $request)
     {
-        // Get student's classroom
-        $classroomId = Auth::user()->classroom_id;
+        $student = auth()->user();
+        $classroom = $student->classroom;
         
-        if (!$classroomId) {
-            // Return empty paginator instead of array
-            $emptyPaginator = new LengthAwarePaginator([], 0, 10);
-            $emptyPaginator->withPath(request()->url());
-            
+        if (!$classroom) {
             return view('siswa.materials.index', [
-                'materials' => $emptyPaginator,
-                'subjects' => [],
-                'message' => 'You are not assigned to any classroom yet.'
+                'materials' => collect([]), // Return empty collection that can be paginated
+                'subjects' => collect([]),
             ]);
         }
         
-        // Filter by subject if provided
-        $subjectId = $request->input('subject_id');
+        // Get subjects for the student's classroom
+        $subjects = Subject::whereHas('classrooms', function($query) use ($classroom) {
+            $query->where('classrooms.id', $classroom->id);
+        })->get();
         
-        $query = Material::where('classroom_id', $classroomId)
-            ->where('publish_date', '<=', now()) // Only published materials
-            ->with('subject', 'teacher');
-            
-        if ($subjectId) {
-            $query->where('subject_id', $subjectId);
+        // Base query for materials
+        $query = Material::whereHas('subjects', function($query) use ($classroom) {
+            $query->whereHas('classrooms', function($q) use ($classroom) {
+                $q->where('classrooms.id', $classroom->id);
+            });
+        })->with(['teacher', 'subjects']);
+        
+        // Filter by subject if provided
+        if ($request->filled('subject')) {
+            $query->whereHas('subjects', function($q) use ($request) {
+                $q->where('subjects.id', $request->subject);
+            });
         }
         
-        $materials = $query->latest('publish_date')->paginate(10);
+        // Filter by search term if provided
+        if ($request->filled('search')) {
+            $searchTerm = '%' . $request->search . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('title', 'like', $searchTerm)
+                  ->orWhere('description', 'like', $searchTerm);
+            });
+        }
         
-        // Get subjects for filter dropdown
-        $subjects = Subject::whereHas('classrooms', function($query) use ($classroomId) {
-            $query->where('classrooms.id', $classroomId);
-        })->get();
+        // Sort materials
+        $query->orderBy('created_at', 'desc');
+        
+        // Paginate the results - this is key to fixing the error
+        $materials = $query->paginate(10);
         
         return view('siswa.materials.index', compact('materials', 'subjects'));
     }
-    
+
     /**
-     * Display details of a specific material
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function show(Material $material)
+    public function show($id)
     {
-        // Verify material is for student's classroom
-        if ($material->classroom_id !== Auth::user()->classroom_id) {
-            abort(403, 'Unauthorized action.');
+        $student = auth()->user();
+        $material = Material::with(['subject', 'teacher'])->findOrFail($id);
+        
+        // Check if the student has access to this material through their classroom
+        $hasAccess = $material->classrooms()->where('classrooms.id', $student->classroom_id)->exists();
+        
+        if (!$hasAccess) {
+            abort(403, 'Anda tidak memiliki akses ke materi ini.');
         }
         
-        // Verify material is published
-        if ($material->publish_date > now()) {
-            abort(403, 'This material is not available yet.');
-        }
-        
-        return view('siswa.materials.show', compact('material'));
-    }
-    
-    /**
-     * Download a material file
-     */
-    public function download(Material $material)
-    {
-        // Verify material is for student's classroom
-        if ($material->classroom_id !== Auth::user()->classroom_id) {
-            abort(403, 'Unauthorized action.');
-        }
-        
-        // Verify material is published
-        if ($material->publish_date > now()) {
-            abort(403, 'This material is not available yet.');
-        }
-        
-        if (!Storage::exists($material->file_path)) {
-            abort(404, 'File not found.');
-        }
-        
-        return Storage::download($material->file_path, $material->file_name);
+        return view('siswa.materials.show', [
+            'material' => $material
+        ]);
     }
 }

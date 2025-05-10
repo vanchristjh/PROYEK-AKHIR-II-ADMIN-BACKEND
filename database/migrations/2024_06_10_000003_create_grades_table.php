@@ -8,35 +8,23 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        if (!Schema::hasTable('grades')) {
-            Schema::create('grades', function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('student_id');
-                $table->unsignedBigInteger('teacher_id');
-                $table->unsignedBigInteger('subject_id');
-                $table->unsignedBigInteger('classroom_id');
-                $table->unsignedBigInteger('assignment_id')->nullable();
-                $table->decimal('score', 5, 2);
-                $table->decimal('max_score', 5, 2)->default(100.00);
-                $table->string('type')->default('assignment');
-                $table->text('feedback')->nullable();
-                $table->string('semester')->nullable();
-                $table->string('academic_year')->nullable();
-                $table->boolean('modified_by_admin')->default(false);
-                $table->unsignedBigInteger('admin_id')->nullable();
-                $table->timestamps();
-            });
-        }
+        // Skip creating this table since it should already exist
+        return;
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('grades');
+        // No-op because the up method does nothing
+        return;
     }
 };

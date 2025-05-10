@@ -15,14 +15,30 @@ class RoleMiddleware
      * @param  \Closure  $next
      * @param  string  $role
      * @return mixed
-     */
-    public function handle(Request $request, Closure $next, $role)
+     */    public function handle(Request $request, Closure $next, $role)
     {
         if (!Auth::check()) {
-            return redirect('login');
+            // Not logged in, redirect to login
+            return redirect()->route('login');
         }
         
-        $userRole = Auth::user()->role->slug;
+        $user = Auth::user();
+        
+        // Check if user has a role
+        if (!$user->role) {
+            // Log the issue
+            \Log::error('User has no role defined: ' . $user->id);
+            
+            // Logout the user and invalidate session
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return redirect()->route('login')
+                ->withErrors(['username' => 'Your account has no role assigned. Please contact administrator.']);
+        }
+        
+        $userRole = $user->role->slug;
         
         if ($userRole !== $role) {
             return redirect()->route('unauthorized');

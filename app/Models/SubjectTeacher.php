@@ -27,7 +27,7 @@ class SubjectTeacher extends Pivot
      */
     protected $fillable = [
         'subject_id',
-        'user_id',
+        'teacher_id',
     ];
     
     /**

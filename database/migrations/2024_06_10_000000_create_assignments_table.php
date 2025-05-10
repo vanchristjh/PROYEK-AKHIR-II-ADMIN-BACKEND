@@ -8,50 +8,23 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        // Don't create if it already exists
-        if (!Schema::hasTable('assignments')) {
-            Schema::create('assignments', function (Blueprint $table) {
-                $table->id();
-                $table->string('title');
-                $table->text('description')->nullable();
-                $table->unsignedBigInteger('classroom_id');
-                $table->unsignedBigInteger('subject_id');
-                $table->unsignedBigInteger('teacher_id');
-                $table->string('attachment_path')->nullable();
-                $table->timestamp('deadline')->nullable();
-                $table->decimal('max_score', 5, 2)->default(100.00);
-                $table->timestamps();
-            });
-            
-            // Add foreign keys in a separate step, only if referenced tables exist
-            if (Schema::hasTable('classrooms')) {
-                Schema::table('assignments', function (Blueprint $table) {
-                    $table->foreign('classroom_id')->references('id')->on('classrooms')->onDelete('cascade');
-                });
-            }
-            
-            if (Schema::hasTable('subjects')) {
-                Schema::table('assignments', function (Blueprint $table) {
-                    $table->foreign('subject_id')->references('id')->on('subjects')->onDelete('cascade');
-                });
-            }
-            
-            if (Schema::hasTable('users')) {
-                Schema::table('assignments', function (Blueprint $table) {
-                    $table->foreign('teacher_id')->references('id')->on('users')->onDelete('cascade');
-                });
-            }
-        }
+        // Skip creating this table since it already exists
+        return;
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('assignments');
+        // No-op because the up method does nothing
+        return;
     }
 };

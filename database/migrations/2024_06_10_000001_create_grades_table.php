@@ -8,52 +8,45 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
+        if (Schema::hasTable('grades')) {
+            return;
+        }
+        
         Schema::create('grades', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('student_id')->constrained('users');
-            $table->foreignId('teacher_id')->constrained('users');
-            
-            // Check if subjects table exists before creating foreign key
-            if (Schema::hasTable('subjects')) {
-                $table->foreignId('subject_id')->constrained('subjects');
-            } else {
-                $table->unsignedBigInteger('subject_id');
-            }
-            
-            // Check if classrooms table exists before creating foreign key
-            if (Schema::hasTable('classrooms')) {
-                $table->foreignId('classroom_id')->constrained('classrooms');
-            } else {
-                $table->unsignedBigInteger('classroom_id');
-            }
-            
-            // Make the assignment_id nullable and only add constraint if table exists
-            $table->unsignedBigInteger('assignment_id')->nullable();
-            if (Schema::hasTable('assignments')) {
-                $table->foreign('assignment_id')->references('id')->on('assignments');
-            }
-            
-            $table->decimal('score', 5, 2);
-            $table->decimal('max_score', 5, 2)->default(100.00);
-            $table->string('type')->default('assignment'); // assignment, quiz, exam, etc.
-            $table->text('feedback')->nullable();
-            $table->string('semester')->nullable();
-            $table->string('academic_year')->nullable();
-            $table->boolean('modified_by_admin')->default(false);
-            $table->unsignedBigInteger('admin_id')->nullable();
-            $table->foreign('admin_id')->references('id')->on('users');
+            $table->foreignId('student_id')->constrained()->onDelete('cascade');
+            $table->foreignId('subject_id')->constrained()->onDelete('cascade');
+            $table->foreignId('teacher_id')->constrained('teachers')->onDelete('cascade');
+            $table->string('semester');
+            $table->string('academic_year');
+            $table->decimal('assignment_score', 5, 2)->nullable();
+            $table->decimal('midterm_score', 5, 2)->nullable();
+            $table->decimal('final_score', 5, 2)->nullable();
+            $table->decimal('total_score', 5, 2)->nullable();
+            $table->char('grade', 2)->nullable();
+            $table->text('comments')->nullable();
             $table->timestamps();
+            
+            // Ensure a student can only have one grade per subject per semester/year
+            $table->unique(['student_id', 'subject_id', 'semester', 'academic_year'], 'unique_student_subject_semester_year');
         });
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('grades');
+        // Only drop if it exists
+        if (Schema::hasTable('grades')) {
+            Schema::dropIfExists('grades');
+        }
     }
 };

@@ -76,26 +76,28 @@ class AssignmentController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
+        $assignment = Assignment::findOrFail($id);
         
-        $assignment = Assignment::with([
-            'subject', 
-            'submissions' => function($query) use ($user) {
-                $query->where('student_id', $user->id);
-            }
-        ])->findOrFail($id);
+        // Check if user's class has access to this assignment
+        $student = Auth::user();
+        $classroom = $student->classroom;
         
-        // Check if the assignment is for student's class
-        if ($assignment->classroom_id !== $user->classroom_id) {
-            abort(403, 'You do not have access to this assignment.');
-        }
+        // Check if user has submitted this assignment
+        $submission = Submission::where('assignment_id', $id)
+            ->where('student_id', $student->id)
+            ->first();
         
-        // Get the student's submission for this assignment, if any
-        $submission = Submission::where('assignment_id', $assignment->id)
-                             ->where('student_id', $user->id)
-                             ->first();
+        $isSubmitted = !is_null($submission);
+        $isGraded = $isSubmitted && !is_null($submission->score);
+        $isExpired = $assignment->deadline < now();
         
-        return view('siswa.assignments.show', compact('assignment', 'submission'));
+        return view('siswa.assignments.show', [
+            'assignment' => $assignment,
+            'submission' => $submission,
+            'isSubmitted' => $isSubmitted,
+            'isGraded' => $isGraded,
+            'isExpired' => $isExpired,
+        ]);
     }
 
     /**

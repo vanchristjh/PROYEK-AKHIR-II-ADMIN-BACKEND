@@ -4,6 +4,7 @@
     php_value post_max_size 21M
     php_value max_execution_time 300
     php_value max_input_time 300
+    php_value memory_limit 256M
 </IfModule>
 
 <IfModule mod_php8.c>
@@ -11,6 +12,16 @@
     php_value post_max_size 21M
     php_value max_execution_time 300
     php_value max_input_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+# For LiteSpeed/OpenLiteSpeed
+<IfModule litespeed>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 21M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 256M
 </IfModule>
 
 # Existing code (if any)...

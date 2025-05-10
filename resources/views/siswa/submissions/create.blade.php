@@ -1,4 +1,4 @@
-                    </div>
+</div>
                 </div>
             </form>
         </div>
@@ -14,9 +14,19 @@
         const progressContainer = document.getElementById('progress-container');
         const progressBar = document.getElementById('progress-bar');
         const statusText = document.getElementById('status-text');
-        const submitButton = document.querySelector('button[type="submit"]');
-        const commentInput = document.getElementById('comment');
+        const submitButton = document.querySelector('button[type="submit"]');        const commentInput = document.getElementById('comment');
         const contentInput = document.getElementById('content');
+        
+        // Define server limits based on error message (content-length: 8855181 bytes)
+        // Note: To increase the server limit, modify post_max_size in php.ini or .htaccess file
+        // For PHP, add: post_max_size=16M and upload_max_filesize=16M
+        const MAX_FILE_SIZE = 2; // 2MB to be safe (server limit appears to be around 8MB)
+        const ALLOWED_FILE_TYPES = [
+            'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/zip', 'application/x-zip-compressed', 'image/jpeg', 'image/png', 'image/gif', 'text/plain'
+        ];
         
         // Auto-save timer
         let autoSaveTimer;
@@ -59,6 +69,21 @@
                     const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
                     const fileName = file.name;
                     const fileType = file.type;
+                      // Validate file size immediately
+                    if (fileSize > MAX_FILE_SIZE) {
+                        fileInput.value = ''; // Clear the file input
+                        showError(`File terlalu besar (${fileSize}MB). Ukuran maksimal yang diizinkan adalah ${MAX_FILE_SIZE}MB. Silahkan kompres file atau gunakan layanan seperti Google Drive untuk berbagi file yang lebih besar.`);
+                        submitButton.disabled = true;
+                        return; // Stop processing
+                    }
+                    
+                    // Validate file type if not empty
+                    if (fileType && !ALLOWED_FILE_TYPES.includes(fileType)) {
+                        fileInput.value = ''; // Clear the file input
+                        showError(`Jenis file "${fileType}" tidak diizinkan. Gunakan format file yang umum seperti PDF, Word, Excel, PowerPoint, atau ZIP.`);
+                        submitButton.disabled = true;
+                        return; // Stop processing
+                    }
                     
                     // Clear previous preview
                     filePreview.innerHTML = '';
@@ -70,25 +95,25 @@
                     let iconClass = 'fa-file';
                     let colorClass = 'text-gray-500';
                     
-                    if (fileType.includes('pdf')) {
+                    if (file.type.includes('pdf')) {
                         iconClass = 'fa-file-pdf';
                         colorClass = 'text-red-500';
-                    } else if (fileType.includes('word') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+                    } else if (file.type.includes('word') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
                         iconClass = 'fa-file-word';
                         colorClass = 'text-blue-500';
-                    } else if (fileType.includes('spreadsheet') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+                    } else if (file.type.includes('spreadsheet') || fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
                         iconClass = 'fa-file-excel';
                         colorClass = 'text-green-500';
-                    } else if (fileType.includes('presentation') || fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) {
+                    } else if (file.type.includes('presentation') || fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) {
                         iconClass = 'fa-file-powerpoint';
                         colorClass = 'text-orange-500';
-                    } else if (fileType.includes('image')) {
+                    } else if (file.type.includes('image')) {
                         iconClass = 'fa-file-image';
                         colorClass = 'text-purple-500';
-                    } else if (fileType.includes('zip') || fileType.includes('archive') || fileName.endsWith('.zip')) {
+                    } else if (file.type.includes('zip') || file.type.includes('archive') || fileName.endsWith('.zip')) {
                         iconClass = 'fa-file-archive';
                         colorClass = 'text-yellow-500';
-                    } else if (fileType.includes('video')) {
+                    } else if (file.type.includes('video')) {
                         iconClass = 'fa-file-video';
                         colorClass = 'text-pink-500';
                     }
@@ -120,17 +145,13 @@
                         filePreview.innerHTML = '';
                         progressContainer.classList.add('hidden');
                         progressBar.style.width = '0%';
-                    });
-                    
-                    // Validate file size
-                    const maxSize = 20; // 20MB
-                    if (file.size > maxSize * 1024 * 1024) {
-                        showError(`File terlalu besar. Ukuran maksimal adalah ${maxSize}MB.`);
-                        submitButton.disabled = true;
-                    } else {
                         clearError();
                         submitButton.disabled = false;
-                    }
+                    });
+                    
+                    // File is valid
+                    clearError();
+                    submitButton.disabled = false;
                 }
             });
         }
@@ -138,27 +159,43 @@
         // Form submission
         if (form) {
             form.addEventListener('submit', function(event) {
+                // Additional file size validation before submission
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
+                    const fileType = file.type;
+                      if (fileSize > MAX_FILE_SIZE) {
+                        event.preventDefault();
+                        showError(`File terlalu besar (${fileSize}MB). Ukuran maksimal yang diizinkan adalah ${MAX_FILE_SIZE}MB. Silahkan kompres file atau gunakan layanan seperti Google Drive untuk berbagi file yang lebih besar.`);
+                        window.scrollTo(0, 0); // Scroll to top to show the error
+                        return false;
+                    }
+                    
+                    // Validate file type if not empty
+                    if (fileType && !ALLOWED_FILE_TYPES.includes(fileType)) {
+                        event.preventDefault();
+                        showError(`Jenis file "${fileType}" tidak diizinkan. Gunakan format file yang umum seperti PDF, Word, Excel, PowerPoint, atau ZIP.`);
+                        window.scrollTo(0, 0); // Scroll to top to show the error
+                        return false;
+                    }
+                }
+                
                 // Clear auto-saved content on successful submission
                 if (contentInput) {
                     localStorage.removeItem(`submission_content_${document.querySelector('input[name="assignment_id"]').value}`);
-                }
-                
-                // Basic validation
-                if (fileInput && fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const maxSize = 20; // 20MB
-                    
-                    if (file.size > maxSize * 1024 * 1024) {
-                        event.preventDefault();
-                        showError(`File terlalu besar. Ukuran maksimal adalah ${maxSize}MB.`);
-                        return false;
-                    }
                 }
                 
                 // Show loading state
                 submitButton.disabled = true;
                 const originalText = submitButton.innerHTML;
                 submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengirim...';
+                
+                // Add a hidden field to track form submission progress
+                const progressTracker = document.createElement('input');
+                progressTracker.type = 'hidden';
+                progressTracker.name = 'submission_started';
+                progressTracker.value = Date.now();
+                form.appendChild(progressTracker);
                 
                 // Disable form reset
                 form.onreset = function(e) {
@@ -171,10 +208,10 @@
         function showError(message) {
             const errorContainer = document.getElementById('error-container') || createErrorContainer();
             errorContainer.innerHTML = `
-                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-md mb-4">
                     <div class="flex">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                            <i class="fas fa-exclamation-triangle text-red-500"></i>
                         </div>
                         <div class="ml-3">
                             <p class="text-sm text-red-700">${message}</p>
@@ -183,6 +220,9 @@
                 </div>
             `;
             errorContainer.classList.remove('hidden');
+            
+            // Scroll to error
+            errorContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         
         function clearError() {

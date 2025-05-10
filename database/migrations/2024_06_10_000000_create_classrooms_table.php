@@ -8,37 +8,23 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        if (!Schema::hasTable('classrooms')) {
-            Schema::create('classrooms', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->string('grade_level')->nullable();
-                $table->string('academic_year')->nullable();
-                $table->unsignedBigInteger('homeroom_teacher_id')->nullable();
-                $table->integer('capacity')->default(30);
-                $table->string('room_number')->nullable();
-                $table->timestamps();
-            });
-            
-            // Add foreign key in a separate step, only if users table exists
-            if (Schema::hasTable('users')) {
-                Schema::table('classrooms', function (Blueprint $table) {
-                    $table->foreign('homeroom_teacher_id')
-                          ->references('id')->on('users')
-                          ->onDelete('set null');
-                });
-            }
-        }
+        // Skip creating this table since it already exists
+        return;
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('classrooms');
+        // No-op because the up method does nothing
+        return;
     }
 };

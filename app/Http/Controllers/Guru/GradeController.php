@@ -20,49 +20,57 @@ class GradeController extends Controller
     public function index(Request $request)
     {
         $teacher = Auth::user();
+        $teacherId = $teacher->id;
         
-        // Query submissions instead of grades
-        $query = Submission::with(['student', 'assignment.subject', 'assignment.classroom'])
-            ->whereHas('assignment', function($q) use($teacher) {
-                $q->whereHas('subject.teachers', function($q2) use($teacher) {
-                    $q2->where('user_id', $teacher->id);
-                });
-            });
-            
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'graded') {
-                $query->whereNotNull('score');
-            } elseif ($request->status === 'ungraded') {
-                $query->whereNull('score');
-            }
-        }
+        // Get teacher's subjects
+        $subjects = $teacher->teacherSubjects()->get();
         
-        // Filter by subject
+        // Get classrooms the teacher has access to
+        $classrooms = $teacher->teachingClassrooms()->get();
+        
+        // Base query for direct grades
+        $directGradesQuery = Grade::where('teacher_id', $teacherId);
+        
+        // Get submission-based grades
+        $submissionsQuery = Submission::with(['student', 'assignment'])
+                                ->whereHas('assignment', function($query) use ($teacherId) {
+                                    $query->where('teacher_id', $teacherId);
+                                });
+        
+        // Apply filters if provided
         if ($request->filled('subject')) {
-            $query->whereHas('assignment.subject', function($q) use($request) {
-                $q->where('id', $request->subject);
+            $subjectId = $request->subject;
+            $directGradesQuery->where('subject_id', $subjectId);
+            $submissionsQuery->whereHas('assignment', function($query) use ($subjectId) {
+                $query->where('subject_id', $subjectId);
             });
         }
         
-        // Filter by classroom
         if ($request->filled('classroom')) {
-            $query->whereHas('assignment.classroom', function($q) use($request) {
-                $q->where('id', $request->classroom);
+            $classroomId = $request->classroom;
+            $directGradesQuery->where('classroom_id', $classroomId);
+            $submissionsQuery->whereHas('student', function($query) use ($classroomId) {
+                $query->where('classroom_id', $classroomId);
             });
         }
         
-        $submissions = $query->latest('submitted_at')->paginate(15);
+        // Get paginated results
+        $directGrades = $directGradesQuery->orderBy('created_at', 'desc')->paginate(10, ['*'], 'direct_page');
+        $submissions = $submissionsQuery->orderBy('created_at', 'desc')->paginate(10, ['*'], 'submissions_page');
         
-        // Get subjects that this teacher teaches
-        $subjects = $teacher->teacherSubjects;
+        // Get all grades (mainly for backward compatibility)
+        $grades = Grade::where('teacher_id', $teacherId)
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(10, ['*'], 'grades_page');
         
-        // Get classrooms that this teacher teaches
-        $classrooms = Classroom::whereHas('subjects.teachers', function($query) use ($teacher) {
-            $query->where('users.id', $teacher->id);
-        })->get();
-        
-        return view('guru.grades.index', compact('submissions', 'subjects', 'classrooms'));
+        // Pass all necessary variables to the view
+        return view('guru.grades.index', compact(
+            'grades', 
+            'subjects', 
+            'classrooms', 
+            'submissions', 
+            'directGrades'
+        ));
     }
     
     /**
@@ -85,8 +93,7 @@ class GradeController extends Controller
     public function store(Request $request)
     {
         $teacher = Auth::user();
-        
-        $validated = $request->validate([
+          $validated = $request->validate([
             'student_id' => 'required|exists:users,id',
             'subject_id' => 'required|exists:subjects,id',
             'classroom_id' => 'required|exists:classrooms,id',
@@ -96,19 +103,44 @@ class GradeController extends Controller
             'feedback' => 'nullable|string',
             'semester' => 'required|string',
             'academic_year' => 'required|string',
+        ], [
+            'student_id.required' => 'Siswa harus dipilih.',
+            'student_id.exists' => 'Siswa yang dipilih tidak valid.',
+            'subject_id.required' => 'Mata pelajaran harus dipilih.',
+            'subject_id.exists' => 'Mata pelajaran yang dipilih tidak valid.',
+            'classroom_id.required' => 'Kelas harus dipilih.',
+            'classroom_id.exists' => 'Kelas yang dipilih tidak valid.',
+            'score.required' => 'Nilai harus diisi.',
+            'score.numeric' => 'Nilai harus berupa angka.',
+            'score.min' => 'Nilai tidak boleh kurang dari 0.',
+            'max_score.required' => 'Nilai maksimum harus diisi.',
+            'max_score.numeric' => 'Nilai maksimum harus berupa angka.',
+            'max_score.min' => 'Nilai maksimum tidak boleh kurang dari 1.',
+            'type.required' => 'Tipe penilaian harus diisi.',
+            'semester.required' => 'Semester harus diisi.',
+            'academic_year.required' => 'Tahun ajaran harus diisi.',
         ]);
         
         // Ensure teacher teaches this subject
-        if (!$teacher->subjects->contains($validated['subject_id'])) {
-            return back()->with('error', 'You cannot grade for this subject.');
+        $teachesSubject = $teacher->teacherSubjects->contains($validated['subject_id']);
+        if (!$teachesSubject) {
+            return back()->withInput()->with('error', 'Anda tidak berwenang memberikan penilaian untuk mata pelajaran ini.');
         }
         
+        // Ensure student belongs to selected classroom
+        $student = User::findOrFail($validated['student_id']);
+        if ($student->classroom_id != $validated['classroom_id']) {
+            return back()->withInput()->with('error', 'Siswa tidak terdaftar di kelas yang dipilih.');
+        }
+
+        // Add teacher ID to the validated data
         $validated['teacher_id'] = $teacher->id;
         
+        // Create the grade
         Grade::create($validated);
         
         return redirect()->route('guru.grades.index')
-            ->with('success', 'Grade created successfully');
+            ->with('success', 'Penilaian berhasil dibuat!');
     }
     
     /**
@@ -167,7 +199,22 @@ class GradeController extends Controller
         
         // Check if teacher owns this grade
         if ($grade->teacher_id !== $teacher->id) {
-            return back()->with('error', 'You are not authorized to edit this grade');
+            return back()->with('error', 'Anda tidak memiliki akses untuk mengedit nilai ini');
+        }
+        
+        // If this grade is for an assignment, redirect to the submission page
+        if ($grade->assignment_id) {
+            // Find the submission
+            $submission = Submission::where('student_id', $grade->student_id)
+                ->where('assignment_id', $grade->assignment_id)
+                ->first();
+            
+            if ($submission) {
+                return redirect()->route('guru.submissions.show', [
+                    'assignment' => $grade->assignment_id,
+                    'submission' => $submission->id
+                ]);
+            }
         }
         
         return view('guru.grades.edit', compact('grade'));
@@ -184,10 +231,14 @@ class GradeController extends Controller
         if ($grade->teacher_id !== $teacher->id) {
             return back()->with('error', 'You are not authorized to update this grade');
         }
-        
-        $validated = $request->validate([
+          $validated = $request->validate([
             'score' => 'required|numeric|min:0|max:' . $grade->max_score,
             'feedback' => 'nullable|string',
+        ], [
+            'score.required' => 'Nilai harus diisi.',
+            'score.numeric' => 'Nilai harus berupa angka.',
+            'score.min' => 'Nilai tidak boleh kurang dari 0.',
+            'score.max' => 'Nilai tidak boleh lebih dari ' . $grade->max_score . '.',
         ]);
         
         $grade->update($validated);
@@ -226,5 +277,57 @@ class GradeController extends Controller
         
         return redirect()->route('guru.grades.index')
             ->with('success', 'Grade deleted successfully');
+    }
+    
+    /**
+     * Get classrooms for a specific subject that the teacher teaches
+     */
+    public function getClassroomsBySubject($subjectId)
+    {
+        $teacher = Auth::user();
+        
+        // Check if teacher teaches this subject
+        if (!$teacher->teacherSubjects->contains($subjectId)) {
+            return response()->json([
+                'error' => 'Anda tidak mengajar mata pelajaran ini.'
+            ], 403);
+        }
+        
+        // Get classrooms for this subject
+        $classrooms = Classroom::whereHas('subjects', function($query) use ($subjectId) {
+            $query->where('subjects.id', $subjectId);
+        })->get(['id', 'name']);
+        
+        return response()->json($classrooms);
+    }
+    
+    /**
+     * Get students for a specific classroom
+     */
+    public function getStudentsByClassroom($classroomId)
+    {
+        $teacher = Auth::user();
+        
+        // Check if teacher teaches in this classroom
+        $teachesInClassroom = Classroom::where('id', $classroomId)
+            ->whereHas('subjects.teachers', function($query) use ($teacher) {
+                $query->where('users.id', $teacher->id);
+            })->exists();
+            
+        if (!$teachesInClassroom) {
+            return response()->json([
+                'error' => 'Anda tidak mengajar di kelas ini.'
+            ], 403);
+        }
+        
+        // Get students in this classroom
+        $students = User::where('classroom_id', $classroomId)
+            ->whereHas('role', function($query) {
+                $query->where('slug', 'siswa');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'nis']);
+        
+        return response()->json($students);
     }
 }

@@ -195,11 +195,9 @@
     </div>
     
     <!-- Pagination -->
-    @if(isset($materials) && $materials->hasPages())
-        <div class="flex justify-center">
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                {{ $materials->withQueryString()->links() }}
-            </nav>
+    @if(isset($materials) && $materials instanceof \Illuminate\Pagination\LengthAwarePaginator && $materials->hasPages())
+        <div class="px-4 py-3 border-t border-gray-200">
+            {{ $materials->links() }}
         </div>
     @endif
 @endsection

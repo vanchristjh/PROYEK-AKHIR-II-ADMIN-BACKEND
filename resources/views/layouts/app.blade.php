@@ -400,9 +400,19 @@
                                     <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
                                 </div>
                                 
-                                <a href="#" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
+                                @if(auth()->user()->role->slug === 'admin')
+                                <a href="{{ route('admin.profile.show') }}" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
                                     <i class="fas fa-user text-secondary-500 mr-3 w-4"></i> Profil
                                 </a>
+                                @elseif(auth()->user()->role->slug === 'guru')
+                                <a href="{{ route('guru.profile.show') }}" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
+                                    <i class="fas fa-user text-secondary-500 mr-3 w-4"></i> Profil
+                                </a>
+                                @elseif(auth()->user()->role->slug === 'siswa')
+                                <a href="{{ route('siswa.profile.show') }}" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
+                                    <i class="fas fa-user text-secondary-500 mr-3 w-4"></i> Profil
+                                </a>
+                                @endif
                                 
                                 @if(auth()->user()->role->slug === 'admin')
                                 <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
@@ -418,9 +428,20 @@
                                 </a>
                                 @endif
                                 
-                                <a href="#" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
+                                @if(auth()->user()->role->slug === 'admin')
+                                <a href="{{ route('admin.settings.index') }}" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
                                     <i class="fas fa-cog text-secondary-500 mr-3 w-4"></i> Pengaturan
                                 </a>
+                                @elseif(auth()->user()->role->slug === 'guru')
+                                <a href="{{ route('guru.settings.index') }}" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
+                                    <i class="fas fa-cog text-secondary-500 mr-3 w-4"></i> Pengaturan
+                                </a>
+                                @elseif(auth()->user()->role->slug === 'siswa')
+                                <a href="{{ route('siswa.settings.index') }}" class="flex items-center px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50">
+                                    <i class="fas fa-cog text-secondary-500 mr-3 w-4"></i> Pengaturan
+                                </a>
+                                @endif
+                                
                                 <div class="border-t border-secondary-200 my-1"></div>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf

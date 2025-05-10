@@ -45,6 +45,33 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6">
+    <!-- Add flash messages for success/error notifications -->
+    @if(session('success'))
+        <div class="mb-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-md">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-green-700">{{ session('success') }}</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">{{ session('error') }}</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="mb-6">
         <a href="{{ route('siswa.assignments.index') }}" class="text-indigo-600 hover:text-indigo-800 inline-flex items-center">
             <i class="fas fa-arrow-left mr-1"></i> Kembali ke daftar tugas
@@ -198,10 +225,13 @@
                                 <div class="flex items-center bg-gray-50 border border-gray-200 p-3 rounded-md mb-4">
                                     <i class="fas fa-file-alt text-gray-500 mr-3"></i>
                                     <div class="flex-1">
-                                        <p class="text-sm font-medium text-gray-700">{{ Str::afterLast($submission->file, '/') }}</p>
+                                        <p class="text-sm font-medium text-gray-700">{{ Str::afterLast($submission->submission_file, '/') }}</p>
                                     </div>
-                                    <a href="{{ Storage::url($submission->file) }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                    <a href="{{ Storage::url($submission->submission_file) }}" target="_blank" class="text-blue-600 hover:text-blue-800 mr-2">
                                         <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                    <a href="{{ Storage::url($submission->submission_file) }}" download class="text-green-600 hover:text-green-800">
+                                        <i class="fas fa-download"></i>
                                     </a>
                                 </div>
                                 
@@ -233,10 +263,18 @@
                                 @endif
                                 
                                 @if(!$isExpired && !$isGraded)
-                                    <div class="mt-4">
+                                    <div class="mt-4 flex space-x-3">
                                         <button type="button" id="show-edit-form" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
                                             <i class="fas fa-edit mr-1"></i> Edit Pengumpulan
                                         </button>
+                                        
+                                        <form action="{{ route('siswa.submissions.destroy', $submission->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengumpulan tugas ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors">
+                                                <i class="fas fa-trash-alt mr-1"></i> Hapus
+                                            </button>
+                                        </form>
                                     </div>
                                 @endif
                             </div>
@@ -251,19 +289,24 @@
                             <form action="{{ route('siswa.submissions.update', $submission->id) }}" method="POST" enctype="multipart/form-data" class="bg-white border border-gray-200 rounded-md p-5">
                                 @csrf
                                 @method('PUT')
-                                
                                 <div class="mb-4">
-                                    <label for="file" class="block text-sm font-medium text-gray-700 mb-1">File Tugas <span class="text-red-500">*</span></label>
-                                    <div class="flex items-center">
-                                        <input type="file" name="file" id="file" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    <label for="file" class="block text-sm font-medium text-gray-700 mb-1">File Tugas</label>
+                                    <div class="bg-blue-50 p-3 rounded-lg mb-3 border border-blue-100">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                                            <p class="text-xs text-blue-700">Perhatian: Ukuran file maksimal <strong>2MB</strong>. Untuk file yang lebih besar, silahkan kompres file atau unggah ke Google Drive/cloud storage dan masukkan link sharing-nya di catatan.</p>
+                                        </div>
                                     </div>
-                                    <p class="mt-1 text-xs text-gray-500">Format file: PDF, Word, Excel, PowerPoint. Maksimal 10MB.</p>
-                                    <p class="mt-2 text-xs text-gray-500">File saat ini: <strong>{{ Str::afterLast($submission->file, '/') }}</strong></p>
+                                    <div class="flex items-center">
+                                        <input type="file" name="file" id="edit-file" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">Format file: PDF, Word, Excel, PowerPoint. Maksimal 2MB.</p>
+                                    <p class="mt-2 text-xs text-gray-500">File saat ini: <strong>{{ Str::afterLast($submission->submission_file, '/') }}</strong></p>
                                 </div>
                                 
                                 <div class="mb-4">
                                     <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Catatan (Opsional)</label>
-                                    <textarea name="notes" id="notes" rows="3" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">{{ $submission->notes }}</textarea>
+                                    <textarea name="notes" id="edit-notes" rows="3" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">{{ $submission->notes }}</textarea>
                                     <p class="mt-1 text-xs text-gray-500">Tambahkan catatan jika diperlukan (maksimal 500 karakter)</p>
                                 </div>
                                 
@@ -284,16 +327,27 @@
                     @if(!$isExpired)
                         <form action="{{ route('siswa.submissions.store', $assignment->id) }}" method="POST" enctype="multipart/form-data" class="bg-white border border-gray-200 rounded-md p-5">
                             @csrf
-                            
                             <div class="mb-4">
                                 <label for="file" class="block text-sm font-medium text-gray-700 mb-1">File Tugas <span class="text-red-500">*</span></label>
+                                <div class="bg-blue-50 p-3 rounded-lg mb-3 border border-blue-100">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                                        <p class="text-xs text-blue-700">Perhatian: Ukuran file maksimal <strong>2MB</strong>. Untuk file yang lebih besar, silahkan kompres file atau unggah ke Google Drive/cloud storage dan masukkan link sharing-nya di catatan.</p>
+                                    </div>
+                                </div>
                                 <input type="file" name="file" id="file" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
-                                <p class="mt-1 text-xs text-gray-500">Format file: PDF, Word, Excel, PowerPoint. Maksimal 10MB.</p>
+                                @error('file')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                                <p class="mt-1 text-xs text-gray-500">Format file: PDF, Word, Excel, PowerPoint. Maksimal 2MB.</p>
                             </div>
                             
                             <div class="mb-4">
                                 <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Catatan (Opsional)</label>
-                                <textarea name="notes" id="notes" rows="3" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                                <textarea name="notes" id="notes" rows="3" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">{{ old('notes') }}</textarea>
+                                @error('notes')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
                                 <p class="mt-1 text-xs text-gray-500">Tambahkan catatan jika diperlukan (maksimal 500 karakter)</p>
                             </div>
                             
@@ -331,7 +385,28 @@
         const showEditFormBtn = document.getElementById('show-edit-form');
         const editSubmissionForm = document.getElementById('edit-submission-form');
         const cancelEditBtn = document.getElementById('cancel-edit');
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        const submitForms = document.querySelectorAll('form[enctype="multipart/form-data"]');
         
+        // File size validation constants
+        const MAX_FILE_SIZE = 2; // 2MB limit
+        const ALLOWED_FILE_TYPES = [
+            'application/pdf', 
+            'application/msword', 
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel', 
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint', 
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/zip', 
+            'application/x-zip-compressed', 
+            'image/jpeg', 
+            'image/png', 
+            'image/gif', 
+            'text/plain'
+        ];
+        
+        // Edit form toggle functionality
         if(showEditFormBtn && editSubmissionForm) {
             showEditFormBtn.addEventListener('click', function() {
                 editSubmissionForm.classList.remove('hidden');
@@ -344,6 +419,52 @@
                 editSubmissionForm.classList.add('hidden');
                 showEditFormBtn.classList.remove('hidden');
             });
+        }
+        
+        // File validation for all file inputs
+        fileInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                validateFile(this);
+            });
+        });
+        
+        // Form submission validation
+        submitForms.forEach(form => {
+            form.addEventListener('submit', function(event) {
+                const fileInput = this.querySelector('input[type="file"]');
+                if (fileInput && fileInput.files.length > 0) {
+                    if (!validateFile(fileInput)) {
+                        event.preventDefault();
+                        return false;
+                    }
+                }
+            });
+        });
+        
+        // File validation function
+        function validateFile(fileInput) {
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
+                
+                // Check file size
+                if (fileSize > MAX_FILE_SIZE) {
+                    alert(`File terlalu besar (${fileSize}MB). Ukuran maksimal yang diizinkan adalah ${MAX_FILE_SIZE}MB. Silahkan kompres file atau gunakan layanan seperti Google Drive untuk berbagi file yang lebih besar.`);
+                    fileInput.value = ''; // Clear the file input
+                    return false;
+                }
+                
+                // Optional: Check file type
+                // const fileType = file.type;
+                // if (!ALLOWED_FILE_TYPES.includes(fileType)) {
+                //     alert(`Jenis file tidak diperbolehkan. Gunakan format PDF, Word, Excel, PowerPoint, atau ZIP.`);
+                //     fileInput.value = ''; // Clear the file input
+                //     return false;
+                // }
+                
+                return true;
+            }
+            return true;
         }
     });
 </script>

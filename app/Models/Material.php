@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Material extends Model
 {
@@ -12,80 +13,228 @@ class Material extends Model
     protected $fillable = [
         'title',
         'description',
-        'file_path',
         'subject_id',
         'teacher_id',
-        'classroom_id',
-        'published_at',
+        'file_path',
+        'publish_date',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
     protected $casts = [
-        'published_at' => 'datetime',
+        'publish_date' => 'datetime',
     ];
 
-    // Teacher who uploaded the material
-    public function teacher()
-    {
-        return $this->belongsTo(User::class, 'teacher_id');
-    }
-
-    // Subject this material belongs to
+    /**
+     * Get the subject that owns the material.
+     */
     public function subject()
     {
         return $this->belongsTo(Subject::class);
     }
 
-    // Classroom this material is for (one-to-one relationship)
-    public function classroom()
+    /**
+     * Get the teacher who created the material.
+     */
+    public function teacher()
     {
-        return $this->belongsTo(Classroom::class);
+        return $this->belongsTo(User::class, 'teacher_id');
     }
-    
-    // Classrooms this material is for (many-to-many relationship)
+
+    /**
+     * The classrooms that have access to this material.
+     */
     public function classrooms()
     {
         return $this->belongsToMany(Classroom::class, 'classroom_material');
     }
-    
-    // File extension attribute
+
+    /**
+     * Get the file type based on file extension
+     *
+     * @return string
+     */
+    public function getFileType()
+    {
+        if (empty($this->file_path)) {
+            return 'Unknown Format';
+        }
+        
+        $extension = pathinfo($this->file_path, PATHINFO_EXTENSION);
+        
+        switch (strtolower($extension)) {
+            case 'pdf':
+                return 'PDF Document';
+            case 'doc':
+            case 'docx':
+                return 'Word Document';
+            case 'ppt':
+            case 'pptx':
+                return 'PowerPoint Presentation';
+            case 'xls':
+            case 'xlsx':
+                return 'Excel Spreadsheet';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+                return 'Image';
+            case 'mp4':
+            case 'avi':
+            case 'mov':
+                return 'Video';
+            case 'mp3':
+            case 'wav':
+                return 'Audio';
+            case 'zip':
+            case 'rar':
+                return 'Archive';
+            default:
+                return 'Document';
+        }
+    }
+
+    /**
+     * Get short file type for display in badges
+     * 
+     * @return string
+     */
+    public function getFileTypeShort()
+    {
+        if (empty($this->file_path)) {
+            return 'TXT';
+        }
+        
+        $extension = pathinfo($this->file_path, PATHINFO_EXTENSION);
+        return strtoupper($extension);
+    }
+
+    /**
+     * Get file extension
+     * 
+     * @return string
+     */
     public function getFileExtensionAttribute()
     {
-        if (!$this->file_path) return null;
+        if (empty($this->file_path)) {
+            return '';
+        }
+        
         return pathinfo($this->file_path, PATHINFO_EXTENSION);
     }
-    
-    // File icon based on extension
+
+    /**
+     * Get CSS class for file icon
+     * 
+     * @return string
+     */
     public function getFileIconAttribute()
     {
-        $extension = $this->file_extension;
-        if (!$extension) return 'fa-file';
+        if (empty($this->file_path)) {
+            return 'fa-file-alt';
+        }
         
-        return match(strtolower($extension)) {
-            'pdf' => 'fa-file-pdf',
-            'doc', 'docx' => 'fa-file-word',
-            'xls', 'xlsx' => 'fa-file-excel',
-            'ppt', 'pptx' => 'fa-file-powerpoint',
-            'jpg', 'jpeg', 'png', 'gif' => 'fa-file-image',
-            'zip', 'rar' => 'fa-file-archive',
-            'txt' => 'fa-file-alt',
-            default => 'fa-file',
-        };
+        $extension = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+        
+        switch ($extension) {
+            case 'pdf':
+                return 'fa-file-pdf';
+            case 'doc':
+            case 'docx':
+                return 'fa-file-word';
+            case 'xls':
+            case 'xlsx':
+                return 'fa-file-excel';
+            case 'ppt':
+            case 'pptx':
+                return 'fa-file-powerpoint';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+                return 'fa-file-image';
+            case 'mp4':
+            case 'avi':
+            case 'mov':
+                return 'fa-file-video';
+            case 'mp3':
+            case 'wav':
+                return 'fa-file-audio';
+            case 'zip':
+            case 'rar':
+                return 'fa-file-archive';
+            default:
+                return 'fa-file-alt';
+        }
     }
-    
-    // File color based on extension
+
+    /**
+     * Get CSS color class for file icon
+     * 
+     * @return string
+     */
     public function getFileColorAttribute()
     {
-        $extension = $this->file_extension;
-        if (!$extension) return 'text-gray-500';
+        if (empty($this->file_path)) {
+            return 'text-gray-500';
+        }
         
-        return match(strtolower($extension)) {
-            'pdf' => 'text-red-500',
-            'doc', 'docx' => 'text-blue-500',
-            'xls', 'xlsx' => 'text-green-500',
-            'ppt', 'pptx' => 'text-orange-500',
-            'jpg', 'jpeg', 'png', 'gif' => 'text-purple-500',
-            'zip', 'rar' => 'text-yellow-600',
-            default => 'text-gray-500',
-        };
+        $extension = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+        
+        switch ($extension) {
+            case 'pdf':
+                return 'text-red-600';
+            case 'doc':
+            case 'docx':
+                return 'text-blue-600';
+            case 'xls':
+            case 'xlsx':
+                return 'text-green-600';
+            case 'ppt':
+            case 'pptx':
+                return 'text-orange-600';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+                return 'text-purple-600';
+            case 'mp4':
+            case 'avi':
+            case 'mov':
+                return 'text-pink-600';
+            case 'mp3':
+            case 'wav':
+                return 'text-indigo-600';
+            case 'zip':
+            case 'rar':
+                return 'text-yellow-600';
+            default:
+                return 'text-gray-600';
+        }
+    }
+
+    /**
+     * Check if the material is new (published within the last 3 days)
+     *
+     * @return bool
+     */
+    public function isNew()
+    {
+        return $this->publish_date->diffInDays(now()) <= 3;
+    }
+
+    /**
+     * Get full file URL
+     */
+    public function getFileUrlAttribute()
+    {
+        if (!$this->file_path) {
+            return null;
+        }
+        
+        return Storage::url($this->file_path);
     }
 }

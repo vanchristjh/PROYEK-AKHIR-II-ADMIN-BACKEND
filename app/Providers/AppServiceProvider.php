@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Load custom PHP configuration settings
+        if (file_exists(config_path('php_config.php'))) {
+            require config_path('php_config.php');
+        }
     }
 }

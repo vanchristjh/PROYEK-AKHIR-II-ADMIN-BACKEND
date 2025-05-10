@@ -8,18 +8,23 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        // This migration is now handled by 2024_06_10_000000_create_classrooms_table.php
-        // Keeping this file to maintain migration history
+        // Skip creating this table since it already exists
+        return;
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        // No operation needed
+        // No-op because the up method does nothing
+        return;
     }
 };

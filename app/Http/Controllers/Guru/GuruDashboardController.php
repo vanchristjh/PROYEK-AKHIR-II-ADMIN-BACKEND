@@ -18,18 +18,39 @@ class GuruDashboardController extends Controller
      * Display the guru dashboard.
      *
      * @return \Illuminate\Http\Response
-     */
-    public function index()
+     */    public function index()
     {
         $guru = Auth::user();
         
-        // Subjects count
-        $subjectsCount = $guru->teacherSubjects()->count();
+        // Default values in case of no data
+        $subjectsCount = 0;
+        $classesCount = 0;
+        $assignmentsCount = 0;
+        $materialsCount = 0;
         
-        // Classes count - unique classrooms that the teacher teaches
-        $classesCount = Classroom::whereHas('subjects', function($query) use ($guru) {
-            $query->whereIn('subjects.id', $guru->teacherSubjects->pluck('id'));
-        })->count();
+        // Get teacher record or create one if it doesn't exist
+        $teacher = $guru->teacher;
+        
+        // If teacher record exists, get the counts
+        if ($teacher) {
+            // Subjects count
+            $subjectsCount = $guru->teacherSubjects()->count();
+            
+            // Classes count - unique classrooms that the teacher teaches
+            $subjectIds = $guru->teacherSubjects()->pluck('id')->toArray();
+            if (!empty($subjectIds)) {
+                $classesCount = Classroom::whereHas('subjects', function($query) use ($subjectIds) {
+                    $query->whereIn('subjects.id', $subjectIds);
+                })->count();
+            }
+        }
+        
+        // These counts are based on user ID, not teacher ID
+        $assignmentsCount = Assignment::where('teacher_id', $guru->id)
+            ->where('deadline', '>=', now())
+            ->count();
+        
+        $materialsCount = Material::where('teacher_id', $guru->id)->count();
         
         // Active assignments count
         $assignmentsCount = Assignment::where('teacher_id', $guru->id)

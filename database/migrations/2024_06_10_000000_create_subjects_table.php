@@ -8,26 +8,23 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        // Only create if it doesn't exist
-        if (!Schema::hasTable('subjects')) {
-            Schema::create('subjects', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->string('code')->unique();
-                $table->text('description')->nullable();
-                $table->timestamps();
-            });
-        }
+        // Skip creating this table since it already exists
+        return;
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('subjects');
+        // No-op because the up method does nothing
+        return;
     }
 };

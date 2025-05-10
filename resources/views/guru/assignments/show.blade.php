@@ -173,10 +173,14 @@
                     <p class="text-3xl font-bold text-gray-800">{{ ($assignment->classroom->students->count() ?? 0) - $submissions->count() }}</p>
                 </div>
             </div>
-            
-            <!-- Submissions -->
+              <!-- Submissions -->
             <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Daftar Pengumpulan</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Daftar Pengumpulan</h3>
+                    <a href="{{ route('guru.submissions.index', $assignment->id) }}" class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all">
+                        <i class="fas fa-list-check mr-2"></i> Kelola Penilaian
+                    </a>
+                </div>
                 
                 @if($submissions->count() > 0)
                     <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100/50">
@@ -230,14 +234,15 @@
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        </td>                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex space-x-2">
-                                                <a href="{{ Storage::url($submission->file) }}" target="_blank" class="text-blue-600 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-md transition-colors" title="Download">
+                                                @if($submission->file_path)
+                                                <a href="{{ route('guru.submissions.download', ['assignment' => $assignment->id, 'submission' => $submission->id]) }}" class="text-blue-600 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-md transition-colors" title="Download">
                                                     <i class="fas fa-download"></i>
                                                 </a>
-                                                <a href="{{ route('guru.grades.edit', $submission->id) }}" class="text-yellow-600 hover:text-yellow-900 bg-yellow-100 hover:bg-yellow-200 p-1.5 rounded-md transition-colors" title="{{ $submission->score !== null ? 'Edit Nilai' : 'Beri Nilai' }}">
-                                                    <i class="fas fa-{{ $submission->score !== null ? 'edit' : 'star' }}"></i>
+                                                @endif
+                                                <a href="{{ route('guru.submissions.show', ['assignment' => $assignment->id, 'submission' => $submission->id]) }}" class="text-yellow-600 hover:text-yellow-900 bg-yellow-100 hover:bg-yellow-200 p-1.5 rounded-md transition-colors" title="{{ $submission->isGraded() ? 'Edit Nilai' : 'Beri Nilai' }}">
+                                                    <i class="fas fa-{{ $submission->isGraded() ? 'edit' : 'star' }}"></i>
                                                 </a>
                                             </div>
                                         </td>
@@ -245,14 +250,14 @@
                                 @endforeach
                             </tbody>
                         </table>
-                    </div>
-                @else
+                    </div>                @else
                     <div class="bg-gray-50 rounded-lg p-8 text-center">
                         <div class="inline-flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 text-yellow-600 mb-4">
                             <i class="fas fa-exclamation-circle text-2xl"></i>
                         </div>
                         <h4 class="text-base font-medium text-gray-800 mb-1">Belum ada siswa yang mengumpulkan</h4>
-                        <p class="text-gray-500 mb-0">Belum ada siswa yang mengumpulkan tugas ini.</p>
+                        <p class="text-gray-500 mb-4">Belum ada siswa yang mengumpulkan tugas ini.</p>
+                        <p class="text-gray-500 text-sm">Ketika siswa mulai mengumpulkan tugas, Anda dapat menilai tugas mereka di sini.</p>
                     </div>
                 @endif
             </div>

@@ -11,25 +11,36 @@ class Classroom extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
         'name',
-        'grade_level',
-        'academic_year',
-        'homeroom_teacher_id',
-        'capacity',
-        'room_number',
+        'level',
+        'year',
+        'teacher_id', // homeroom teacher
     ];
 
     /**
-     * Get the students in this class
+     * Get the students for the classroom.
      */
     public function students(): HasMany
     {
-        return $this->hasMany(User::class, 'classroom_id')->where('role_id', 3); // 3 = siswa role_id
+        return $this->hasMany(Student::class);
     }
 
     /**
-     * Get the subjects taught in this class
+     * Get the homeroom teacher for the classroom.
+     */
+    public function teacher()
+    {
+        return $this->belongsTo(Teacher::class, 'teacher_id');
+    }
+
+    /**
+     * Get the subjects assigned to this classroom.
      */
     public function subjects(): BelongsToMany
     {
@@ -37,34 +48,10 @@ class Classroom extends Model
     }
 
     /**
-     * Get the homeroom teacher
-     */
-    public function homeroomTeacher()
-    {
-        return $this->belongsTo(User::class, 'homeroom_teacher_id');
-    }
-
-    /**
-     * Get the schedule entries for this class
-     */
-    public function schedules(): HasMany
-    {
-        return $this->hasMany(Schedule::class);
-    }
-
-    /**
-     * Get the assignments for this classroom
+     * Get the assignments for the classroom.
      */
     public function assignments(): HasMany
     {
         return $this->hasMany(Assignment::class);
-    }
-
-    /**
-     * Get the attendances for this classroom
-     */
-    public function attendances(): HasMany
-    {
-        return $this->hasMany(Attendance::class);
     }
 }

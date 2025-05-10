@@ -29,6 +29,12 @@ use App\Http\Controllers\Siswa\AttendanceController as SiswaAttendanceController
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AuthController;
 
+// Controllers for Profile and Settings
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
+use App\Http\Controllers\Guru\ProfileController as GuruProfileController;
+use App\Http\Controllers\Guru\SettingsController as GuruSettingsController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -42,10 +48,11 @@ use App\Http\Controllers\AuthController;
 
 // Redirect root to login
 Route::get('/', function () {
+    // If user is logged in, they'll be redirected by the guest middleware
     return redirect()->route('login');
 });
 
-// Authentication Routes
+// Authentication Routes - use only one controller for consistency
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
@@ -53,6 +60,15 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 Route::get('/unauthorized', [AuthController::class, 'unauthorized'])->name('unauthorized');
+
+// Clear route cache if there's a redirect loop (helpful for debugging)
+Route::get('/clear-cache', function() {
+    Artisan::call('route:clear');
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('view:clear');
+    return redirect('/')->with('message', 'Cache cleared successfully');
+});
 
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -69,10 +85,28 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Subject management
     Route::resource('subjects', App\Http\Controllers\Admin\SubjectController::class);
     
+    // Schedule management
+    Route::resource('schedule', App\Http\Controllers\Admin\AdminScheduleController::class);
+    Route::get('/schedule/classroom/{classroom_id}', [App\Http\Controllers\Admin\AdminScheduleController::class, 'getSchedulesByClassroom'])->name('schedule.by-classroom');
+    Route::get('/schedule/bulk-create', [App\Http\Controllers\Admin\AdminScheduleController::class, 'bulkCreate'])->name('schedule.bulk-create');
+    Route::post('/schedule/bulk-store', [App\Http\Controllers\Admin\AdminScheduleController::class, 'bulkStore'])->name('schedule.bulk-store');
+    Route::get('/schedule/calendar', [App\Http\Controllers\Admin\AdminScheduleController::class, 'calendar'])->name('schedule.calendar');
+    Route::get('/schedule/calendar-data', [App\Http\Controllers\Admin\AdminScheduleController::class, 'getCalendarData'])->name('schedule.calendar-data');
+    Route::get('/schedule/export-classroom/{classroom_id}', [App\Http\Controllers\Admin\AdminScheduleController::class, 'exportClassroomSchedule'])->name('schedule.export-classroom');
+    
     // Announcement management
     Route::resource('announcements', App\Http\Controllers\Admin\AnnouncementController::class);
     Route::get('announcements/{announcement}/download', [App\Http\Controllers\Admin\AdminAnnouncementController::class, 'download'])
         ->name('announcements.download');
+
+    // Profile routes
+    Route::get('profile', [AdminProfileController::class, 'show'])->name('profile.show');
+    Route::get('profile/edit', [AdminProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('profile', [AdminProfileController::class, 'update'])->name('profile.update');
+
+    // Settings routes
+    Route::get('settings', [AdminSettingsController::class, 'index'])->name('settings.index');
+    Route::post('settings', [AdminSettingsController::class, 'update'])->name('settings.update');
 });
 
 // Guru Routes
@@ -81,8 +115,8 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::get('/dashboard', [App\Http\Controllers\Guru\GuruDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/refresh', [App\Http\Controllers\Guru\GuruDashboardController::class, 'refresh'])->name('dashboard.refresh');
     
-    // Schedule routes for teachers
-    Route::get('/schedule', [App\Http\Controllers\Guru\ScheduleController::class, 'index'])->name('schedule.index');
+    // Schedule routes for teachers with full CRUD
+    Route::resource('schedule', App\Http\Controllers\Guru\ScheduleController::class);
     
     // Materials management
     Route::resource('materials', App\Http\Controllers\Guru\MaterialController::class);
@@ -94,57 +128,49 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::get('assignments/{assignment}/submissions', [App\Http\Controllers\Guru\SubmissionController::class, 'index'])->name('submissions.index');
     Route::get('assignments/{assignment}/submissions/{submission}', [App\Http\Controllers\Guru\SubmissionController::class, 'show'])->name('submissions.show');
     Route::put('assignments/{assignment}/submissions/{submission}', [App\Http\Controllers\Guru\SubmissionController::class, 'update'])->name('submissions.update');
+    Route::get('assignments/{assignment}/submissions/{submission}/download', [App\Http\Controllers\Guru\SubmissionController::class, 'download'])->name('submissions.download');
+    Route::post('assignments/{assignment}/submissions/batch-grade', [App\Http\Controllers\Guru\SubmissionController::class, 'batchGrade'])->name('submissions.batch-grade');
+    
+    // Teacher Submission Management Routes
+    Route::get('/assignments/{assignment}/submissions', [App\Http\Controllers\Guru\SubmissionController::class, 'index'])->name('submissions.index');
+    Route::get('/assignments/{assignment}/submissions/{submission}', [App\Http\Controllers\Guru\SubmissionController::class, 'show'])->name('submissions.show');
+    Route::put('/assignments/{assignment}/submissions/{submission}/grade', [App\Http\Controllers\Guru\SubmissionController::class, 'grade'])->name('submissions.grade');
+    Route::get('/assignments/{assignment}/submissions/{submission}/download', [App\Http\Controllers\Guru\SubmissionController::class, 'download'])->name('submissions.download');
+    Route::get('/assignments/{assignment}/submissions/{submission}/preview', [App\Http\Controllers\Guru\SubmissionController::class, 'preview'])->name('submissions.preview');
+    Route::post('/assignments/{assignment}/submissions/mass-grade', [App\Http\Controllers\Guru\SubmissionController::class, 'massGrade'])->name('submissions.mass-grade');
+    Route::post('/assignments/{assignment}/submissions/zero/{student}', [App\Http\Controllers\Guru\SubmissionController::class, 'markZero'])->name('submissions.zero');
+    Route::get('/assignments/{assignment}/submissions/export', [App\Http\Controllers\Guru\SubmissionController::class, 'export'])->name('submissions.export');
     
     // Attendance management
     Route::resource('attendance', App\Http\Controllers\Guru\AttendanceController::class);
     
-    // AJAX routes for dependent dropdowns
-    Route::get('subjects/{subject}/classrooms', function (App\Models\Subject $subject) {
-        $teacher = auth()->user();
-        
-        // Get classrooms where this subject is taught
-        $classrooms = $subject->classrooms;
-        
-        // Format data for frontend
-        return response()->json($classrooms->map(function($classroom) {
-            return [
-                'id' => $classroom->id,
-                'name' => $classroom->name,
-            ];
-        }));
-    })->name('guru.subjects.classrooms');
+    // AJAX routes for dependent dropdowns redirected to the controller
     
     // Grades management
     Route::resource('grades', App\Http\Controllers\Guru\GradeController::class);
+    
+    // AJAX routes for dependent dropdowns
+    Route::get('subjects/{subject}/classrooms', [App\Http\Controllers\Guru\GradeController::class, 'getClassroomsBySubject'])
+        ->name('grades.getClassrooms');
+    Route::get('classrooms/{classroom}/students', [App\Http\Controllers\Guru\GradeController::class, 'getStudentsByClassroom'])
+        ->name('grades.getStudents');
     
     // Announcements management
     Route::resource('announcements', App\Http\Controllers\Guru\AnnouncementController::class);
     Route::get('announcements/{announcement}/download', [App\Http\Controllers\Guru\AnnouncementController::class, 'download'])
         ->name('announcements.download');
     
-    // AJAX routes for dependent dropdowns
-    Route::get('subjects/{subject}/classrooms', function (App\Models\Subject $subject) {
-        $teacher = auth()->user();
-        
-        // Check if teacher has this subject
-        $teachesSubject = $teacher->teacherSubjects->contains($subject->id);
-        
-        if ($teachesSubject) {
-            // Return all classrooms that have this subject
-            $classrooms = $subject->classrooms;
-        } else {
-            // If they don't teach the subject, show no classrooms
-            $classrooms = collect();
-        }
-        
-        return response()->json($classrooms);
-    });
-    
-    Route::get('classrooms/{classroom}/students', function (App\Models\Classroom $classroom) {
-        // Return students in this classroom
-        $students = $classroom->students()->get();
-        return response()->json($students);
-    });
+    // Profile routes
+    Route::get('profile', [GuruProfileController::class, 'show'])->name('profile.show');
+    Route::get('profile/edit', [GuruProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('profile', [GuruProfileController::class, 'update'])->name('profile.update');
+    Route::put('profile/password', [GuruProfileController::class, 'updatePassword'])->name('profile.update-password');
+
+    // Settings routes
+    Route::get('settings', [GuruSettingsController::class, 'index'])->name('settings.index');
+    Route::post('settings', [GuruSettingsController::class, 'update'])->name('settings.update');
+
+    // AJAX routes for dependent dropdowns are defined above with the controller
 });
 
 // Siswa Routes
@@ -158,26 +184,51 @@ Route::middleware(['auth', 'role:siswa'])->prefix('siswa')->name('siswa.')->grou
     
     // Submissions for students
     Route::resource('submissions', App\Http\Controllers\Siswa\SubmissionController::class)->only(['index', 'show', 'store', 'update']);
+    Route::post('/submissions/{assignment}', [App\Http\Controllers\Siswa\SubmissionController::class, 'store'])->name('submissions.store');
+    Route::put('/submissions/{submission}', [App\Http\Controllers\Siswa\SubmissionController::class, 'update'])->name('submissions.update');
+    Route::delete('/submissions/{submission}', [App\Http\Controllers\Siswa\SubmissionController::class, 'destroy'])->name('submissions.destroy');
+    
+    // Submission routes
+    Route::get('/submissions', [App\Http\Controllers\Siswa\SubmissionController::class, 'index'])->name('submissions.index');
+    Route::get('/submissions/{submission}', [App\Http\Controllers\Siswa\SubmissionController::class, 'show'])->name('submissions.show');
+    Route::get('/submissions/{submission}/download', [App\Http\Controllers\Siswa\SubmissionController::class, 'download'])->name('submissions.download');
+    Route::post('/assignments/{assignment}/submit', [App\Http\Controllers\Siswa\SubmissionController::class, 'store'])->name('submissions.store');
+    Route::put('/submissions/{submission}', [App\Http\Controllers\Siswa\SubmissionController::class, 'update'])->name('submissions.update');
+    Route::delete('/submissions/{submission}', [App\Http\Controllers\Siswa\SubmissionController::class, 'destroy'])->name('submissions.destroy');
     
     // Materials for students
-    Route::resource('materials', App\Http\Controllers\Siswa\MaterialController::class)->only(['index', 'show']);
+    Route::resource('materials', App\Http\Controllers\Siswa\SiswaMaterialController::class)->only(['index', 'show']);
     
-    // Schedule for students
-    Route::get('/schedule', [App\Http\Controllers\Siswa\ScheduleController::class, 'index'])->name('schedule.index');
+    // Schedule for students (view only)
+    Route::get('/schedule', [App\Http\Controllers\Siswa\SiswaScheduleController::class, 'index'])->name('schedule.index');
+    Route::get('/schedule/day/{day}', [App\Http\Controllers\Siswa\SiswaScheduleController::class, 'showDay'])->name('schedule.day');
+    Route::get('/schedule/export/ical', [App\Http\Controllers\Siswa\SiswaScheduleController::class, 'exportIcal'])->name('schedule.export-ical');
     
     // Grades for students
-    Route::get('/grades', [App\Http\Controllers\Siswa\GradeController::class, 'index'])->name('grades.index');
+    Route::get('/grades', [App\Http\Controllers\Siswa\SiswaGradeController::class, 'index'])->name('grades.index');
     
     // Announcements for students
-    Route::get('/announcements', [App\Http\Controllers\Siswa\AnnouncementController::class, 'index'])->name('announcements.index');
-    Route::get('/announcements/{announcement}', [App\Http\Controllers\Siswa\AnnouncementController::class, 'show'])->name('announcements.show');
-    Route::get('/announcements/{announcement}/download', [App\Http\Controllers\Siswa\AnnouncementController::class, 'download'])
+    Route::get('/announcements', [App\Http\Controllers\Siswa\SiswaAnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('/announcements/{announcement}', [App\Http\Controllers\Siswa\SiswaAnnouncementController::class, 'show'])->name('announcements.show');
+    Route::get('/announcements/{announcement}/download', [App\Http\Controllers\Siswa\SiswaAnnouncementController::class, 'download'])
         ->name('announcements.download');
     
     // Student Attendance Routes (read-only)
     Route::get('attendance', [App\Http\Controllers\Siswa\AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('attendance/{month?}/{year?}', [App\Http\Controllers\Siswa\AttendanceController::class, 'month'])->name('attendance.month');
     Route::get('attendance/subject/{subject}', [App\Http\Controllers\Siswa\AttendanceController::class, 'bySubject'])->name('attendance.by-subject');
+    
+    // Add the profile route
+    Route::get('/profile', [\App\Http\Controllers\Siswa\SiswaProfileController::class, 'show'])->name('profile.show');
+    
+    // Add settings routes
+    Route::get('/settings', [\App\Http\Controllers\Siswa\SiswaSettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [\App\Http\Controllers\Siswa\SiswaSettingsController::class, 'update'])->name('settings.update');
+
+    // Student Submission Routes
+    Route::post('/assignments/{assignment}/submit', [App\Http\Controllers\Siswa\SubmissionController::class, 'store'])->name('submissions.store');
+    Route::put('/submissions/{submission}', [App\Http\Controllers\Siswa\SubmissionController::class, 'update'])->name('submissions.update');
+    Route::delete('/submissions/{submission}', [App\Http\Controllers\Siswa\SubmissionController::class, 'destroy'])->name('submissions.destroy');
 });
 
 // Error routes

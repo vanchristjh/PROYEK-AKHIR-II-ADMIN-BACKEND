@@ -70,9 +70,13 @@
                     <i class="fas fa-calendar-alt text-2xl"></i>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-bold mb-1">Jadwal Pelajaran</h2>
-                    <p class="text-blue-100">Lihat jadwal kelas Anda untuk minggu ini</p>
+                    <h2 class="text-2xl font-bold mb-1">Jadwal Pelajaran</h2>                    <p class="text-blue-100">Lihat jadwal kelas Anda untuk minggu ini</p>
                 </div>
+            </div>
+            <div class="mt-4">
+                <a href="{{ route('siswa.schedule.export-ical') }}" class="btn-glass flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300">
+                    <i class="fas fa-calendar-plus mr-2"></i> Ekspor ke Kalender
+                </a>
             </div>
         </div>
     </div>
@@ -99,35 +103,40 @@
                         @php 
                             $isToday = date('N') == $day;
                             $bgClass = $isToday ? 'bg-blue-50 ring-2 ring-blue-300' : 'bg-gray-50';
-                        @endphp
-                        <div class="{{ $bgClass }} rounded-xl shadow-sm p-4 transition-transform duration-300 hover:scale-[1.02]">
-                            <h3 class="text-lg font-medium {{ $isToday ? 'text-blue-800' : 'text-gray-800' }} mb-3 text-center">
-                                @if($isToday)
-                                    <span class="inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded-full mr-2">Hari Ini</span>
-                                @endif
-                                {{ $dayNames[$day] }}
-                            </h3>
+                        @endphp                        <div class="{{ $bgClass }} rounded-xl shadow-sm p-4 transition-transform duration-300 hover:scale-[1.02]">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-lg font-medium {{ $isToday ? 'text-blue-800' : 'text-gray-800' }}">
+                                    @if($isToday)
+                                        <span class="inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded-full mr-2">Hari Ini</span>
+                                    @endif
+                                    {{ $dayNames[$day] }}
+                                </h3>
+                                <a href="{{ route('siswa.schedule.day', $day) }}" class="text-xs text-blue-600 hover:text-blue-800 hover:underline" title="Lihat detail">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
                             
-                            @if(count($daySchedules) > 0)
-                                <div class="space-y-3">
+                            @if(count($daySchedules) > 0)                                <div class="space-y-3">
                                     @foreach($daySchedules as $schedule)
-                                        <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:border-blue-200 hover:translate-x-1">
-                                            <div class="font-medium text-gray-800">{{ $schedule->subject->name }}</div>
-                                            <div class="flex items-center text-sm text-gray-500 mt-2">
-                                                <i class="fas fa-clock text-blue-500 mr-2"></i>
-                                                {{ date('H:i', strtotime($schedule->start_time)) }} - {{ date('H:i', strtotime($schedule->end_time)) }}
-                                            </div>
-                                            <div class="text-sm text-gray-600 mt-3">
-                                                <div class="flex items-center mb-2">
-                                                    <i class="fas fa-user-tie text-blue-600 mr-2"></i>
-                                                    <span class="truncate">{{ $schedule->teacher->name }}</span>
+                                        <a href="{{ route('siswa.schedule.day', $day) }}" class="block">
+                                            <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:border-blue-200 hover:translate-x-1">
+                                                <div class="font-medium text-gray-800">{{ $schedule->subject->name }}</div>
+                                                <div class="flex items-center text-sm text-gray-500 mt-2">
+                                                    <i class="fas fa-clock text-blue-500 mr-2"></i>
+                                                    {{ date('H:i', strtotime($schedule->start_time)) }} - {{ date('H:i', strtotime($schedule->end_time)) }}
                                                 </div>
-                                                <div class="flex items-center">
-                                                    <i class="fas fa-map-marker-alt text-red-600 mr-2"></i>
-                                                    <span class="truncate">{{ $schedule->room ?? 'No Room Assigned' }}</span>
+                                                <div class="text-sm text-gray-600 mt-3">
+                                                    <div class="flex items-center mb-2">
+                                                        <i class="fas fa-user-tie text-blue-600 mr-2"></i>
+                                                        <span class="truncate">{{ $schedule->teacher->name }}</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-map-marker-alt text-red-600 mr-2"></i>
+                                                        <span class="truncate">{{ $schedule->room ?? 'Belum ditentukan' }}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </a>
                                     @endforeach
                                 </div>
                             @else

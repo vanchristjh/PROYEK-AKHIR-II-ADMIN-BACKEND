@@ -24,6 +24,9 @@ use App\Models\DiscussionPost;
 use App\Models\Comment;
 use App\Models\Schedule;
 use App\Models\UserNotification;
+use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\ParentModel;
 
 class User extends Authenticatable
 {
@@ -41,6 +44,7 @@ class User extends Authenticatable
         'password',
         'role_id',
         'avatar',
+        'preferences',
         'classroom_id',
     ];
 
@@ -62,7 +66,32 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'preferences' => 'array',
     ];
+
+    /**
+     * Get the user's theme preference.
+     * 
+     * @return string
+     */
+    public function getThemePreference()
+    {
+        return $this->preferences['theme'] ?? 'light';
+    }
+    
+    /**
+     * Set the user's theme preference.
+     * 
+     * @param string $theme
+     * @return void
+     */
+    public function setThemePreference($theme)
+    {
+        $preferences = $this->preferences ?? [];
+        $preferences['theme'] = $theme;
+        $this->preferences = $preferences;
+        $this->save();
+    }
 
     /**
      * Get the role that owns the user
@@ -85,6 +114,10 @@ class User extends Authenticatable
      */
     public function hasRole(string $roleName): bool
     {
+        // Check if the role relationship exists first
+        if (!$this->role) {
+            return false;
+        }
         return $this->role->slug === $roleName;
     }
 
@@ -130,33 +163,66 @@ class User extends Authenticatable
 
     /**
      * Get the subjects that this teacher teaches
+     * This is now an alias for teacherSubjects() for backward compatibility
      */
-    public function subjects(): BelongsToMany
+    public function subjects()
     {
-        return $this->belongsToMany(Subject::class, 'subject_teacher');
+        return $this->teacherSubjects();
     }
 
     /**
-     * Get all subjects that this teacher teaches
+     * Get all subjects that this teacher teaches through the teacher relationship
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
      */
-    public function teacherSubjects(): BelongsToMany
+    public function teacherSubjects()
     {
-        return $this->belongsToMany(Subject::class, 'subject_teacher', 'user_id', 'subject_id');
+        // Return a proper relationship instance using hasManyThrough
+        return $this->hasManyThrough(
+            Subject::class,
+            SubjectTeacher::class,
+            'teacher_id', // Foreign key on subject_teacher table
+            'id',         // Foreign key on subjects table
+            'teacher.id', // Local key on users table (via teacher relation)
+            'subject_id'  // Local key on subject_teacher table
+        )->with('teachers');
     }
     
     /**
-     * Get all classrooms that this teacher teaches
+     * Get all classrooms that this teacher teaches in
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function teachingClassrooms(): HasManyThrough
+    public function teachingClassrooms()
     {
-        return $this->hasManyThrough(
-            Classroom::class,
-            SubjectTeacher::class,
-            'user_id', // Foreign key on SubjectTeacher table
-            'id',      // Foreign key on Classroom table
-            'id',      // Local key on User table
-            'subject_id' // Local key on SubjectTeacher table
-        )->distinct();
+        // First, get the teacher record associated with this user
+        $teacher = $this->teacher;
+        
+        // If no teacher record, return empty relationship
+        if (!$teacher) {
+            // Specify the relationship with proper pivot table to avoid 'classroom_user' error
+            return $this->belongsToMany(
+                Classroom::class,
+                'classroom_subject',  // Use the correct pivot table name
+                'subject_id',         // Foreign key
+                'classroom_id'        // Related key
+            )->whereRaw('1 = 0');     // This creates an empty result set
+        }
+        
+        // Teachers have a many-to-many relationship with classrooms through subjects
+        return $this->belongsToMany(
+            Classroom::class,      // Related model
+            'classroom_subject',   // Pivot table
+            'subject_id',          // Foreign key on pivot table
+            'classroom_id',        // Related key on pivot table
+            null,                  // Local key (will use a subquery instead)
+            'id'                   // Related model key
+        )->wherePivotIn('subject_id', function($query) use ($teacher) {
+            // Subquery to get the subjects this teacher teaches
+            $query->select('subject_id')
+                  ->from('subject_teacher')
+                  ->where('teacher_id', $teacher->id);  // Using teacher_id instead of user_id
+        });
     }
 
     /**
@@ -177,10 +243,13 @@ class User extends Authenticatable
     
     /**
      * Get the classroom that the user (teacher) is homeroom teacher of.
+     * Note: This relationship is for future implementation. Currently the column doesn't exist.
      */
     public function homeroomOf()
     {
-        return $this->hasOne(Classroom::class, 'homeroom_teacher_id');
+        // This feature isn't implemented yet in the database schema
+        // When implemented, the classrooms table will need a homeroom_teacher_id column
+        return null;
     }
     
     /**
@@ -212,15 +281,15 @@ class User extends Authenticatable
      */
     public function attendanceRecords()
     {
-        return $this->hasMany(Attendance::class, 'teacher_id');
+        return $this->hasMany(Attendance::class, 'recorded_by');
     }
     
     /**
      * Get attendance records for a student
      */
-    public function studentAttendances()
+    public function studentAttendanceRecords()
     {
-        return $this->hasMany(Attendance::class, 'student_id');
+        return $this->hasMany(AttendanceRecord::class, 'student_id');
     }
     
     /**
@@ -279,5 +348,29 @@ class User extends Authenticatable
     public function userNotifications()
     {
         return $this->hasMany(UserNotification::class);
+    }
+
+    /**
+     * Get the student record associated with the user.
+     */
+    public function student()
+    {
+        return $this->hasOne(Student::class);
+    }
+
+    /**
+     * Get the teacher record associated with the user.
+     */
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
+    /**
+     * Get the parent record associated with the user.
+     */
+    public function parent()
+    {
+        return $this->hasOne(ParentModel::class);
     }
 }

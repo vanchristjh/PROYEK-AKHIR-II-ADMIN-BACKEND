@@ -8,43 +8,36 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        // Create the many-to-many relationship table between subjects and teachers (users)
-        if (!Schema::hasTable('subject_teacher')) {
-            Schema::create('subject_teacher', function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('subject_id');
-                $table->unsignedBigInteger('user_id'); // teacher
-                $table->timestamps();
-
-                // Add unique constraint to prevent duplicate entries
-                $table->unique(['subject_id', 'user_id']);
-            });
+        // Check if table already exists before creating
+        if (Schema::hasTable('subject_teacher')) {
+            return;
         }
 
-        // Add foreign keys in a separate step to ensure the tables exist
-        Schema::table('subject_teacher', function (Blueprint $table) {
-            if (Schema::hasColumn('subject_teacher', 'subject_id')) {
-                $table->foreign('subject_id')
-                      ->references('id')->on('subjects')
-                      ->onDelete('cascade');
-            }
+        Schema::create('subject_teacher', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('subject_id')->constrained()->onDelete('cascade');
+            $table->foreignId('teacher_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
             
-            if (Schema::hasColumn('subject_teacher', 'user_id')) {
-                $table->foreign('user_id')
-                      ->references('id')->on('users')
-                      ->onDelete('cascade');
-            }
+            // Ensure a teacher can only be assigned to a subject once
+            $table->unique(['subject_id', 'teacher_id']);
         });
     }
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('subject_teacher');
-    }
+        // Only drop if it exists and there are no other migrations using it
+        if (Schema::hasTable('subject_teacher')) {
+            Schema::dropIfExists('subject_teacher');
+        }    }
 };

@@ -29,9 +29,16 @@ class LoginController extends Controller
             
             \Log::info('Login successful for user: ' . Auth::user()->username);
             
-            // Redirect based on user role
+            // Check if the role relationship exists
             $user = Auth::user();
+            if (!$user->role) {
+                \Log::error('User has no role: ' . $user->id);
+                Auth::logout();
+                $request->session()->invalidate();
+                return back()->withErrors(['username' => 'Account has no role assigned. Please contact administrator.']);
+            }
             
+            // Redirect based on user role
             if ($user->isAdmin()) {
                 return redirect()->intended(route('admin.dashboard'));
             } elseif ($user->isGuru()) {
