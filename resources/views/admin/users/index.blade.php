@@ -35,151 +35,102 @@
             <span class="ml-3">Pengumuman</span>
         </a>
     </li>
-    <li>
-        <a href="{{ route('admin.settings.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-cog text-lg w-6 text-indigo-300"></i>
-            <span class="ml-3">Pengaturan</span>
-        </a>
-    </li>
 @endsection
 
 @section('content')
-    <!-- Header with animation -->
-    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 mb-6 text-white relative overflow-hidden animate-fade-in">
-        <div class="absolute -right-10 -top-10 opacity-10">
-            <i class="fas fa-users text-9xl"></i>
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div class="flex justify-between mb-4">
+            <h2 class="text-xl font-medium">Daftar Pengguna</h2>
+            <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all">
+                <i class="fas fa-plus mr-2"></i>Tambah Pengguna Baru
+            </a>
         </div>
-        <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
-        <div class="absolute right-1/3 -top-12 w-36 h-36 bg-purple-300/20 rounded-full blur-3xl"></div>
-        <div class="relative z-10">
-            <h2 class="text-2xl font-bold mb-2">Manajemen Pengguna</h2>
-            <p class="text-purple-100">Kelola semua pengguna sistem termasuk administrator, guru, dan siswa.</p>
-        </div>
-    </div>
 
-    <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center">
-            <div class="p-2 bg-purple-100 rounded-lg mr-3">
-                <i class="fas fa-users text-purple-600"></i>
-            </div>
-            <h3 class="text-lg font-medium text-gray-800">Daftar Pengguna</h3>
-        </div>
-        <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-colors shadow-md hover:shadow-lg flex items-center">
-            <i class="fas fa-plus mr-2"></i> Tambah Pengguna
-        </a>
-    </div>
-
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded-md animate-fade-in">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-check-circle"></i>
+        <!-- Filter and Search Form -->
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+            <form action="{{ route('admin.users.index') }}" method="GET" class="flex flex-wrap gap-4">
+                <div class="flex-grow min-w-[200px]">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, username, atau email..." 
+                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                 </div>
-                <div class="ml-3">
-                    <p class="text-sm">{{ session('success') }}</p>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100/50 transform transition hover:shadow-md">
-        <div class="bg-gray-50 p-4 border-b border-gray-100 flex flex-wrap md:flex-nowrap items-center justify-between gap-4">
-            <div class="flex items-center">
-                <div class="p-2 bg-purple-100 rounded-lg mr-3">
-                    <i class="fas fa-filter text-purple-600"></i>
-                </div>
-                <h4 class="text-base font-medium text-gray-800">Filter & Pencarian</h4>
-            </div>
-            <div class="flex items-center flex-grow md:justify-end gap-3">
-                <div class="relative flex-grow max-w-xs">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-gray-400"></i>
-                    </div>
-                    <input id="userSearch" type="text" placeholder="Cari pengguna..." class="pl-10 py-2 w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50">
-                </div>
-                <form action="{{ route('admin.users.index') }}" method="GET" class="flex-grow md:flex-grow-0">
-                    <select name="role" onchange="this.form.submit()" class="rounded-lg border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50 py-2 w-full">
+                <div>
+                    <select name="role" class="rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         <option value="">Semua Peran</option>
-                        @foreach($roles as $role)
-                            <option value="{{ $role->slug }}" {{ $roleFilter === $role->slug ? 'selected' : '' }}>
+                        @foreach($roles ?? [] as $role)
+                            <option value="{{ strtolower($role->name) }}" {{ request('role') == strtolower($role->name) ? 'selected' : '' }}>
                                 {{ $role->name }}
                             </option>
                         @endforeach
                     </select>
-                </form>
-            </div>
+                </div>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-search mr-2"></i>Cari
+                </button>
+                @if(request()->anyFilled(['search', 'role']))
+                    <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-times mr-2"></i>Reset
+                    </a>
+                @endif
+            </form>
         </div>
-        
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+
+        <div class="overflow-x-auto bg-white rounded-lg">
+            <table class="min-w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Pengguna
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Email
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Username
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Peran
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Kelas
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Aksi
-                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
-                    @forelse($users as $user)
-                        <tr class="hover:bg-gray-50 transition-colors user-row">
+                <tbody class="divide-y divide-gray-200">
+                    @forelse ($users ?? [] as $user)
+                        <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
+                                <div class="flex items-center">                                    <div class="flex-shrink-0 h-10 w-10">
                                         @if($user->avatar)
-                                            <img class="h-10 w-10 rounded-full object-cover border-2 border-gray-200" src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}">
+                                            <img class="h-10 w-10 rounded-full object-cover" src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}">
                                         @else
-                                            <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold text-lg">
-                                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                                            <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                                                {{ substr($user->name, 0, 1) }}
                                             </div>
                                         @endif
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>                                        @if($user->nip || $user->nisn)
+                                            <div class="text-sm text-gray-500">{{ $user->id_number }}</div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $user->username }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500">{{ $user->username }}</div>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $user->email }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    {{ $user->role->slug === 'admin' ? 'bg-purple-100 text-purple-800' : 
-                                      ($user->role->slug === 'guru' ? 'bg-blue-100 text-blue-800' : 
-                                       'bg-green-100 text-green-800') }}">
-                                    {{ $user->role->name }}
+                                    {{ $user->role_id == 1 ? 'bg-red-100 text-red-800' : 
+                                       ($user->role_id == 2 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800') }}">
+                                    {{ $user->role->name ?? 'Unknown' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $user->classroom ? $user->classroom->name : 'N/A' }}
-                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end space-x-2">
-                                    <a href="{{ route('admin.users.edit', $user->id) }}" class="text-indigo-600 hover:text-indigo-900 bg-indigo-100 hover:bg-indigo-200 p-2 rounded-md transition-colors">
+                                <div class="flex space-x-2 justify-end">
+                                    <a href="{{ route('admin.users.show', $user->id) }}" class="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors" title="Lihat Detail">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('admin.users.edit', $user->id) }}" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors" title="Edit Pengguna">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline-block"
-                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna {{ $user->name }}? Tindakan ini tidak dapat diurungkan.');">
+                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline delete-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900 bg-red-100 hover:bg-red-200 p-2 rounded-md transition-colors">
+                                        <button type="button" class="delete-btn px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors" title="Hapus Pengguna" 
+                                            data-id="{{ $user->id }}" data-name="{{ $user->name }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -188,15 +139,15 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center">
+                            <td colspan="5" class="px-6 py-10 text-center">
                                 <div class="flex flex-col items-center">
-                                    <div class="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
-                                        <i class="fas fa-users-slash text-3xl"></i>
+                                    <div class="h-16 w-16 bg-blue-100 text-blue-400 rounded-full flex items-center justify-center mb-3">
+                                        <i class="fas fa-users text-2xl"></i>
                                     </div>
-                                    <h3 class="text-lg font-medium text-gray-900 mb-1">Tidak Ada Pengguna</h3>
-                                    <p class="text-gray-500 max-w-md">
-                                        Belum ada pengguna yang terdaftar atau sesuai dengan filter yang Anda pilih.
-                                    </p>
+                                    <p class="text-gray-500 mb-3">Belum ada pengguna yang tersedia</p>
+                                    <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                        <i class="fas fa-plus mr-2"></i>Tambah Pengguna Baru
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -205,174 +156,141 @@
             </table>
         </div>
         
-        @if ($users->hasPages())
-            <div class="border-t border-gray-200 px-4 py-3 bg-gray-50">
-                <div class="pagination-container">
-                    {{ $users->links() }}
-                </div>
+        <!-- Pagination -->
+        @if(isset($users) && method_exists($users, 'links'))
+            <div class="mt-4">
+                {{ $users->links() }}
             </div>
         @endif
     </div>
 
-    <!-- Hidden no results message template -->
-    <template id="no-results-template">
-        <tr id="no-results-row">
-            <td colspan="6" class="px-6 py-10 text-center">
-                <div class="flex flex-col items-center">
-                    <div class="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
-                        <i class="fas fa-search text-3xl"></i>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-1">Tidak Ada Hasil</h3>
-                    <p class="text-gray-500 max-w-md">
-                        Tidak ada pengguna yang cocok dengan pencarian Anda.
-                    </p>
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="text-center mb-6">
+                <div class="h-16 w-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
                 </div>
-            </td>
-        </tr>
-    </template>
-@endsection
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Konfirmasi Hapus</h3>
+                <p class="text-gray-500" id="deleteConfirmationText">Apakah Anda yakin ingin menghapus pengguna ini?</p>
+            </div>
+            <div class="flex justify-center space-x-4">
+                <button type="button" id="cancelDelete" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+                    Batal
+                </button>
+                <button type="button" id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    Ya, Hapus
+                </button>
+            </div>
+        </div>
+    </div>
 
-@push('styles')
-<style>
-    .animate-fade-in {
-        animation: fade-in 0.6s ease-in-out;
-    }
-    
-    @keyframes fade-in {
-        0% {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .highlight-search {
-        animation: highlight 1s ease-in-out;
-    }
-    
-    @keyframes highlight {
-        0% {
-            background-color: rgba(139, 92, 246, 0.1);
-        }
-        100% {
-            background-color: transparent;
-        }
-    }
-    
-    /* Pagination styling to match the design */
-    .pagination {
-        display: flex;
-        list-style-type: none;
-        justify-content: center;
-    }
-    
-    .pagination li {
-        display: inline-flex;
-    }
-    
-    .pagination li a, .pagination li span {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.5rem 0.75rem;
-        margin-left: -1px;
-        font-weight: 500;
-        color: #4B5563;
-        background-color: #ffffff;
-        border: 1px solid #D1D5DB;
-        transition: all 0.2s ease-in-out;
-    }
-    
-    .pagination .active span {
-        color: #ffffff;
-        background-color: #8B5CF6;
-        border-color: #8B5CF6;
-    }
-    
-    .pagination a:hover {
-        color: #1F2937;
-        background-color: #F3F4F6;
-    }
-    
-    .pagination .disabled span {
-        color: #9CA3AF;
-        pointer-events: none;
-        background-color: #F3F4F6;
-    }
-    
-    .pagination li:first-child a,
-    .pagination li:first-child span {
-        margin-left: 0;
-        border-top-left-radius: 0.375rem;
-        border-bottom-left-radius: 0.375rem;
-    }
-    
-    .pagination li:last-child a,
-    .pagination li:last-child span {
-        border-top-right-radius: 0.375rem;
-        border-bottom-right-radius: 0.375rem;
-    }
-</style>
-@endpush
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-4 right-4 z-50 hidden">
+        <div class="flex items-center p-4 mb-4 rounded-lg shadow min-w-64" role="alert">
+            <div id="toast-icon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
+            <div class="ml-3 text-sm font-normal" id="toast-message"></div>
+            <button type="button" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" 
+                    onclick="document.getElementById('toast-notification').classList.add('hidden')">
+                <span class="sr-only">Close</span>
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
 
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto-hide success alert after 5 seconds
-        const successAlert = document.querySelector('.bg-green-100');
-        if (successAlert) {
+    @push('scripts')
+    <script>
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            // Set message
+            toastMessage.textContent = message;
+            
+            // Set toast type (success, error, warning)
+            if (type === 'success') {
+                toast.querySelector('div').classList.add('bg-green-50', 'text-green-800');
+                toastIcon.classList.add('bg-green-100', 'text-green-500');
+                toastIcon.innerHTML = '<i class="fas fa-check"></i>';
+            } else if (type === 'error') {
+                toast.querySelector('div').classList.add('bg-red-50', 'text-red-800');
+                toastIcon.classList.add('bg-red-100', 'text-red-500');
+                toastIcon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+            } else if (type === 'warning') {
+                toast.querySelector('div').classList.add('bg-yellow-50', 'text-yellow-800');
+                toastIcon.classList.add('bg-yellow-100', 'text-yellow-500');
+                toastIcon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            }
+            
+            // Show toast
+            toast.classList.remove('hidden');
+            
+            // Auto hide toast after 5 seconds
             setTimeout(() => {
-                successAlert.style.opacity = '0';
-                successAlert.style.transition = 'opacity 0.5s ease-in-out';
-                setTimeout(() => {
-                    successAlert.remove();
-                }, 500);
+                toast.classList.add('hidden');
+                // Reset classes for next use
+                toast.querySelector('div').className = 'flex items-center p-4 mb-4 rounded-lg shadow min-w-64';
+                toastIcon.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg';
             }, 5000);
         }
-        
-        // User search functionality
-        const userSearch = document.getElementById('userSearch');
-        const userRows = document.querySelectorAll('.user-row');
-        const userTableBody = document.getElementById('userTableBody');
-        const noResultsTemplate = document.getElementById('no-results-template');
-        
-        userSearch.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            let foundResults = false;
+
+        // Show flash messages using toast if they exist
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showToast('{{ session('success') }}', 'success');
+            @endif
             
-            // Remove existing no-results row if it exists
-            const existingNoResults = document.getElementById('no-results-row');
-            if (existingNoResults) {
-                existingNoResults.remove();
-            }
-            
-            userRows.forEach(row => {
-                const name = row.querySelector('td:nth-child(1) .text-gray-900').textContent.toLowerCase();
-                const email = row.querySelector('td:nth-child(2) .text-gray-500').textContent.toLowerCase();
-                const username = row.querySelector('td:nth-child(3) .text-gray-500').textContent.toLowerCase();
-                
-                if (name.includes(searchTerm) || email.includes(searchTerm) || username.includes(searchTerm)) {
-                    row.classList.remove('hidden');
-                    foundResults = true;
+            @if(session('error'))
+                showToast('{{ session('error') }}', 'error');
+            @endif
+
+            // Delete confirmation handling
+            const deleteModal = document.getElementById('deleteModal');
+            const cancelDelete = document.getElementById('cancelDelete');
+            const confirmDelete = document.getElementById('confirmDelete');
+            const deleteText = document.getElementById('deleteConfirmationText');
+            let currentForm = null;
+
+            // Open modal when delete button is clicked
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.dataset.id;
+                    const userName = this.dataset.name;
+                    currentForm = this.closest('.delete-form');
                     
-                    // Add highlight animation
-                    row.classList.add('highlight-search');
-                    setTimeout(() => {
-                        row.classList.remove('highlight-search');
-                    }, 1000);
-                } else {
-                    row.classList.add('hidden');
+                    deleteText.textContent = `Apakah Anda yakin ingin menghapus pengguna "${userName}"?`;
+                    deleteModal.classList.remove('hidden');
+                });
+            });
+
+            // Close modal when cancel is clicked
+            cancelDelete.addEventListener('click', function() {
+                deleteModal.classList.add('hidden');
+                currentForm = null;
+            });
+
+            // Close modal when clicking outside
+            deleteModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    deleteModal.classList.add('hidden');
+                    currentForm = null;
                 }
             });
-            
-            // Show no results message if no matches found
-            if (!foundResults && searchTerm !== '') {
-                userTableBody.insertAdjacentHTML('beforeend', noResultsTemplate.innerHTML);
-            }
+
+            // Submit form when confirm is clicked
+            confirmDelete.addEventListener('click', function() {
+                if (currentForm) {
+                    // Show loading state
+                    confirmDelete.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menghapus...';
+                    confirmDelete.disabled = true;
+                    
+                    currentForm.submit();
+                }
+                deleteModal.classList.add('hidden');
+            });
         });
-    });
-</script>
-@endpush
+    </script>
+    @endpush
+@endsection

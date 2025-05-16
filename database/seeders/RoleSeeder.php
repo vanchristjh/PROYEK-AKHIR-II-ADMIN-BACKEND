@@ -2,38 +2,33 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class RoleSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     */
-    public function run(): void
+     *
+     * @return void
+     */    public function run()
     {
         $roles = [
-            [
-                'name' => 'Administrator',
-                'slug' => 'admin',
-                'description' => 'Administrator has full access to all features',
-            ],
-            [
-                'name' => 'Guru',
-                'slug' => 'guru',
-                'description' => 'Teachers can manage classes, grades, and students',
-            ],
-            [
-                'name' => 'Siswa',
-                'slug' => 'siswa',
-                'description' => 'Students can view their grades, assignments, and schedules',
-            ],
+            ['name' => 'admin', 'slug' => 'admin', 'description' => 'Administrator'],
+            ['name' => 'teacher', 'slug' => 'guru', 'description' => 'Teacher'],
+            ['name' => 'student', 'slug' => 'siswa', 'description' => 'Student'],
+            ['name' => 'parent', 'slug' => 'parent', 'description' => 'Parent'],
         ];
 
         foreach ($roles as $role) {
-            Role::firstOrCreate(
-                ['slug' => $role['slug']],
-                $role
+            DB::table('roles')->updateOrInsert(
+                ['name' => $role['name']],
+                [
+                    'slug' => $role['slug'],
+                    'description' => $role['description'],
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]
             );
         }
     }

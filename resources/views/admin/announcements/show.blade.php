@@ -1,5 +1,10 @@
 @extends('layouts.dashboard')
 
+@php
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+@endphp
+
 @section('title', 'Detail Pengumuman')
 
 @section('header', 'Detail Pengumuman')

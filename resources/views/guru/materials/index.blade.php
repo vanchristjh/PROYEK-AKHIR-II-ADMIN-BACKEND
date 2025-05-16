@@ -1,5 +1,9 @@
 @extends('layouts.dashboard')
 
+@php
+use Illuminate\Support\Str;
+@endphp
+
 @section('title', 'Materi Pelajaran')
 
 @section('header', 'Materi Pelajaran')
@@ -28,14 +32,6 @@
                 <i class="fas fa-tasks text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
             </div>
             <span class="ml-3">Tugas</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('guru.grades.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-purple-700/50 transition-all duration-200">
-                <i class="fas fa-star text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Penilaian</span>
         </a>
     </li>
     <li>
@@ -75,7 +71,6 @@
             </div>
         </div>
     </div>
-
     <div class="flex justify-between items-center mb-6">
         <div class="flex items-center">
             <div class="p-2 bg-green-100 rounded-lg mr-3">
@@ -87,13 +82,11 @@
             <i class="fas fa-plus mr-2"></i> Tambah Materi
         </a>
     </div>
-
     @if(session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded-md">
             <p>{{ session('success') }}</p>
         </div>
     @endif
-
     <!-- Filter section -->
     <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
         <form action="{{ route('guru.materials.index') }}" method="GET" class="flex flex-wrap items-end gap-4">
@@ -122,7 +115,6 @@
             @endif
         </form>
     </div>
-
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         @if($materials->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
@@ -185,7 +177,6 @@
                 </div>
             </div>
         @endif
-        
         <div class="px-6 py-4 border-t">
             {{ $materials->links() }}
         </div>
@@ -207,7 +198,7 @@
                 menu.classList.toggle('hidden');
             });
         });
-        
+
         document.addEventListener('click', function() {
             document.querySelectorAll('.dropdown-menu').forEach(menu => {
                 menu.classList.add('hidden');

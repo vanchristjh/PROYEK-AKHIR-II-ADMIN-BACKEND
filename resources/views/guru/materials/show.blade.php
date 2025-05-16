@@ -82,22 +82,30 @@
             @if($material->file_path)
             <div class="mt-8 pt-6 border-t border-gray-100">
                 <h3 class="text-lg font-medium text-gray-900 mb-3">Lampiran Materi</h3>
-                <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                        <i class="fas {{ $material->file_icon }} {{ $material->file_color }}"></i>
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                    <div class="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas {{ $material->file_icon ?? 'fa-file' }} {{ $material->file_color ?? 'text-blue-500' }} text-xl"></i>
                     </div>
                     <div class="min-w-0 flex-1">
                         <p class="text-sm font-medium text-gray-900 truncate">
                             {{ basename($material->file_path) }}
                         </p>
                         <p class="text-xs text-gray-500">
-                            {{ strtoupper($material->file_extension) }} File
+                            {{ strtoupper($material->file_extension ?? pathinfo($material->file_path, PATHINFO_EXTENSION)) }} File
                         </p>
                     </div>
-                    <div class="flex-shrink-0">
-                        <a href="{{ asset('storage/' . $material->file_path) }}" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors inline-flex items-center" target="_blank">
+                    <div class="flex items-center space-x-2">
+                        <a href="{{ asset('storage/' . $material->file_path) }}" 
+                           class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors inline-flex items-center" 
+                           download>
                             <i class="fas fa-download mr-1"></i>
                             <span>Unduh</span>
+                        </a>
+                        <a href="{{ asset('storage/' . $material->file_path) }}" 
+                           class="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors inline-flex items-center"
+                           target="_blank">
+                            <i class="fas fa-eye mr-1"></i>
+                            <span>Lihat</span>
                         </a>
                     </div>
                 </div>

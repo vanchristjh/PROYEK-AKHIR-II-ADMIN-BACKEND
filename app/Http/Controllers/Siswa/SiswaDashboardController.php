@@ -50,6 +50,12 @@ class SiswaDashboardController extends Controller
             $query->where('classrooms.id', $user->classroom_id);
         })->count();
         
+        // Fix the query that's causing the error
+        // Make sure we're using the correct relationship or update the query
+        $assignmentCount = Assignment::whereHas('classroom', function($query) use ($user) {
+            $query->where('id', $user->classroom_id);
+        })->count();
+        
         // Calculate attendance rate
         $totalAttendanceRecords = Attendance::where('classroom_id', $user->classroom_id)->count();
         $userAttendancePresent = Attendance::where('classroom_id', $user->classroom_id)

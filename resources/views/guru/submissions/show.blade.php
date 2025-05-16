@@ -216,7 +216,7 @@
             <div class="border-t border-gray-200 pt-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Penilaian</h3>
                 
-                <form action="{{ route('guru.submissions.grade', ['assignment' => $assignment->id, 'submission' => $submission->id]) }}" method="POST" id="grading-form">
+                <form action="{{ route('guru.submissions.grade', ['assignment' => $assignment->id, 'submission' => $submission->id]) }}" method="POST" id="gradeForm">
                     @csrf
                     @method('PUT')
                     
@@ -226,7 +226,7 @@
                             <div class="flex items-center">
                                 <input type="number" name="score" id="score" min="0" max="{{ $assignment->max_score }}" 
                                     value="{{ old('score', $submission->score) }}" 
-                                    class="mr-2 w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                                    class="mr-2 w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 styled-input" required>
                                 <span class="text-gray-500 text-sm">/ {{ $assignment->max_score }}</span>
                             </div>
                             <p class="text-xs text-gray-500 mt-1">Nilai maksimum: {{ $assignment->max_score }}</p>
@@ -264,70 +264,89 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('gradeForm');
         const scoreInput = document.getElementById('score');
-        const maxScore = {{ $assignment->max_score }};
-        const resetButton = document.getElementById('reset-form');
-        const form = document.getElementById('grading-form');
+        const maxScoreInput = document.getElementById('max-score');
         
-        // Validate score input
-        scoreInput.addEventListener('input', function() {
-            let value = parseInt(this.value);
+        if (form && scoreInput && maxScoreInput) {
+            const maxScore = parseInt(maxScoreInput.value);
             
-            if (isNaN(value)) {
-                this.value = '';
-            } else {
-                // Ensure score is not negative
-                if (value < 0) {
-                    this.value = 0;
+            form.addEventListener('submit', function(event) {
+                const scoreValue = scoreInput.value.trim();
+                
+                if (!scoreValue) {
+                    event.preventDefault();
+                    alert('Mohon masukkan nilai untuk tugas ini.');
+                    scoreInput.focus();
+                    return false;
                 }
                 
-                // Ensure score does not exceed max score
-                if (value > maxScore) {
-                    this.value = maxScore;
+                const numScore = parseInt(scoreValue);
+                
+                if (isNaN(numScore)) {
+                    event.preventDefault();
+                    alert('Nilai harus berupa angka.');
+                    scoreInput.focus();
+                    return false;
                 }
-            }
-        });
+                
+                if (numScore < 0 || numScore > maxScore) {
+                    event.preventDefault();
+                    alert(`Nilai harus berada di antara 0 dan ${maxScore}.`);
+                    scoreInput.focus();
+                    return false;
+                }
+            });
+        }
         
-        // Reset form button
-        resetButton.addEventListener('click', function() {
-            const originalScore = {{ $submission->score ?? 'null' }};
-            const originalFeedback = `{{ $submission->feedback ?? '' }}`;
-            
-            if (originalScore !== null) {
-                scoreInput.value = originalScore;
-            } else {
-                scoreInput.value = '';
-            }
-            
-            document.getElementById('feedback').value = originalFeedback;
-        });
+        // Handle file preview
+        const fileLink = document.getElementById('file-preview-link');
+        const filePreview = document.getElementById('file-preview-container');
+        const closePreview = document.getElementById('close-preview');
         
-        // Form submission validation
-        form.addEventListener('submit', function(event) {
-            const score = scoreInput.value.trim();
+        if (fileLink && filePreview && closePreview) {
+            fileLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                filePreview.classList.remove('hidden');
+            });
             
-            if (!score) {
-                event.preventDefault();
-                alert('Mohon masukkan nilai untuk tugas ini.');
-                scoreInput.focus();
-                return false;
-            }
+            closePreview.addEventListener('click', function() {
+                filePreview.classList.add('hidden');
+            });
+        }
+        
+        // Handle comments character counter
+        const commentsTextarea = document.getElementById('comments');
+        const commentsCounter = document.getElementById('comments-counter');
+        
+        if (commentsTextarea && commentsCounter) {
+            commentsTextarea.addEventListener('input', function() {
+                const currentLength = this.value.length;
+                const maxLength = 500;  // Adjust as needed
+                const remaining = maxLength - currentLength;
+                
+                commentsCounter.textContent = `${currentLength}/${maxLength} karakter`;
+                
+                // Change color when approaching limit
+                if (remaining <= 50) {
+                    commentsCounter.classList.add('text-orange-500');
+                    commentsCounter.classList.remove('text-gray-500');
+                } else {
+                    commentsCounter.classList.add('text-gray-500');
+                    commentsCounter.classList.remove('text-orange-500');
+                }
+                
+                // Prevent typing more characters than allowed
+                if (currentLength > maxLength) {
+                    this.value = this.value.substring(0, maxLength);
+                    commentsCounter.textContent = `${maxLength}/${maxLength} karakter`;
+                    commentsCounter.classList.add('text-red-500');
+                }
+            });
             
-            const numScore = parseInt(score);
-            if (isNaN(numScore)) {
-                event.preventDefault();
-                alert('Nilai harus berupa angka.');
-                scoreInput.focus();
-                return false;
-            }
-            
-            if (numScore < 0 || numScore > maxScore) {
-                event.preventDefault();
-                alert(`Nilai harus berada di antara 0 dan ${maxScore}.`);
-                scoreInput.focus();
-                return false;
-            }
-        });
+            // Initialize counter
+            commentsTextarea.dispatchEvent(new Event('input'));
+        }
     });
 </script>
 @endpush
@@ -347,6 +366,40 @@
             opacity: 1;
             transform: translateY(0);
         }
+    }
+    
+    .file-preview-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .file-preview-content {
+        background: white;
+        border-radius: 0.5rem;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow: auto;
+        position: relative;
+    }
+    
+    /* Improved input styles */
+    input[type="number"].styled-input {
+        appearance: textfield;
+    }
+    
+    input[type="number"].styled-input::-webkit-outer-spin-button,
+    input[type="number"].styled-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
 </style>
 @endpush

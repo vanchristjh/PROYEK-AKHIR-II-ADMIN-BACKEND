@@ -7,81 +7,80 @@ use Illuminate\Http\Request;
 use App\Models\Schedule;
 use App\Models\Subject;
 use App\Models\Classroom;
+use App\Models\Teacher;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\View;
+use PDF;
 
 class ScheduleController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of teacher's schedules.
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        $teacher = Auth::user();
-        
-        // Check if the day column exists, if not, tell the user to run migrations
-        if (!Schema::hasColumn('schedules', 'day')) {
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
             return view('guru.schedule.index', [
-                'schedules' => collect(),
-                'schedulesByDay' => [],
-                'message' => 'Database schema perlu diperbarui. Silakan jalankan perintah "php artisan migrate" atau hubungi administrator.'
-            ]);
+                'schedules' => collect([]),
+                'schedulesByDay' => []
+            ])->withErrors('Data guru tidak ditemukan.');
         }
         
-        try {
-            // Get all schedules for this teacher
-            $schedules = Schedule::with(['subject', 'classroom'])
-                ->forTeacher($teacher->id)
-                ->orderBy('day')
-                ->orderBy('start_time')
-                ->get();
-            
-            // Organize schedules by day for easier display
-            $schedulesByDay = [
-                'Senin' => [],
-                'Selasa' => [],
-                'Rabu' => [],
-                'Kamis' => [],
-                'Jumat' => [],
-                'Sabtu' => [],
-                'Minggu' => []
-            ];
-            
-            foreach ($schedules as $schedule) {
-                $schedulesByDay[$schedule->dayName][] = $schedule;
-            }
-            
-            return view('guru.schedule.index', [
-                'schedules' => $schedules,
-                'schedulesByDay' => $schedulesByDay
-            ]);
-        } catch (\Exception $e) {
-            return view('guru.schedule.index', [
-                'schedules' => collect(),
-                'schedulesByDay' => [],
-                'message' => 'Terjadi kesalahan saat mengambil data jadwal. Silakan hubungi administrator: ' . $e->getMessage()
-            ]);
+        // Get all schedules for this teacher
+        $schedules = Schedule::with(['subject', 'classroom'])
+                        ->where('teacher_id', $teacher->id)
+                        ->orderBy('day')
+                        ->orderBy('start_time')
+                        ->get();
+                        
+        // Group schedules by day for display
+        $schedulesByDay = $schedules->groupBy('day');
+        
+        // Count new schedules (created within the last 3 days)
+        $newSchedulesCount = $schedules->filter(function($schedule) {
+            return $schedule->created_at >= now()->subDays(3);
+        })->count();
+        
+        if ($newSchedulesCount > 0) {
+            session()->flash('new_schedules_count', $newSchedulesCount);
         }
+
+        return view('guru.schedule.index', compact('schedules', 'schedulesByDay'));
     }
 
     /**
-     * Show the form for creating a new schedule.
+     * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
      */
     public function create()
     {
-        $teacher = Auth::user();
-        $subjects = $teacher->teacherSubjects;
-        $classrooms = Classroom::all();
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Data guru tidak ditemukan.');
+        }
         
-        return view('guru.schedule.create', [
-            'subjects' => $subjects,
-            'classrooms' => $classrooms
-        ]);
+        // Get subjects this teacher can teach
+        $subjects = Subject::whereHas('teachers', function($query) use ($teacher) {
+            $query->where('teacher_id', $teacher->id);
+        })->get();
+        
+        if ($subjects->isEmpty()) {
+            $subjects = Subject::all(); // Fallback to all subjects
+        }
+        
+        // Get all classrooms
+        $classrooms = Classroom::orderBy('name')->get();
+        
+        return view('guru.schedule.create', compact('subjects', 'classrooms'));
     }
 
     /**
@@ -92,47 +91,58 @@ class ScheduleController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate form data
         $validator = Validator::make($request->all(), [
             'subject_id' => 'required|exists:subjects,id',
             'classroom_id' => 'required|exists:classrooms,id',
-            'day' => 'required|integer|min:1|max:7',
+            'day' => 'required|integer|between:1,7',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'room' => 'nullable|string|max:255',
+            'room' => 'nullable|string|max:50',
+        ], [
+            'end_time.after' => 'Waktu selesai harus setelah waktu mulai.'
         ]);
-
+        
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
         }
-
+        
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Data guru tidak ditemukan.');
+        }
+        
         // Check for schedule conflicts
-        $conflicts = $this->checkScheduleConflicts(
+        $conflicts = $this->checkConflicts(
             $request->day,
             $request->start_time,
             $request->end_time,
-            $request->classroom_id,
-            Auth::id()
+            $teacher->id,
+            $request->classroom_id
         );
-
-        if ($conflicts) {
+        
+        if ($conflicts->isNotEmpty()) {
             return redirect()->back()
-                ->with('error', 'Jadwal bentrok dengan jadwal yang sudah ada.')
+                ->with('error', 'Terdapat konflik jadwal. Anda sudah mengajar di waktu yang sama atau kelas sudah memiliki jadwal pada waktu tersebut.')
                 ->withInput();
         }
-
-        // Create schedule
-        $schedule = Schedule::create([
-            'subject_id' => $request->subject_id,
-            'teacher_id' => Auth::id(),
-            'classroom_id' => $request->classroom_id,
-            'day' => $request->day,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'room' => $request->room,
-        ]);
-
+        
+        // Create new schedule
+        $schedule = new Schedule();
+        $schedule->subject_id = $request->subject_id;
+        $schedule->classroom_id = $request->classroom_id;
+        $schedule->teacher_id = $teacher->id;        
+        $schedule->day = $request->day;
+        $schedule->start_time = $request->start_time;
+        $schedule->end_time = $request->end_time;
+        $schedule->room = $request->room;
+        $schedule->created_by = Auth::id();
+        $schedule->save();
+        
         return redirect()->route('guru.schedule.index')
             ->with('success', 'Jadwal berhasil ditambahkan.');
     }
@@ -145,22 +155,33 @@ class ScheduleController extends Controller
      */
     public function edit($id)
     {
-        $teacher = Auth::user();
-        $schedule = Schedule::findOrFail($id);
-        
-        // Check if teacher owns this schedule
-        if ($schedule->teacher_id !== $teacher->id) {
-            abort(403, 'Unauthorized action.');
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Data guru tidak ditemukan.');
         }
         
-        $subjects = $teacher->teacherSubjects;
-        $classrooms = Classroom::all();
+        // Get schedule and check ownership
+        $schedule = Schedule::findOrFail($id);
+        if ($schedule->teacher_id != $teacher->id) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit jadwal ini.');
+        }
         
-        return view('guru.schedule.edit', [
-            'schedule' => $schedule,
-            'subjects' => $subjects,
-            'classrooms' => $classrooms
-        ]);
+        // Get subjects this teacher can teach
+        $subjects = Subject::whereHas('teachers', function($query) use ($teacher) {
+            $query->where('teacher_id', $teacher->id);
+        })->get();
+        
+        if ($subjects->isEmpty()) {
+            $subjects = Subject::all(); // Fallback to all subjects
+        }
+        
+        // Get all classrooms
+        $classrooms = Classroom::orderBy('name')->get();
+        
+        return view('guru.schedule.edit', compact('schedule', 'subjects', 'classrooms'));
     }
 
     /**
@@ -172,54 +193,64 @@ class ScheduleController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $schedule = Schedule::findOrFail($id);
-        
-        // Check if teacher owns this schedule
-        if ($schedule->teacher_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
-        
+        // Validate form data
         $validator = Validator::make($request->all(), [
             'subject_id' => 'required|exists:subjects,id',
             'classroom_id' => 'required|exists:classrooms,id',
-            'day' => 'required|integer|min:1|max:7',
+            'day' => 'required|integer|between:1,7',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'room' => 'nullable|string|max:255',
+            'room' => 'nullable|string|max:50',
+        ], [
+            'end_time.after' => 'Waktu selesai harus setelah waktu mulai.'
         ]);
-
+        
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
         }
-
-        // Check for schedule conflicts (excluding the current schedule)
-        $conflicts = $this->checkScheduleConflicts(
+        
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Data guru tidak ditemukan.');
+        }
+        
+        // Get schedule and check ownership
+        $schedule = Schedule::findOrFail($id);
+        if ($schedule->teacher_id != $teacher->id) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit jadwal ini.');
+        }
+        
+        // Check for schedule conflicts (excluding this schedule)
+        $conflicts = $this->checkConflicts(
             $request->day,
             $request->start_time,
             $request->end_time,
+            $teacher->id,
             $request->classroom_id,
-            Auth::id(),
             $id
         );
-
-        if ($conflicts) {
+        
+        if ($conflicts->isNotEmpty()) {
             return redirect()->back()
-                ->with('error', 'Jadwal bentrok dengan jadwal yang sudah ada.')
+                ->with('error', 'Terdapat konflik jadwal. Anda sudah mengajar di waktu yang sama atau kelas sudah memiliki jadwal pada waktu tersebut.')
                 ->withInput();
         }
-
+        
         // Update schedule
-        $schedule->update([
-            'subject_id' => $request->subject_id,
-            'classroom_id' => $request->classroom_id,
-            'day' => $request->day,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'room' => $request->room,
-        ]);
-
+        $schedule->subject_id = $request->subject_id;
+        $schedule->classroom_id = $request->classroom_id;
+        $schedule->day = $request->day;
+        $schedule->start_time = $request->start_time;
+        $schedule->end_time = $request->end_time;
+        $schedule->room = $request->room;
+        $schedule->updated_at = now();
+        $schedule->save();
+        
         return redirect()->route('guru.schedule.index')
             ->with('success', 'Jadwal berhasil diperbarui.');
     }
@@ -232,11 +263,18 @@ class ScheduleController extends Controller
      */
     public function destroy($id)
     {
-        $schedule = Schedule::findOrFail($id);
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Data guru tidak ditemukan.');
+        }
         
-        // Check if teacher owns this schedule
-        if ($schedule->teacher_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+        // Get schedule and check ownership
+        $schedule = Schedule::findOrFail($id);
+        if ($schedule->teacher_id != $teacher->id) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Anda tidak memiliki izin untuk menghapus jadwal ini.');
         }
         
         $schedule->delete();
@@ -246,96 +284,216 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Check for schedule conflicts
+     * Export schedules to PDF.
      *
-     * @param int $day
-     * @param string $startTime
-     * @param string $endTime
-     * @param int $classroomId
-     * @param int $teacherId
-     * @param int|null $excludeId
-     * @return bool
-     */    private function checkScheduleConflicts($day, $startTime, $endTime, $classroomId, $teacherId, $excludeId = null)
+     * @return \Illuminate\Http\Response
+     */
+    public function exportPDF()
+    {
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Data guru tidak ditemukan.');
+        }
+        
+        $schedules = Schedule::with(['subject', 'classroom'])
+            ->where('teacher_id', $teacher->id)
+            ->orderBy('day')
+            ->orderBy('start_time')
+            ->get();
+
+        $schedulesByDay = $schedules->groupBy('day');
+        
+        $pdf = PDF::loadView('guru.schedule.pdf', [
+            'teacher' => Auth::user(),
+            'schedulesByDay' => $schedulesByDay
+        ]);
+        
+        return $pdf->download('jadwal-mengajar-' . Auth::user()->name . '.pdf');
+    }
+
+    /**
+     * Export schedules to Excel.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function exportExcel() 
+    {
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Data guru tidak ditemukan.');
+        }
+        
+        $schedules = Schedule::with(['subject', 'classroom'])
+            ->where('teacher_id', $teacher->id)
+            ->orderBy('day')
+            ->orderBy('start_time')
+            ->get();
+        
+        $headers = [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="jadwal-mengajar-'.Auth::user()->name.'.xlsx"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+        
+        // Convert day numbers to names
+        $dayNames = [
+            1 => 'Senin',
+            2 => 'Selasa',
+            3 => 'Rabu',
+            4 => 'Kamis',
+            5 => 'Jumat',
+            6 => 'Sabtu',
+            7 => 'Minggu'
+        ];
+        
+        // Create CSV content (which Excel can open)
+        $callback = function() use ($schedules, $dayNames) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for UTF-8 
+            fputs($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            
+            // Headers
+            fputcsv($file, ['Hari', 'Mata Pelajaran', 'Kelas', 'Waktu Mulai', 'Waktu Selesai', 'Ruangan']);
+            
+            // Data rows
+            foreach ($schedules as $schedule) {
+                $day = $dayNames[$schedule->day] ?? $schedule->day;
+                
+                $row = [
+                    $day,
+                    $schedule->subject->name ?? 'N/A',
+                    $schedule->classroom->name ?? 'N/A',
+                    $schedule->start_time,
+                    $schedule->end_time,
+                    $schedule->room ?? '-'
+                ];
+                
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        return Response::stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export schedules to CSV.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function exportCSV() 
+    {
+        // Get current teacher
+        $teacher = Teacher::where('user_id', Auth::id())->first();
+        if (!$teacher) {
+            return redirect()->route('guru.schedule.index')
+                ->with('error', 'Data guru tidak ditemukan.');
+        }
+        
+        $schedules = Schedule::with(['subject', 'classroom'])
+            ->where('teacher_id', $teacher->id)
+            ->orderBy('day')
+            ->orderBy('start_time')
+            ->get();
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="jadwal-mengajar-'.Auth::user()->name.'.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+        
+        $callback = function() use ($schedules) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM to fix UTF-8 in Excel
+            fputs($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            
+            // Add headers
+            fputcsv($file, ['Hari', 'Mata Pelajaran', 'Kelas', 'Waktu Mulai', 'Waktu Selesai', 'Ruangan']);
+            
+            // Add data rows
+            foreach ($schedules as $schedule) {
+                // Convert day number to name if needed
+                $day = $schedule->day;
+                if (is_numeric($day)) {
+                    $dayNames = [
+                        1 => 'Senin',
+                        2 => 'Selasa',
+                        3 => 'Rabu',
+                        4 => 'Kamis',
+                        5 => 'Jumat',
+                        6 => 'Sabtu',
+                        7 => 'Minggu'
+                    ];
+                    $day = $dayNames[$day] ?? $day;
+                }
+                
+                $row = [
+                    $day,
+                    $schedule->subject->name ?? 'N/A',
+                    $schedule->classroom->name ?? 'N/A',
+                    $schedule->start_time,
+                    $schedule->end_time,
+                    $schedule->room ?? '-'
+                ];
+                
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        return Response::stream($callback, 200, $headers);
+    }
+
+    /**
+     * Check for schedule conflicts.
+     *
+     * @param  int  $day
+     * @param  string  $startTime
+     * @param  string  $endTime
+     * @param  int  $teacherId
+     * @param  int  $classroomId
+     * @param  int|null  $excludeId
+     * @return \Illuminate\Support\Collection
+     */
+    private function checkConflicts($day, $startTime, $endTime, $teacherId, $classroomId, $excludeId = null)
     {
         $query = Schedule::where('day', $day)
             ->where(function($q) use ($startTime, $endTime) {
-                // Check if times overlap
-                $q->where(function($q) use ($startTime, $endTime) {
-                    $q->where('start_time', '<=', $startTime)
-                      ->where('end_time', '>', $startTime);
-                })->orWhere(function($q) use ($startTime, $endTime) {
-                    $q->where('start_time', '<', $endTime)
-                      ->where('end_time', '>=', $endTime);
-                })->orWhere(function($q) use ($startTime, $endTime) {
-                    $q->where('start_time', '>=', $startTime)
-                      ->where('end_time', '<=', $endTime);
+                // Check for overlapping time slots
+                $q->where(function($q1) use ($startTime, $endTime) {
+                    $q1->where('start_time', '<=', $startTime)
+                        ->where('end_time', '>', $startTime);
+                })->orWhere(function($q2) use ($startTime, $endTime) {
+                    $q2->where('start_time', '<', $endTime)
+                        ->where('end_time', '>=', $endTime);
+                })->orWhere(function($q3) use ($startTime, $endTime) {
+                    $q3->where('start_time', '>=', $startTime)
+                        ->where('end_time', '<=', $endTime);
                 });
             })
-            ->where(function($q) use ($classroomId, $teacherId) {
-                // Check conflicts for classroom or teacher
-                $q->where('classroom_id', $classroomId)
-                  ->orWhere('teacher_id', $teacherId);
+            ->where(function($q) use ($teacherId, $classroomId) {
+                // Either same teacher or same classroom
+                $q->where('teacher_id', $teacherId)
+                  ->orWhere('classroom_id', $classroomId);
             });
         
-        // Exclude current schedule if updating
+        // Exclude current schedule if editing
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
         
-        return $query->exists();
-    }
-    
-    /**
-     * Get conflict details for better error messages
-     *
-     * @param int $day
-     * @param string $startTime
-     * @param string $endTime
-     * @param int $classroomId
-     * @param int $teacherId
-     * @param int|null $excludeId
-     * @return array|null
-     */
-    private function getScheduleConflictDetails($day, $startTime, $endTime, $classroomId, $teacherId, $excludeId = null)
-    {
-        $query = Schedule::with(['subject', 'classroom', 'teacher'])
-            ->where('day', $day)
-            ->where(function($q) use ($startTime, $endTime) {
-                // Check if times overlap
-                $q->where(function($q) use ($startTime, $endTime) {
-                    $q->where('start_time', '<=', $startTime)
-                      ->where('end_time', '>', $startTime);
-                })->orWhere(function($q) use ($startTime, $endTime) {
-                    $q->where('start_time', '<', $endTime)
-                      ->where('end_time', '>=', $endTime);
-                })->orWhere(function($q) use ($startTime, $endTime) {
-                    $q->where('start_time', '>=', $startTime)
-                      ->where('end_time', '<=', $endTime);
-                });
-            })
-            ->where(function($q) use ($classroomId, $teacherId) {
-                // Check conflicts for classroom or teacher
-                $q->where('classroom_id', $classroomId)
-                  ->orWhere('teacher_id', $teacherId);
-            });
-        
-        // Exclude current schedule if updating
-        if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
-        }
-        
-        $conflict = $query->first();
-        
-        if ($conflict) {
-            return [
-                'schedule' => $conflict,
-                'type' => $conflict->classroom_id == $classroomId ? 'classroom' : 'teacher',
-                'message' => $conflict->classroom_id == $classroomId 
-                    ? "Kelas {$conflict->classroom->name} sudah memiliki jadwal pada hari dan waktu tersebut" 
-                    : "Guru {$conflict->teacher->name} sudah memiliki jadwal pada hari dan waktu tersebut"
-            ];
-        }
-        
-        return null;
+        return $query->get();
     }
 }

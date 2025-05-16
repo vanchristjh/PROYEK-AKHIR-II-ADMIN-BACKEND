@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-class UpdateAnnouncementsTableStructure extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -101,4 +100,4 @@ class UpdateAnnouncementsTableStructure extends Migration
     {
         // This migration makes additive changes, no need to reverse them
     }
-}
+};

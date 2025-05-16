@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class AnnouncementController extends Controller
 {
@@ -224,16 +225,35 @@ class AnnouncementController extends Controller
             return redirect()->route('unauthorized');
         }
         
-        // Delete attachment if exists
-        if ($announcement->attachment) {
-            Storage::disk('public')->delete($announcement->attachment);
+        try {
+            // Begin transaction
+            DB::beginTransaction();
+            
+            // Delete attachment if exists
+            if ($announcement->attachment) {
+                Storage::disk('public')->delete($announcement->attachment);
+            }
+            
+            // Delete the announcement
+            $announcement->delete();
+            
+            // Commit transaction
+            DB::commit();
+            
+            $routePrefix = $this->getRoutePrefix();
+            return redirect()->route($routePrefix . '.announcements.index')
+                ->with('success', 'Pengumuman berhasil dihapus.');
+                
+        } catch (\Exception $e) {
+            // Rollback transaction
+            DB::rollBack();
+            
+            // Log error
+            \Log::error('Error deleting announcement: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->withErrors(['error' => 'Gagal menghapus pengumuman: ' . $e->getMessage()]);
         }
-        
-        $announcement->delete();
-        
-        $routePrefix = $this->getRoutePrefix();
-        return redirect()->route($routePrefix . '.announcements.index')
-            ->with('success', 'Pengumuman berhasil dihapus.');
     }
     
     /**

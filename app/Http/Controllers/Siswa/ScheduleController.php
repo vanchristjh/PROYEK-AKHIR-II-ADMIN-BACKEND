@@ -4,36 +4,93 @@ namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Schedule;
+use App\Models\Subject;
+use App\Models\Student;
+use App\Models\Classroom;
+use Illuminate\Support\Facades\Auth;
 
 class ScheduleController extends Controller
 {
     /**
-     * Display the student's class schedule.
+     * Display a listing of the schedules.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $user = Auth::user();
+        // Get current logged in student
+        $student = Student::where('user_id', Auth::id())->first();
         
-        if (!$user->classroom) {
-            return view('siswa.schedule.index', [
-                'message' => 'You are not assigned to any classroom yet.'
-            ]);
+        // Make sure we have a classroom, even if it might be null
+        $classroom = $student ? $student->classroom : null;
+        
+        // Build the query
+        $query = Schedule::with(['subject', 'teacher'])
+                ->where('classroom_id', $classroom ? $classroom->id : null)
+                ->orderBy('day')
+                ->orderBy('start_time');
+
+        // Apply filters if present
+        if ($request->filled('day')) {
+            $query->where('day', $request->day);
         }
         
-        $schedules = Schedule::where('classroom_id', $user->classroom_id)
-                           ->with(['subject', 'teacher'])
-                           ->orderBy('day_of_week') // Changed 'day' to 'day_of_week'
-                           ->orderBy('start_time')
-                           ->get();
+        if ($request->filled('subject_id')) {
+            $query->where('subject_id', $request->subject_id);
+        }
         
-        // Group schedules by day
-        $schedulesByDay = $schedules->groupBy('day_of_week'); // Changed 'day' to 'day_of_week'
+        // Get all schedules
+        $allSchedules = $classroom ? $query->get() : collect([]);
         
-        // Define days for proper ordering
-        $dayNames = Schedule::getDaysOfWeek(); // Changed from $days to $dayNames and used Schedule model
+        // Group by day for better display
+        $schedules = $allSchedules->groupBy('day');
         
-        return view('siswa.schedule.index', compact('schedulesByDay', 'dayNames')); // Changed 'days' to 'dayNames'
+        // Get subjects for filter dropdown
+        $subjects = Subject::whereIn('id', $allSchedules->pluck('subject_id')->unique())->get();
+        
+        return view('siswa.schedule.index', compact('schedules', 'subjects', 'classroom'));
+    }
+    
+    /**
+     * Display schedules for a specific day.
+     *
+     * @param  string  $day
+     * @return \Illuminate\Http\Response
+     */
+    public function showDay($day)
+    {
+        // Validate day number
+        if (!in_array($day, ['1', '2', '3', '4', '5', '6', '7'])) {
+            return redirect()->route('siswa.schedule.index')->withErrors('Hari tidak valid.');
+        }
+        
+        // Convert day number to name
+        $dayNames = [
+            '1' => 'Senin',
+            '2' => 'Selasa', 
+            '3' => 'Rabu', 
+            '4' => 'Kamis', 
+            '5' => 'Jumat', 
+            '6' => 'Sabtu',
+            '7' => 'Minggu'
+        ];
+        
+        $dayName = $dayNames[$day];
+        
+        // Get student's classroom
+        $student = Student::where('user_id', Auth::id())->first();
+        
+        // Make sure we have a classroom, even if it might be null
+        $classroom = $student ? $student->classroom : null;
+        
+        // Get schedules for this day
+        $schedules = $classroom ? Schedule::with(['subject', 'teacher'])
+            ->where('classroom_id', $classroom->id)
+            ->where('day', $day)
+            ->orderBy('start_time')
+            ->get() : collect([]);
+            
+        return view('siswa.schedule.day', compact('schedules', 'dayName', 'day', 'classroom'));
     }
 }

@@ -4,118 +4,58 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Assignment extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'title',
         'description',
-        'subject_id',
         'classroom_id',
+        'subject_id',
         'teacher_id',
-        'file',
         'deadline',
-        'max_score',
-        'created_by',
+        'file_path',
+        'file_name',
+        'max_score'
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
     protected $casts = [
         'deadline' => 'datetime',
     ];
 
     /**
-     * Get the submissions for the assignment.
+     * Get the teacher that owns the assignment
      */
-    public function submissions()
+    public function teacher(): BelongsTo
     {
-        return $this->hasMany(Submission::class);
+        return $this->belongsTo(User::class, 'teacher_id');
     }
 
     /**
-     * Get the user who created this assignment.
+     * Get the classroom that the assignment belongs to
      */
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    /**
-     * Get the classroom associated with this assignment.
-     */
-    public function classroom()
+    public function classroom(): BelongsTo
     {
         return $this->belongsTo(Classroom::class);
     }
 
     /**
-     * Get the subject associated with this assignment.
+     * Get the subject that owns the assignment
      */
-    public function subject()
+    public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
     }
 
     /**
-     * Get the teacher associated with this assignment.
+     * Get all submissions for this assignment
      */
-    public function teacher()
+    public function submissions(): HasMany
     {
-        return $this->belongsTo(Teacher::class);
-    }
-
-    // Check if current user has submitted this assignment
-    public function isSubmitted()
-    {
-        return $this->submissions()->where('student_id', Auth::id())->exists();
-    }
-
-    // Get submission by current user
-    public function getSubmissionByCurrentUser()
-    {
-        return $this->submissions()->where('student_id', Auth::id())->first();
-    }
-
-    // Check if assignment deadline has passed
-    public function isExpired()
-    {
-        return $this->deadline < now();
-    }
-
-    // Get remaining time until deadline in human readable format
-    public function getRemainingTimeAttribute()
-    {
-        if ($this->isExpired()) {
-            return 'Deadline terlewat';
-        }
-        
-        $now = now();
-        $diffDays = $this->deadline->diffInDays($now);
-        $diffHours = $this->deadline->diffInHours($now) % 24;
-        $diffMinutes = $this->deadline->diffInMinutes($now) % 60;
-        
-        $result = '';
-        if ($diffDays > 0) {
-            $result .= $diffDays . ' hari ';
-        }
-        if ($diffHours > 0 || $diffDays > 0) {
-            $result .= $diffHours . ' jam ';
-        }
-        $result .= $diffMinutes . ' menit';
-        
-        return $result;
+        return $this->hasMany(AssignmentSubmission::class);
     }
 }

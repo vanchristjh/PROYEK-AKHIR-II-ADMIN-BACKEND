@@ -43,7 +43,7 @@ class AttendanceController extends Controller
         
         // Get classrooms where the teacher teaches
         $classrooms = Classroom::whereHas('subjects.teachers', function($query) use ($teacher) {
-            $query->where('user_id', $teacher->id);
+            $query->where('subject_teacher.teacher_id', $teacher->id);
         })->get();
         
         // Get subjects taught by the teacher
@@ -60,8 +60,8 @@ class AttendanceController extends Controller
         $teacher = Auth::user();
         
         // Get classrooms where the teacher teaches
-        $classrooms = Classroom::whereHas('subjects.teachers', function($query) use ($teacher) {
-            $query->where('user_id', $teacher->id);
+        $classrooms = Classroom::whereHas('subjects.teachers', function ($query) {
+            $query->where('users.id', auth()->id());
         })->get();
         
         // Get subjects taught by the teacher

@@ -29,6 +29,12 @@
             <span class="ml-3">Kelas</span>
         </a>
     </li>
+    <li>
+        <a href="{{ route('admin.announcements.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
+            <i class="fas fa-bullhorn text-lg w-6 text-indigo-300"></i>
+            <span class="ml-3">Pengumuman</span>
+        </a>
+    </li>
 @endsection
 
 @section('content')
@@ -66,6 +72,22 @@
                             @endforeach
                         </ul>
                     </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Add this somewhere at the top of your form for debugging -->
+        @if(isset($teachers) && $teachers->isEmpty())
+            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span>
+                        <strong>Perhatian:</strong> Tidak ada guru yang tersedia. 
+                        Pastikan ada pengguna dengan peran Guru (role_id=2) dalam database.
+                        <a href="{{ url('/diagnostic/teachers') }}" target="_blank" class="text-blue-600 underline">
+                            Lihat Diagnostik
+                        </a>
+                    </span>
                 </div>
             </div>
         @endif
@@ -126,17 +148,32 @@
                         <i class="fas fa-chalkboard-teacher text-gray-400"></i>
                     </div>
                     <select name="teachers[]" id="teachers" multiple class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 sm:text-sm" size="5">
-                        @foreach ($teachers as $teacher)
+                        @forelse ($teachers as $teacher)
                             <option value="{{ $teacher->id }}" {{ in_array($teacher->id, old('teachers', [])) ? 'selected' : '' }}>
                                 {{ $teacher->name }}
                             </option>
-                        @endforeach
+                        @empty
+                            <option disabled>Tidak ada akun guru yang tersedia</option>
+                        @endforelse
                     </select>
                 </div>
                 <p class="mt-1 text-sm text-gray-500">
                     Tahan tombol Ctrl (Windows) atau Command (Mac) untuk memilih beberapa guru
                 </p>
             </div>
+
+            <!-- Add near the teacher selection -->
+            @if($teachers->isEmpty())
+                <div class="mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span>
+                            <strong>Perhatian:</strong> Tidak ada guru yang tersedia. 
+                            Pastikan ada pengguna dengan peran Guru (role_id=2) dalam database.
+                        </span>
+                    </div>
+                </div>
+            @endif
 
             <!-- Form actions -->
             <div class="flex items-center justify-end space-x-3 pt-5 border-t border-gray-200">

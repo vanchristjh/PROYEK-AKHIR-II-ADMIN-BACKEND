@@ -2,31 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-
-// Models
 use App\Models\Classroom;
-use App\Models\Subject;
-use App\Models\SubjectTeacher;
-use App\Models\Assignment;
-use App\Models\Submission;
-use App\Models\Material;
-use App\Models\Announcement;
-use App\Models\Attendance;
-use App\Models\Grade;
-use App\Models\DiscussionPost;
-use App\Models\Comment;
-use App\Models\Schedule;
-use App\Models\UserNotification;
-use App\Models\Student;
-use App\Models\Teacher;
-use App\Models\ParentModel;
 
 class User extends Authenticatable
 {
@@ -35,23 +16,30 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
-        'username',
         'email',
         'password',
+        'username',
         'role_id',
+        'nisn',
+        'nip',
+        'phone',
+        'address',
+        'gender',
+        'birth_date',
+        'birth_place',
         'avatar',
-        'preferences',
+        'status',
         'classroom_id',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -65,211 +53,94 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'preferences' => 'array',
     ];
 
     /**
-     * Get the user's theme preference.
-     * 
-     * @return string
+     * Get the role that owns the user.
      */
-    public function getThemePreference()
+    public function role()
     {
-        return $this->preferences['theme'] ?? 'light';
-    }
-    
-    /**
-     * Set the user's theme preference.
-     * 
-     * @param string $theme
-     * @return void
-     */
-    public function setThemePreference($theme)
-    {
-        $preferences = $this->preferences ?? [];
-        $preferences['theme'] = $theme;
-        $this->preferences = $preferences;
-        $this->save();
-    }
-
-    /**
-     * Get the role that owns the user
-     */
-    public function role(): BelongsTo
-    {
+        // If you have a direct relationship with a single role
         return $this->belongsTo(Role::class);
+        
+        // If you have a many-to-many relationship with roles
+        // return $this->belongsToMany(Role::class, 'role_user');
     }
 
     /**
-     * For compatibility and to avoid "roles()" method not found error
+     * Get the roles associated with the user.
      */
     public function roles()
     {
-        return $this->belongsTo(Role::class, 'role_id');
+        return $this->belongsToMany(Role::class);
     }
 
-    /**
-     * Add a helper method to check roles conveniently
-     */
-    public function hasRole(string $roleName): bool
-    {
-        // Check if the role relationship exists first
-        if (!$this->role) {
-            return false;
-        }
-        return $this->role->slug === $roleName;
-    }
+    // Note: If this should be a many-to-many, add this method and use it instead:
+    // public function roles()
+    // {
+    //     return $this->belongsToMany(Role::class, 'role_user');
+    // }
 
     /**
-     * Check if the user is an admin
+     * Get the classrooms that the student belongs to.
      */
-    public function isAdmin(): bool
-    {
-        return $this->hasRole('admin');
-    }
-
-    /**
-     * Check if the user is a teacher
-     */
-    public function isTeacher(): bool
-    {
-        return $this->hasRole('guru');
-    }
-    
-    /**
-     * Alias for isTeacher() to maintain compatibility
-     */
-    public function isGuru(): bool
-    {
-        return $this->isTeacher();
-    }
-
-    /**
-     * Check if the user is a student
-     */
-    public function isStudent(): bool
-    {
-        return $this->hasRole('siswa');
-    }
-
-    /**
-     * Get the classroom that owns the student
-     */
-    public function classroom(): BelongsTo
+    public function classroom()
     {
         return $this->belongsTo(Classroom::class);
     }
 
     /**
-     * Get the subjects that this teacher teaches
-     * This is now an alias for teacherSubjects() for backward compatibility
+     * Get the subjects taught by this teacher.
      */
     public function subjects()
     {
-        return $this->teacherSubjects();
+        return $this->belongsToMany(Subject::class, 'subject_teacher', 'teacher_id', 'subject_id');
     }
 
     /**
-     * Get all subjects that this teacher teaches through the teacher relationship
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     * Get the subjects taught by this teacher.
+     * This is an alias for the subjects relation specifically for teachers.
      */
     public function teacherSubjects()
     {
-        // Return a proper relationship instance using hasManyThrough
-        return $this->hasManyThrough(
-            Subject::class,
-            SubjectTeacher::class,
-            'teacher_id', // Foreign key on subject_teacher table
-            'id',         // Foreign key on subjects table
-            'teacher.id', // Local key on users table (via teacher relation)
-            'subject_id'  // Local key on subject_teacher table
-        )->with('teachers');
+        return $this->subjects();
     }
-    
+
     /**
-     * Get all classrooms that this teacher teaches in
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * Get the classrooms that the user teaches.
      */
     public function teachingClassrooms()
     {
-        // First, get the teacher record associated with this user
-        $teacher = $this->teacher;
-        
-        // If no teacher record, return empty relationship
-        if (!$teacher) {
-            // Specify the relationship with proper pivot table to avoid 'classroom_user' error
-            return $this->belongsToMany(
-                Classroom::class,
-                'classroom_subject',  // Use the correct pivot table name
-                'subject_id',         // Foreign key
-                'classroom_id'        // Related key
-            )->whereRaw('1 = 0');     // This creates an empty result set
-        }
-        
-        // Teachers have a many-to-many relationship with classrooms through subjects
-        return $this->belongsToMany(
-            Classroom::class,      // Related model
-            'classroom_subject',   // Pivot table
-            'subject_id',          // Foreign key on pivot table
-            'classroom_id',        // Related key on pivot table
-            null,                  // Local key (will use a subquery instead)
-            'id'                   // Related model key
-        )->wherePivotIn('subject_id', function($query) use ($teacher) {
-            // Subquery to get the subjects this teacher teaches
-            $query->select('subject_id')
-                  ->from('subject_teacher')
-                  ->where('teacher_id', $teacher->id);  // Using teacher_id instead of user_id
-        });
+        // Looking at your existing relationships, it seems that a teacher
+        // might be related to classrooms through schedules instead
+        return $this->hasManyThrough(
+            Classroom::class,
+            Schedule::class,
+            'teacher_id', // Foreign key on the schedules table
+            'id', // Foreign key on the classrooms table
+            'id', // Local key on the users table
+            'classroom_id' // Local key on the schedules table
+        );
     }
 
     /**
-     * Get the assignments created by this teacher
+     * Get the classrooms that this teacher is homeroom teacher of.
      */
-    public function assignments()
+    public function homeroomClasses()
     {
-        return $this->hasMany(Assignment::class, 'teacher_id');
+        return $this->hasMany(Classroom::class, 'homeroom_teacher_id');
     }
 
     /**
-     * Get the submissions made by the user (student).
+     * Get the schedules where this user is the teacher.
      */
-    public function studentSubmissions()
+    public function schedules()
     {
-        return $this->hasMany(Submission::class, 'student_id');
-    }
-    
-    /**
-     * Get the classroom that the user (teacher) is homeroom teacher of.
-     * Note: This relationship is for future implementation. Currently the column doesn't exist.
-     */
-    public function homeroomOf()
-    {
-        // This feature isn't implemented yet in the database schema
-        // When implemented, the classrooms table will need a homeroom_teacher_id column
-        return null;
-    }
-    
-    /**
-     * Get the materials created by this teacher
-     */
-    public function materials()
-    {
-        return $this->hasMany(Material::class, 'teacher_id');
-    }
-    
-    /**
-     * Get the announcements authored by this user
-     */
-    public function authoredAnnouncements()
-    {
-        return $this->hasMany(Announcement::class, 'author_id');
+        return $this->hasMany(Schedule::class, 'teacher_id');
     }
 
     /**
-     * Get the announcements created by this user.
+     * Get the announcements created by this user
      */
     public function announcements()
     {
@@ -277,100 +148,76 @@ class User extends Authenticatable
     }
 
     /**
-     * Get attendance records created by teacher
+     * Check if the user has a given role.
+     *
+     * @param string $role
+     * @return bool
      */
-    public function attendanceRecords()
+    public function hasRole($role)
     {
-        return $this->hasMany(Attendance::class, 'recorded_by');
+        return $this->role && $this->role->slug === $role;
     }
-    
+
     /**
-     * Get attendance records for a student
+     * Check if the user is an administrator
+     *
+     * @return bool
      */
-    public function studentAttendanceRecords()
+    public function isAdmin()
     {
-        return $this->hasMany(AttendanceRecord::class, 'student_id');
+        return $this->role->name === 'admin';
     }
-    
+
     /**
-     * Get the grades given by this teacher
+     * Check if the user is a teacher/guru
+     *
+     * @return bool
      */
-    public function givenGrades()
+    public function isGuru()
     {
-        return $this->hasMany(Grade::class, 'teacher_id');
+        return $this->role->name === 'guru';
     }
-    
+
     /**
-     * Get the grades received by this student
+     * Check if the user is a student
+     *
+     * @return bool
      */
-    public function receivedGrades()
+    public function isSiswa()
     {
-        return $this->hasMany(Grade::class, 'student_id');
+        return $this->role->name === 'siswa';
     }
-    
+
     /**
-     * Get all discussion posts by this user
+     * Get the user's ID number based on their role.
+     *
+     * @return string|null
      */
-    public function discussionPosts()
+    public function getIdNumberAttribute()
     {
-        return $this->hasMany(DiscussionPost::class);
-    }
-    
-    /**
-     * Get all comments by this user
-     */
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
-    
-    /**
-     * Get schedule for this user (relevant for both teachers and students)
-     */
-    public function schedule()
-    {
-        if ($this->isStudent()) {
-            return $this->classroom ? $this->classroom->schedules : collect();
-        } elseif ($this->isTeacher()) {
-            return Schedule::whereHas('subject', function($query) {
-                $query->whereHas('teachers', function($q) {
-                    $q->where('users.id', $this->id);
-                });
-            });
+        if ($this->role_id == 2) { // Teacher role
+            return $this->nip;
+        } elseif ($this->role_id == 3) { // Student role
+            return $this->nisn;
         }
-        
-        return collect();
-    }
-    
-    /**
-     * Get notifications for this user
-     */
-    public function userNotifications()
-    {
-        return $this->hasMany(UserNotification::class);
+        return null; // For admin or other roles
     }
 
     /**
-     * Get the student record associated with the user.
+     * Set the user's ID number based on their role.
+     *
+     * @param string|null $value
+     * @return void
      */
-    public function student()
+    public function setIdNumberAttribute($value)
     {
-        return $this->hasOne(Student::class);
-    }
-
-    /**
-     * Get the teacher record associated with the user.
-     */
-    public function teacher()
-    {
-        return $this->hasOne(Teacher::class);
-    }
-
-    /**
-     * Get the parent record associated with the user.
-     */
-    public function parent()
-    {
-        return $this->hasOne(ParentModel::class);
+        if ($this->role_id == 2) { // Teacher role
+            $this->attributes['nip'] = $value;
+            $this->attributes['nisn'] = null;
+        } elseif ($this->role_id == 3) { // Student role
+            $this->attributes['nisn'] = $value;
+            $this->attributes['nip'] = null;
+        }
+        // For admin or other roles, we don't set any ID number
     }
 }

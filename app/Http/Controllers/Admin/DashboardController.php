@@ -3,68 +3,106 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Subject;
-use App\Models\Classroom;
-use App\Models\Role;
-use App\Models\Announcement;
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Classroom;
+use App\Models\Subject;
+use App\Models\Announcement;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     /**
-     * Show the admin dashboard
+     * Display the admin dashboard.
+     *
+     * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        // Get role IDs
-        $adminRole = Role::where('slug', 'admin')->first();
-        $teacherRole = Role::where('slug', 'guru')->first();
-        $studentRole = Role::where('slug', 'siswa')->first();
+        // Get counts for summary cards
+        $studentsCount = User::where('role_id', 3)->count();  // Assuming role_id 3 is for students
+        $teachersCount = User::where('role_id', 2)->count();  // Assuming role_id 2 is for teachers
+        $classroomsCount = Classroom::count();
+        $subjectsCount = Subject::count();
         
-        // Get counts for cards
-        $studentCount = User::where('role_id', $studentRole->id ?? 0)->count();
-        $teacherCount = User::where('role_id', $teacherRole->id ?? 0)->count();
-        $classroomCount = Classroom::count();
-        $subjectCount = Subject::count();
-        
-        // Get recent users
+        // Get recent users (limit to 5)
         $recentUsers = User::with('role')
-                        ->latest()
-                        ->take(5)
-                        ->get();
-        
-        // Get recent announcements
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+          // Get recent teachers with subjects count (limit to 4)
+        $recentTeachers = User::where('role_id', 2)
+            ->selectRaw('users.*, (select count(*) from subjects inner join subject_teacher on subjects.id = subject_teacher.subject_id where subject_teacher.teacher_id = users.id) as subjects_count')
+            ->with(['subjects'])
+            ->orderBy('created_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        // Get recent students with their classrooms (limit to 4)
+        $recentStudents = User::with(['classroom' => function($query) {
+                $query->orderBy('name');
+            }])
+            ->where('role_id', 3)
+            ->orderBy('created_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        // Get recent classrooms with students count (limit to 4)
+        $recentClassrooms = Classroom::with(['students', 'homeroomTeacher'])
+            ->orderBy('created_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        // Get recent announcements (limit to 5)
         $recentAnnouncements = Announcement::with('author')
-                        ->latest('publish_date')
-                        ->take(3)
-                        ->get();
-        
-        // Define colors and icons for activity lists
-        $colors = ['blue', 'indigo', 'cyan', 'emerald', 'amber', 'purple', 'rose'];
-        $icons = [
-            'user_created' => 'user-plus',
-            'user_updated' => 'user-edit',
-            'user_deleted' => 'user-minus',
-            'class_created' => 'school',
-            'class_updated' => 'chalkboard',
-            'class_deleted' => 'trash-alt',
-            'subject_created' => 'book',
-            'subject_updated' => 'edit',
-            'subject_deleted' => 'trash',
-            'login' => 'sign-in-alt',
-            'logout' => 'sign-out-alt',
-        ];
-        
-        return view('dashboard.admin', compact(
-            'studentCount',
-            'teacherCount',
-            'classroomCount',
-            'subjectCount',
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('admin.dashboard.index', compact(
+            'studentsCount', 
+            'teachersCount', 
+            'classroomsCount', 
+            'subjectsCount',
             'recentUsers',
-            'recentAnnouncements',
-            'colors',
-            'icons'
+            'recentTeachers',
+            'recentStudents',
+            'recentClassrooms',
+            'recentAnnouncements'
         ));
+    }
+
+    /**
+     * Get dashboard statistics as JSON.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStats()
+    {
+        $studentsCount = User::where('role_id', 3)->count();
+        $teachersCount = User::where('role_id', 2)->count();
+        $classroomsCount = Classroom::count();
+        $subjectsCount = Subject::count();
+        
+        return response()->json([
+            'studentsCount' => $studentsCount,
+            'teachersCount' => $teachersCount,
+            'classroomsCount' => $classroomsCount,
+            'subjectsCount' => $subjectsCount,
+        ]);
+    }
+
+    /**
+     * Get recent activities for the dashboard.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getActivities()
+    {
+        // You can implement this to return recent activities
+        // For example, recent logins, new users, etc.
+        return response()->json([
+            'activities' => []
+        ]);
     }
 }

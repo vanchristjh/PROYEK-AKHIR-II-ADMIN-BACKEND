@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class MaterialController extends Controller
 {
@@ -67,7 +68,7 @@ class MaterialController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'classroom_id' => 'required|array',
             'classroom_id.*' => 'exists:classrooms,id',
-            'material_file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,jpg,png,mp4,zip,rar|max:20480', // 20MB max
+            'material_file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,jpg,jpeg,png,mp4,zip,rar|max:20480', // 20MB max
         ]);
 
         try {
@@ -75,7 +76,10 @@ class MaterialController extends Controller
             $filePath = null;
             if ($request->hasFile('material_file') && $request->file('material_file')->isValid()) {
                 $file = $request->file('material_file');
-                $fileName = time() . '_' . $file->getClientOriginalName();
+                
+                // Generate a safe filename
+                $fileName = time() . '_' . preg_replace('/[^A-Za-z0-9\-\_\.]/', '_', $file->getClientOriginalName());
+                
                 // Store file in public storage for easy access
                 $filePath = $file->storeAs('materials', $fileName, 'public');
             } else {
@@ -90,7 +94,7 @@ class MaterialController extends Controller
                 'description' => $validated['description'],
                 'subject_id' => $validated['subject_id'],
                 'teacher_id' => auth()->id(),
-                'file_path' => $filePath, // Make sure this field exists in your database
+                'file_path' => $filePath,
                 'publish_date' => now(),
             ]);
 
@@ -102,6 +106,11 @@ class MaterialController extends Controller
         } catch (\Exception $e) {
             // Log the error for debugging
             \Log::error('Error creating material: ' . $e->getMessage());
+            
+            // Delete uploaded file if it exists but database operation failed
+            if ($filePath && Storage::disk('public')->exists($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
             
             return redirect()->back()
                 ->withInput()
@@ -226,16 +235,34 @@ class MaterialController extends Controller
             abort(403, 'Unauthorized action.');
         }
         
-        // Delete file if exists
-        if ($material->file_path && Storage::disk('public')->exists($material->file_path)) {
-            Storage::disk('public')->delete($material->file_path);
+        try {
+            // Begin transaction to ensure atomicity
+            DB::beginTransaction();
+            
+            // Delete file if exists
+            if ($material->file_path && Storage::disk('public')->exists($material->file_path)) {
+                Storage::disk('public')->delete($material->file_path);
+            }
+            
+            // Delete material record and its relationships
+            $material->classrooms()->detach();
+            $material->delete();
+            
+            // Commit transaction
+            DB::commit();
+            
+            return redirect()->route('guru.materials.index')
+                ->with('success', 'Materi berhasil dihapus.');
+                
+        } catch (\Exception $e) {
+            // Rollback transaction if error occurs
+            DB::rollBack();
+            
+            // Log error
+            \Log::error('Error deleting material: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->withErrors(['error' => 'Gagal menghapus materi: ' . $e->getMessage()]);
         }
-        
-        // Delete material record and its relationships
-        $material->classrooms()->detach();
-        $material->delete();
-        
-        return redirect()->route('guru.materials.index')
-            ->with('success', 'Materi berhasil dihapus.');
     }
 }

@@ -44,8 +44,20 @@
             <i class="fas fa-school text-9xl"></i>
         </div>
         <div class="relative z-10">
-            <h2 class="text-2xl font-bold mb-2">Manajemen Kelas</h2>
-            <p class="text-purple-100">Kelola informasi kelas, wali kelas, dan mata pelajaran.</p>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Manajemen Kelas</h2>
+                    <p class="text-purple-100">Kelola informasi kelas, wali kelas, dan mata pelajaran.</p>
+                </div>
+                <div class="hidden md:flex space-x-2">
+                    <a href="{{ route('admin.classrooms.create') }}" class="px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-purple-100 transition-all duration-300 flex items-center shadow-md">
+                        <i class="fas fa-plus mr-2"></i> Tambah Kelas
+                    </a>
+                    <a href="{{ route('admin.classrooms.export-all') }}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center shadow-md">
+                        <i class="fas fa-file-export mr-2"></i> Export Semua
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -199,9 +211,11 @@
             </div>
             
             <!-- Pagination -->
-            <div class="px-6 py-4 border-t border-gray-200">
-                {{ $classrooms->links() }}
-            </div>
+            @if($classrooms->hasPages())
+                <div class="mt-4">
+                    {{ $classrooms->appends(request()->query())->links('pagination::tailwind') }}
+                </div>
+            @endif
         @endif
     </div>
     

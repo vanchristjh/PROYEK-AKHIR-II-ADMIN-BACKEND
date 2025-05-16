@@ -105,7 +105,7 @@
                             </div>
                         </div>
                         <div class="flex items-center mb-2">
-                            <input type="checkbox" name="remove_attachment" id="remove_attachment" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-2">
+                            <input type="checkbox" name="remove_attachment" id="remove_attachment" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-2">
                             <label for="remove_attachment" class="text-sm text-gray-700">Hapus lampiran</label>
                         </div>
                     @endif

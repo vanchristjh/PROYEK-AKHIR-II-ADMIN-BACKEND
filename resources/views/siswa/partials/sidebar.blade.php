@@ -38,12 +38,12 @@
             </a>
         </li>
         <li>
-            <a href="{{ route('siswa.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200 {{ request()->routeIs('siswa.materials.*') ? 'sidebar-active' : '' }}">
-                <div class="p-1.5 rounded-lg {{ request()->routeIs('siswa.materials.*') ? 'bg-purple-800' : 'bg-indigo-700/50 group-hover:bg-purple-700/50' }} transition-all duration-200">
-                    <i class="fas fa-book text-lg w-5 h-5 flex items-center justify-center {{ request()->routeIs('siswa.materials.*') ? 'text-white' : 'text-indigo-300 group-hover:text-white' }}"></i>
+            <a href="{{ url('/siswa/materials') }}" onclick="navigateTo('/siswa/materials')" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200 {{ request()->is('siswa/materials*') ? 'sidebar-active' : '' }}">
+                <div class="p-1.5 rounded-lg {{ request()->is('siswa/materials*') ? 'bg-purple-800' : 'bg-indigo-700/50 group-hover:bg-purple-700/50' }} transition-all duration-200">
+                    <i class="fas fa-book text-lg w-5 h-5 flex items-center justify-center {{ request()->is('siswa/materials*') ? 'text-white' : 'text-indigo-300 group-hover:text-white' }}"></i>
                 </div>
                 <span class="ml-3">Materi Pelajaran</span>
-                @if(request()->routeIs('siswa.materials.*'))
+                @if(request()->is('siswa/materials*'))
                     <span class="absolute inset-y-0 left-0 w-1 bg-purple-400 rounded-tr-md rounded-br-md"></span>
                 @endif
             </a>
@@ -101,6 +101,18 @@
                 @endif
             </a>
         </li>
+        
+        <li>
+            <a href="{{ route('siswa.submissions.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200 {{ request()->routeIs('siswa.submissions.*') ? 'sidebar-active' : '' }}">
+                <div class="p-1.5 rounded-lg {{ request()->routeIs('siswa.submissions.*') ? 'bg-green-700' : 'bg-indigo-700/50 group-hover:bg-green-700/50' }} transition-all duration-200">
+                    <i class="fas fa-file-upload text-lg w-5 h-5 flex items-center justify-center {{ request()->routeIs('siswa.submissions.*') ? 'text-white' : 'text-indigo-300 group-hover:text-white' }}"></i>
+                </div>
+                <span class="ml-3">Pengumpulan Tugas</span>
+                @if(request()->routeIs('siswa.submissions.*'))
+                    <span class="absolute inset-y-0 left-0 w-1 bg-green-400 rounded-tr-md rounded-br-md"></span>
+                @endif
+            </a>
+        </li>
     </ul>
 </div>
 
@@ -135,3 +147,26 @@
         </li>
     </ul>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event handlers to all sidebar links
+    document.querySelectorAll('.sidebar-item').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            // Get the URL directly
+            const href = this.getAttribute('href');
+            if (href && href !== 'javascript:void(0)' && href !== '#') {
+                e.preventDefault(); // Stop default event
+                console.log('Navigating to:', href); // Debug info
+                window.location.href = href; // Force navigation
+            }
+        });
+    });
+});
+
+function navigateTo(path) {
+    console.log('Direct navigation to:', path);
+    window.location.href = path;
+    return false;
+}
+</script>

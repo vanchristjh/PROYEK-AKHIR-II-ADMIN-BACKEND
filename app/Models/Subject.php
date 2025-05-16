@@ -12,7 +12,7 @@ class Subject extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -21,26 +21,27 @@ class Subject extends Model
     ];
 
     /**
-     * Get the teachers who teach this subject.
+     * The teachers that belong to the subject.
      */
     public function teachers()
     {
-        return $this->belongsToMany(Teacher::class, 'subject_teacher');
+        return $this->belongsToMany(User::class, 'subject_teacher', 'subject_id', 'teacher_id');
     }
 
     /**
-     * Get the classrooms associated with this subject.
+     * Get the classrooms where this subject is taught.
      */
     public function classrooms()
     {
-        return $this->belongsToMany(Classroom::class, 'classroom_subject');
+        return $this->belongsToMany(Classroom::class, 'classroom_subject')
+            ->withTimestamps();
     }
 
     /**
-     * Get the assignments for this subject.
+     * Get the schedules related to this subject.
      */
-    public function assignments()
+    public function schedules()
     {
-        return $this->hasMany(Assignment::class);
+        return $this->hasMany(Schedule::class);
     }
 }

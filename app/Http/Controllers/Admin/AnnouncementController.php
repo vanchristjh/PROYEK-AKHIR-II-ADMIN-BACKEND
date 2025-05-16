@@ -4,26 +4,50 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Models\User;
+use App\Exports\AnnouncementExport;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use PDF;
 
 class AnnouncementController extends Controller
 {
     /**
-     * Display a listing of announcements
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $announcements = Announcement::with('author')
-            ->latest('publish_date')
-            ->paginate(10);
-        
-        return view('admin.announcements.index', compact('announcements'));
+        $query = Announcement::with('author');
+
+        // Filter by importance
+        if ($request->has('importance')) {
+            if ($request->importance == 'important') {
+                $query->where('is_important', true);
+            } elseif ($request->importance == 'regular') {
+                $query->where('is_important', false);
+            }
+        }
+
+        // Filter by author
+        if ($request->has('author') && $request->author) {
+            $query->where('author_id', $request->author);
+        }
+
+        $announcements = $query->latest('publish_date')->paginate(10);
+        $authors = User::whereHas('announcements')->get();
+
+        return view('admin.announcements.index', compact('announcements', 'authors'));
     }
 
     /**
-     * Show form to create a new announcement
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
      */
     public function create()
     {
@@ -32,68 +56,43 @@ class AnnouncementController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'audience' => 'required|in:all,administrators,teachers,students',
             'is_important' => 'sometimes|boolean',
-            'audience' => 'required|in:all,teachers,students',
-            'attachment' => 'nullable|file|max:10240', // 10MB max
             'publish_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
+            'attachment' => 'nullable|file|max:20000|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip'
         ]);
-        
-        // Set is_important to false if not checked
-        $validated['is_important'] = isset($validated['is_important']) ? true : false;
-        
-        // Set publish date to now if not provided
-        if (empty($validated['publish_date'])) {
-            $validated['publish_date'] = now();
-        }
-        
-        // Handle attachment upload
+
+        // Handle publish date (default to now if not provided)
+        $validatedData['publish_date'] = $validatedData['publish_date'] ?? now();
+        $validatedData['author_id'] = Auth::id();
+
+        // Handle file upload
         if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('announcements', 'public');
-            $validated['attachment'] = $attachmentPath;
-            
-            // Remove attachment_path if it was accidentally set
-            if (isset($validated['attachment_path'])) {
-                unset($validated['attachment_path']);
-            }
+            $validatedData['attachment'] = $request->file('attachment')
+                ->store('announcements', 'public');
         }
-        
-        // Add author ID
-        $validated['author_id'] = Auth::id();
-        
-        $announcement = Announcement::create($validated);
-        
+
+        Announcement::create($validatedData);
+
         return redirect()->route('admin.announcements.index')
-            ->with('success', 'Pengumuman berhasil dibuat!');
+            ->with('success', 'Pengumuman berhasil dibuat.');
     }
 
     /**
-     * Download the specified announcement attachment
-     */
-    public function downloadAttachment(Announcement $announcement)
-    {
-        if (!$announcement->attachment) {
-            abort(404, 'Attachment not found');
-        }
-        
-        $path = Storage::disk('public')->path($announcement->attachment);
-        $filename = basename($announcement->attachment);
-        
-        if (!file_exists($path)) {
-            abort(404, 'File not found');
-        }
-        
-        return response()->download($path, $filename);
-    }
-
-    /**
-     * Display the specified announcement
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function show(Announcement $announcement)
     {
@@ -101,7 +100,10 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * Show form to edit an announcement
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function edit(Announcement $announcement)
     {
@@ -110,63 +112,104 @@ class AnnouncementController extends Controller
 
     /**
      * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Announcement $announcement)
     {
-        $validated = $request->validate([
+        $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'audience' => 'required|in:all,teachers,students',
+            'audience' => 'required|in:all,administrators,teachers,students',
             'is_important' => 'sometimes|boolean',
             'publish_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date',
-            'attachment' => 'nullable|file|max:10240', // 10MB max
-            'remove_attachment' => 'nullable|boolean',
+            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
+            'attachment' => 'nullable|file|max:20000|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,zip',
+            'remove_attachment' => 'sometimes|boolean'
         ]);
-        
-        // Set is_important to false if not checked
-        $validated['is_important'] = isset($validated['is_important']) ? true : false;
-        
-        // Handle remove attachment request
-        if (isset($validated['remove_attachment']) && $validated['remove_attachment']) {
-            if ($announcement->attachment) {
-                Storage::disk('public')->delete($announcement->attachment);
-                $validated['attachment'] = null;
-            }
-            
-            unset($validated['remove_attachment']);
-        }
-        
-        // Handle attachment upload
+
+        // Set is_important to false if not provided
+        $validatedData['is_important'] = $request->has('is_important');
+
+        // Handle file upload
         if ($request->hasFile('attachment')) {
-            // Delete old file if exists
-            if ($announcement->attachment) {
+            // Delete old attachment if exists
+            if ($announcement->attachment && Storage::disk('public')->exists($announcement->attachment)) {
                 Storage::disk('public')->delete($announcement->attachment);
             }
-            
-            $attachmentPath = $request->file('attachment')->store('announcements', 'public');
-            $validated['attachment'] = $attachmentPath;
+            $validatedData['attachment'] = $request->file('attachment')
+                ->store('announcements', 'public');
+        } elseif ($request->has('remove_attachment') && $announcement->attachment) {
+            // Remove attachment if requested
+            Storage::disk('public')->delete($announcement->attachment);
+            $validatedData['attachment'] = null;
+        } else {
+            // Keep the existing attachment
+            unset($validatedData['attachment']);
         }
-        
-        $announcement->update($validated);
-        
+
+        $announcement->update($validatedData);
+
         return redirect()->route('admin.announcements.index')
-            ->with('success', 'Pengumuman berhasil diperbarui!');
+            ->with('success', 'Pengumuman berhasil diperbarui.');
     }
 
     /**
-     * Remove the specified announcement
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function destroy(Announcement $announcement)
     {
         // Delete attachment if exists
-        if ($announcement->attachment) {
+        if ($announcement->attachment && Storage::disk('public')->exists($announcement->attachment)) {
             Storage::disk('public')->delete($announcement->attachment);
         }
-        
+
         $announcement->delete();
-        
+
         return redirect()->route('admin.announcements.index')
-            ->with('success', 'Pengumuman berhasil dihapus!');
+            ->with('success', 'Pengumuman berhasil dihapus.');
+    }
+
+    /**
+     * Download the announcement attachment.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
+     */
+    public function download(Announcement $announcement)
+    {
+        if (!$announcement->attachment || !Storage::disk('public')->exists($announcement->attachment)) {
+            abort(404, 'File tidak ditemukan.');
+        }
+
+        return Storage::disk('public')->download($announcement->attachment, $announcement->getAttachmentName());
+    }
+
+    /**
+     * Export announcement to PDF
+     *
+     * @param  Announcement  $announcement
+     * @return \Illuminate\Http\Response
+     */
+    public function exportPdf(Announcement $announcement)
+    {
+        $pdf = PDF::loadView('admin.announcements.pdf', compact('announcement'));
+        return $pdf->download('pengumuman-' . $announcement->id . '.pdf');
+    }
+
+    /**
+     * Export announcement to Excel
+     *
+     * @param  Announcement  $announcement
+     * @return \Illuminate\Http\Response
+     */
+    public function exportExcel(Announcement $announcement)
+    {
+        return Excel::download(new AnnouncementExport($announcement), 'pengumuman-' . $announcement->id . '.xlsx');
     }
 }

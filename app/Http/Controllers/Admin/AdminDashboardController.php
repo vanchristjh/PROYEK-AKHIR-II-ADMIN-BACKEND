@@ -8,10 +8,14 @@ use App\Models\Role;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\Announcement;
+use App\Models\Activity;
+use App\Traits\LogsActivity;
+use App\Helpers\ActivityRenderer;
 use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
 {
+    use LogsActivity;
     /**
      * Display the admin dashboard.
      */
@@ -37,13 +41,11 @@ class AdminDashboardController extends Controller
             $recentClassrooms = Classroom::selectRaw('classrooms.*, (SELECT COUNT(*) FROM users WHERE classrooms.id = users.classroom_id AND role_id = 3) as students_count')
                 ->orderBy('created_at', 'desc')
                 ->take(3)
-                ->get();
-
-            // Get subjects with teacher count
-            $recentSubjects = Subject::selectRaw('subjects.*, (SELECT COUNT(*) FROM users INNER JOIN subject_teacher ON users.id = subject_teacher.user_id WHERE subjects.id = subject_teacher.subject_id AND EXISTS (SELECT * FROM roles WHERE users.role_id = roles.id AND slug = "guru")) as teachers_count')
-                ->orderBy('created_at', 'desc')
-                ->take(3)
-                ->get();
+                ->get();        // Get subjects with teacher count
+        $recentSubjects = Subject::selectRaw('subjects.*, (SELECT COUNT(*) FROM users INNER JOIN subject_teacher ON users.id = subject_teacher.teacher_id WHERE subjects.id = subject_teacher.subject_id AND EXISTS (SELECT * FROM roles WHERE users.role_id = roles.id AND slug = "guru")) as teachers_count')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
 
             // Get recent teachers for the table display
             $recentTeachers = User::whereHas('role', function ($query) {
@@ -72,6 +74,12 @@ class AdminDashboardController extends Controller
                     return $announcement;
                 });
 
+            // Get recent activities
+            $recentActivities = $this->getRecentActivities(5);
+
+            // Define colors for activity icons
+            $colors = ['blue', 'green', 'red', 'yellow', 'purple', 'indigo', 'orange', 'teal'];
+
             return view('dashboard.admin', compact(
                 'studentCount',
                 'teacherCount',
@@ -82,7 +90,9 @@ class AdminDashboardController extends Controller
                 'recentSubjects',
                 'recentTeachers',
                 'recentStudents',
-                'recentAnnouncements'
+                'recentAnnouncements',
+                'recentActivities',
+                'colors'
             ));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error loading dashboard: ' . $e->getMessage());
@@ -138,10 +148,8 @@ class AdminDashboardController extends Controller
                         'name' => $classroom->homeroomTeacher->name
                     ] : null
                 ];
-            });
-
-        // Get subjects with teacher count
-        $recentSubjects = Subject::selectRaw('subjects.*, (SELECT COUNT(*) FROM users INNER JOIN subject_teacher ON users.id = subject_teacher.user_id WHERE subjects.id = subject_teacher.subject_id AND EXISTS (SELECT * FROM roles WHERE users.role_id = roles.id AND slug = "guru")) as teachers_count')
+            });        // Get subjects with teacher count
+        $recentSubjects = Subject::selectRaw('subjects.*, (SELECT COUNT(*) FROM users INNER JOIN subject_teacher ON users.id = subject_teacher.teacher_id WHERE subjects.id = subject_teacher.subject_id AND EXISTS (SELECT * FROM roles WHERE users.role_id = roles.id AND slug = "guru")) as teachers_count')
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get()
@@ -173,7 +181,22 @@ class AdminDashboardController extends Controller
                         'name' => $announcement->author->name
                     ] : null
                 ];
-            });
+            });        // Log the data refresh
+        $this->logActivity('Dashboard Refresh', 'Admin refreshed dashboard data', 'refresh');
+        
+        // Get recent activities
+        $activities = $this->getRecentActivities(5)->map(function($activity) {
+            return [
+                'id' => $activity->id,
+                'description' => $activity->description,
+                'type' => $activity->type,
+                'created_at' => $activity->created_at->format('d M Y, H:i'),
+                'user' => $activity->user ? [
+                    'id' => $activity->user->id,
+                    'name' => $activity->user->name
+                ] : null
+            ];
+        });
 
         // Return JSON response with updated data
         return response()->json([
@@ -184,7 +207,60 @@ class AdminDashboardController extends Controller
             'recentUsers' => $recentUsers,
             'recentClassrooms' => $recentClassrooms,
             'recentSubjects' => $recentSubjects,
-            'recentAnnouncements' => $recentAnnouncements
+            'recentAnnouncements' => $recentAnnouncements,
+            'recentActivities' => $activities
         ]);
+    }
+
+    /**
+     * Get only the recent activities (for specific activity refresh)
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getActivities()
+    {
+        // Log the activity refresh
+        $this->logActivity('Activity Refresh', 'Admin refreshed activity log', 'refresh');
+        
+        // Get recent activities
+        $activities = $this->getRecentActivities(10)->map(function($activity) {
+            return [
+                'id' => $activity->id,
+                'description' => $activity->description,
+                'type' => $activity->type,
+                'created_at' => $activity->created_at->format('d M Y, H:i'),
+                'user' => $activity->user ? [
+                    'id' => $activity->user->id,
+                    'name' => $activity->user->name
+                ] : null
+            ];
+        });
+
+        // Return JSON response with only activity data
+        return response()->json([
+            'recentActivities' => $activities
+        ]);
+    }    /**
+     * Get a rendered activity item template.
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getActivityTemplate(Request $request)
+    {
+        // Create an activity object from the request parameters
+        $activity = new \stdClass();
+        $activity->id = $request->input('id');
+        $activity->type = $request->input('type', 'system');
+        $activity->description = $request->input('description');
+        $activity->created_at = \Carbon\Carbon::parse($request->input('created_at', now()));
+        
+        // If there's a user ID, fetch the user
+        if ($request->input('user_id')) {
+            $activity->user = User::find($request->input('user_id'));
+        }
+        
+        // Use our ActivityRenderer to generate the HTML
+        return ActivityRenderer::render($activity, 0);
     }
 }

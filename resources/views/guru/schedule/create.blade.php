@@ -17,6 +17,10 @@
         <div class="relative z-10">
             <h2 class="text-2xl font-bold mb-2">Tambah Jadwal Mengajar</h2>
             <p class="text-blue-100">Tambahkan jadwal mengajar baru untuk mata pelajaran dan kelas.</p>
+            <div class="mt-3 bg-white/20 p-2 rounded-lg inline-block text-sm">
+                <i class="fas fa-info-circle mr-1"></i> 
+                Catatan: Jadwal yang ditambahkan akan terlihat oleh siswa di kelas yang dipilih.
+            </div>
         </div>
     </div>
 
@@ -202,6 +206,7 @@
         // Check for time conflicts when selecting start/end times
         const startTimeInput = document.getElementById('start_time');
         const endTimeInput = document.getElementById('end_time');
+        const form = document.querySelector('form');
         
         function validateTimes() {
             const startTime = startTimeInput.value;
@@ -209,13 +214,56 @@
             
             if (startTime && endTime && startTime >= endTime) {
                 endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
+                return false;
             } else {
                 endTimeInput.setCustomValidity('');
+                return true;
             }
         }
         
         startTimeInput.addEventListener('change', validateTimes);
         endTimeInput.addEventListener('change', validateTimes);
+        
+        // Validate form before submission
+        form.addEventListener('submit', function(e) {
+            // Reset validity
+            form.querySelectorAll('input, select').forEach(field => {
+                field.classList.remove('border-red-300');
+                field.setCustomValidity('');
+            });
+            
+            // Check required fields
+            let hasEmptyRequired = false;
+            form.querySelectorAll('[required]').forEach(field => {
+                if (!field.value.trim()) {
+                    field.setCustomValidity('Bidang ini wajib diisi');
+                    field.classList.add('border-red-300');
+                    hasEmptyRequired = true;
+                }
+            });
+            
+            if (hasEmptyRequired) {
+                e.preventDefault();
+                alert('Silakan lengkapi semua bidang yang wajib diisi');
+                return;
+            }
+            
+            // Check time validity
+            if (!validateTimes()) {
+                e.preventDefault();
+                alert('Waktu selesai harus setelah waktu mulai');
+                endTimeInput.classList.add('border-red-300');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
+            submitBtn.disabled = true;
+        });
+        
+        // Run validation on page load
+        validateTimes();
     });
 </script>
 @endpush

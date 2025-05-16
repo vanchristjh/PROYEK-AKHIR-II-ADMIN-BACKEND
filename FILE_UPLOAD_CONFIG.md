@@ -5,8 +5,8 @@
 This application has been configured with specific file upload limits to ensure stability and performance:
 
 ### Current Configuration:
-- **Client-side limit**: 2MB
-- **Server-side limit**: 20MB (configured in .htaccess)
+- **Client-side limit**: 100MB
+- **Server-side limit**: 120MB (configured in .htaccess)
 
 ### Adjusting File Upload Limits
 

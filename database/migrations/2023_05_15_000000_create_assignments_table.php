@@ -13,21 +13,14 @@ class CreateAssignmentsTable extends Migration
      */
     public function up()
     {
-        if (Schema::hasTable('assignments')) {
-            return;
-        }
-        
         Schema::create('assignments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('subject_id')->constrained()->onDelete('cascade');
+            $table->foreignId('teacher_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->foreignId('subject_id')->constrained()->onDelete('cascade');
-            $table->foreignId('classroom_id')->constrained()->onDelete('cascade');
-            $table->foreignId('teacher_id')->constrained()->onDelete('cascade');
-            $table->string('file')->nullable(); // file attachment
-            $table->timestamp('deadline');
-            $table->integer('max_score')->default(100);
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->dateTime('due_date');
+            $table->string('file_path')->nullable();
             $table->timestamps();
         });
     }

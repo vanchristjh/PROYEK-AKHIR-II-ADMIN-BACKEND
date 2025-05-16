@@ -504,6 +504,10 @@
             document.head.appendChild(style);
         });
     </script>
+    
+    <!-- User Management JS -->
+    <script src="{{ asset('js/user-management.js') }}"></script>
+    
     @stack('scripts')
 </body>
 </html>

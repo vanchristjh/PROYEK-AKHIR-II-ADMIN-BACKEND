@@ -34,19 +34,43 @@ class RedirectIfAuthenticated
                     $request->session()->regenerateToken();
                     return redirect()->route('login')
                         ->withErrors(['username' => 'Account has no role assigned. Please contact administrator.']);
-                }
-                
-                // If request is to the login page, redirect to their dashboard
+                }                  // If request is to the login page, redirect to their dashboard
                 if ($request->routeIs('login') || $request->is('/') || $request->is('login')) {
-                    if ($user->isAdmin()) {
-                        return redirect()->route('admin.dashboard');
-                    } elseif ($user->isGuru()) {
-                        return redirect()->route('guru.dashboard');
-                    } elseif ($user->isStudent()) {
-                        return redirect()->route('siswa.dashboard');
-                    } else {
-                        // Fallback for unknown role
-                        return redirect()->route('unauthorized');
+                    // Use role slug directly to avoid method calls that might cause issues
+                    $roleName = $user->role->slug ?? null;
+                    
+                    // Track redirects to prevent loops
+                    $redirectCount = $request->session()->get('redirect_count', 0) + 1;
+                    $request->session()->put('redirect_count', $redirectCount);
+                    
+                    // If we've redirected too many times, break the loop and show debug page
+                    if ($redirectCount > 3) {
+                        // Clear the counter and log the issue
+                        $request->session()->forget('redirect_count');
+                        \Log::error("Redirect loop detected for user {$user->id} with role {$roleName}");
+                        
+                        // Debug response to break the loop
+                        return response()->view('admin.dashboard.debug', [
+                            'user' => $user,
+                            'debug_info' => [
+                                'role' => $roleName,
+                                'redirect_count' => $redirectCount,
+                                'request_path' => $request->path()
+                            ]
+                        ]);
+                    }
+                    
+                    switch ($roleName) {
+                        case 'admin':
+                            return redirect()->route('admin.dashboard');
+                        case 'guru':
+                            return redirect()->route('guru.dashboard');
+                        case 'siswa':
+                            return redirect()->route('siswa.dashboard');
+                        default:
+                            // Log this unexpected case
+                            \Log::warning("User {$user->id} has unknown role: {$roleName}");
+                            return redirect()->route('unauthorized');
                     }
                 }
             }

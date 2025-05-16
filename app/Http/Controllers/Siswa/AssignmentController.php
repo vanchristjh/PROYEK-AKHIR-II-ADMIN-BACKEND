@@ -4,185 +4,139 @@ namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assignment;
-use App\Models\Subject;
-use App\Models\Submission;
+use App\Models\AssignmentSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class AssignmentController extends Controller
 {
     /**
-     * Display a listing of assignments for the student.
+     * Display a listing of the assignments.
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
+        // Get the student's classroom
+        $student = Auth::user();
+        $classroom = $student->classroom;
         
-        // Check if the student is assigned to a classroom
-        if (!$user->classroom) {
-            return view('siswa.assignments.index', [
-                'assignments' => new LengthAwarePaginator([], 0, 10),
-                'message' => 'Anda tidak terdaftar dalam kelas manapun.'
-            ]);
+        if (!$classroom) {
+            return view('siswa.assignments.index', ['assignments' => collect()]);
         }
         
-        $classroomId = $user->classroom_id;
-        
-        // Filter by status if provided
-        $status = $request->input('status');
-        $subjectId = $request->input('subject_id');
-        
-        // Get all assignments for the student's classroom
-        $query = Assignment::where('classroom_id', $classroomId)
-            ->with(['subject', 'submissions' => function($query) use ($user) {
-                $query->where('student_id', $user->id);
+        $query = Assignment::query()
+            ->where('classroom_id', $classroom->id)
+            ->with(['subject', 'teacher', 'submissions' => function($query) {
+                $query->where('student_id', Auth::id());
             }]);
-        
-        // Filter by status
-        if ($status === 'submitted') {
-            $query->whereHas('submissions', function($query) use ($user) {
-                $query->where('student_id', $user->id);
-            });
-        } elseif ($status === 'pending') {
-            $query->whereDoesntHave('submissions', function($query) use ($user) {
-                $query->where('student_id', $user->id);
-            });
-        } elseif ($status === 'completed') {
-            $query->whereHas('submissions', function($query) use ($user) {
-                $query->where('student_id', $user->id)
-                    ->whereNotNull('score');
+            
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
         
-        // Filter by subject if provided
-        if ($subjectId) {
-            $query->where('subject_id', $subjectId);
+        if ($request->filled('subject')) {
+            $query->where('subject_id', $request->subject);
         }
         
+        if ($request->filled('status')) {
+            if ($request->status === 'submitted') {
+                $query->whereHas('submissions', function($q) {
+                    $q->where('student_id', Auth::id());
+                });
+            } elseif ($request->status === 'not_submitted') {
+                $query->whereDoesntHave('submissions', function($q) {
+                    $q->where('student_id', Auth::id());
+                });
+            }
+        }
+        
+        // Get assignments
         $assignments = $query->latest()->paginate(10);
         
-        // Get subjects for the filter
-        $subjects = Subject::whereHas('classrooms', function($query) use ($classroomId) {
-            $query->where('classrooms.id', $classroomId);
-        })->get();
+        // Get subjects for filter
+        $subjects = $classroom->subjects;
         
-        return view('siswa.assignments.index', compact('assignments', 'status', 'subjects', 'subjectId'));
+        return view('siswa.assignments.index', compact('assignments', 'subjects'));
     }
 
     /**
      * Display the specified assignment.
      */
-    public function show($id)
+    public function show(Assignment $assignment)
     {
-        $assignment = Assignment::findOrFail($id);
-        
-        // Check if user's class has access to this assignment
+        // Check if the assignment belongs to student's classroom
         $student = Auth::user();
-        $classroom = $student->classroom;
+        if ($assignment->classroom_id !== $student->classroom_id) {
+            abort(403, 'Unauthorized action.');
+        }
         
-        // Check if user has submitted this assignment
-        $submission = Submission::where('assignment_id', $id)
+        $submission = AssignmentSubmission::where('assignment_id', $assignment->id)
             ->where('student_id', $student->id)
             ->first();
         
-        $isSubmitted = !is_null($submission);
-        $isGraded = $isSubmitted && !is_null($submission->score);
-        $isExpired = $assignment->deadline < now();
-        
-        return view('siswa.assignments.show', [
-            'assignment' => $assignment,
-            'submission' => $submission,
-            'isSubmitted' => $isSubmitted,
-            'isGraded' => $isGraded,
-            'isExpired' => $isExpired,
-        ]);
+        return view('siswa.assignments.show', compact('assignment', 'submission'));
     }
 
     /**
-     * Submit a solution for an assignment
+     * Submit an assignment.
      */
     public function submit(Request $request, Assignment $assignment)
     {
-        // Verify assignment is for student's classroom
-        if ($assignment->classroom_id !== Auth::user()->classroom_id) {
+        // Check if the assignment belongs to student's classroom
+        $student = Auth::user();
+        if ($assignment->classroom_id !== $student->classroom_id) {
             abort(403, 'Unauthorized action.');
         }
         
         // Check if deadline has passed
-        if ($assignment->isExpired()) {
-            return redirect()->route('siswa.assignments.show', $assignment)
-                ->with('error', 'The deadline for this assignment has passed.');
+        if ($assignment->deadline && now() > $assignment->deadline) {
+            return redirect()->back()->with('error', 'Batas waktu pengumpulan sudah berakhir!');
         }
         
+        // Validate request
         $validated = $request->validate([
-            'file' => ['required', 'file', 'max:10240'], // 10MB max
-            'notes' => ['nullable', 'string'],
+            'file' => 'required|file|max:10240', // Max 10MB
+            'notes' => 'nullable|string'
         ]);
         
-        // Check if student already submitted
-        $existingSubmission = Submission::where('assignment_id', $assignment->id)
-            ->where('student_id', Auth::id())
+        // Check if student has already submitted
+        $existingSubmission = AssignmentSubmission::where('assignment_id', $assignment->id)
+            ->where('student_id', $student->id)
             ->first();
-            
+        
+        // Handle file upload
+        $file = $request->file('file');
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        $filePath = $file->storeAs('submissions', $fileName, 'public');
+        
         if ($existingSubmission) {
-            return redirect()->route('siswa.assignments.show', $assignment)
-                ->with('error', 'You have already submitted a solution for this assignment.');
+            // Delete old file if exists
+            if ($existingSubmission->file_path) {
+                Storage::disk('public')->delete($existingSubmission->file_path);
+            }
+            
+            // Update existing submission
+            $existingSubmission->file_path = $filePath;
+            $existingSubmission->file_name = $file->getClientOriginalName();
+            $existingSubmission->notes = $validated['notes'] ?? null;
+            $existingSubmission->save();
+            
+            return redirect()->route('siswa.assignments.show', $assignment)->with('success', 'Tugas berhasil diperbarui!');
+        } else {
+            // Create new submission
+            AssignmentSubmission::create([
+                'assignment_id' => $assignment->id,
+                'student_id' => $student->id,
+                'file_path' => $filePath,
+                'file_name' => $file->getClientOriginalName(),
+                'notes' => $validated['notes'] ?? null
+            ]);
+            
+            return redirect()->route('siswa.assignments.show', $assignment)->with('success', 'Tugas berhasil dikumpulkan!');
         }
-        
-        // Store the file
-        $filePath = $request->file('file')->store('submissions', 'public');
-        
-        // Create submission
-        Submission::create([
-            'assignment_id' => $assignment->id,
-            'student_id' => Auth::id(),
-            'file_path' => $filePath,
-            'notes' => $validated['notes'],
-            'submitted_at' => now(),
-        ]);
-        
-        return redirect()->route('siswa.assignments.show', $assignment)
-            ->with('success', 'Your solution has been submitted successfully!');
-    }
-    
-    /**
-     * Download the assignment file
-     */
-    public function download(Assignment $assignment)
-    {
-        // Verify assignment is for student's classroom
-        if ($assignment->classroom_id !== Auth::user()->classroom_id) {
-            abort(403, 'Unauthorized action.');
-        }
-        
-        // Check if assignment has a file
-        if (!$assignment->file_path) {
-            abort(404, 'This assignment does not have an attached file.');
-        }
-        
-        // Get original filename
-        $filename = basename($assignment->file_path);
-        
-        // Return file download
-        return Storage::disk('public')->download($assignment->file_path, $filename);
-    }
-    
-    /**
-     * Download the submission file
-     */
-    public function downloadSubmission(Submission $submission)
-    {
-        // Verify submission belongs to the student
-        if ($submission->student_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
-        
-        // Get original filename
-        $filename = basename($submission->file_path);
-        
-        // Return file download
-        return Storage::disk('public')->download($submission->file_path, $filename);
     }
 }

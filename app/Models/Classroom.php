@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Classroom extends Model
 {
@@ -14,44 +12,46 @@ class Classroom extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
-        'level',
-        'year',
-        'teacher_id', // homeroom teacher
+        'grade_level',
+        'academic_year',
+        'homeroom_teacher_id',
+        'capacity',
+        'room_number',
     ];
-
-    /**
-     * Get the students for the classroom.
-     */
-    public function students(): HasMany
-    {
-        return $this->hasMany(Student::class);
-    }
 
     /**
      * Get the homeroom teacher for the classroom.
      */
-    public function teacher()
+    public function homeroomTeacher()
     {
-        return $this->belongsTo(Teacher::class, 'teacher_id');
+        return $this->belongsTo(User::class, 'homeroom_teacher_id');
     }
 
     /**
-     * Get the subjects assigned to this classroom.
+     * Get the students for the classroom.
      */
-    public function subjects(): BelongsToMany
+    public function students()
+    {
+        return $this->hasMany(User::class, 'classroom_id');
+    }
+    
+    /**
+     * Get the schedules for this classroom.
+     */
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    /**
+     * Get the subjects for this classroom.
+     */
+    public function subjects()
     {
         return $this->belongsToMany(Subject::class, 'classroom_subject');
-    }
-
-    /**
-     * Get the assignments for the classroom.
-     */
-    public function assignments(): HasMany
-    {
-        return $this->hasMany(Assignment::class);
     }
 }

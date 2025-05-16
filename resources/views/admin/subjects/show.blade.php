@@ -29,6 +29,12 @@
             <span class="ml-3">Kelas</span>
         </a>
     </li>
+    <li>
+        <a href="{{ route('admin.announcements.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
+            <i class="fas fa-bullhorn text-lg w-6 text-indigo-300"></i>
+            <span class="ml-3">Pengumuman</span>
+        </a>
+    </li>
 @endsection
 
 @section('content')
@@ -60,6 +66,25 @@
         </ol>
     </nav>
 
+    <!-- Success/Error messages -->
+    @if(session('success'))
+        <div class="mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md animate-fade-in">
+            <div class="flex items-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        </div>
+    @endif
+    
+    @if(session('error'))
+        <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md animate-fade-in">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <span>{{ session('error') }}</span>
+            </div>
+        </div>
+    @endif
+
     <!-- Subject Header -->
     <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 mb-6 text-white relative overflow-hidden animate-fade-in">
         <div class="absolute -right-10 -top-10 opacity-10">
@@ -86,13 +111,19 @@
                     <i class="fas fa-edit mr-2"></i>
                     Edit
                 </a>
-                <form action="{{ route('admin.subjects.destroy', $subject->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata pelajaran ini?');">
+                <a href="{{ route('admin.subjects.download', $subject->id) }}" class="inline-flex items-center px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm">
+                    <i class="fas fa-download mr-2"></i>
+                    Unduh Materi
+                </a>
+                <button type="button" class="delete-button inline-flex items-center px-4 py-2 bg-red-500/20 text-white rounded-lg hover:bg-red-500/40 transition-colors backdrop-blur-sm"
+                    data-subject-id="{{ $subject->id }}" 
+                    data-subject-name="{{ $subject->name }}">
+                    <i class="fas fa-trash mr-2"></i>
+                    Hapus
+                </button>
+                <form id="delete-form-{{ $subject->id }}" action="{{ route('admin.subjects.destroy', $subject->id) }}" method="POST" class="hidden">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-500/20 text-white rounded-lg hover:bg-red-500/40 transition-colors backdrop-blur-sm">
-                        <i class="fas fa-trash mr-2"></i>
-                        Hapus
-                    </button>
                 </form>
             </div>
         </div>
@@ -226,3 +257,70 @@
         </a>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete confirmation with improved UX
+        const deleteButton = document.querySelector('.delete-button');
+        
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function() {
+                const subjectId = this.dataset.subjectId;
+                const subjectName = this.dataset.subjectName;
+                
+                // Create modal overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+                
+                // Create confirmation modal
+                const modal = document.createElement('div');
+                modal.className = 'bg-white rounded-lg shadow-xl p-6 max-w-md mx-4 animate-fade-in';
+                modal.innerHTML = `
+                    <div class="text-center mb-4">
+                        <div class="h-16 w-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-exclamation-triangle text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Konfirmasi Penghapusan</h3>
+                        <p class="text-gray-600">Apakah Anda yakin ingin menghapus mata pelajaran <span class="font-medium">"${subjectName}"</span>?</p>
+                        <p class="text-sm text-red-600 mt-2">Tindakan ini akan menghapus semua data terkait dan tidak dapat dibatalkan.</p>
+                    </div>
+                    <div class="flex justify-center space-x-3">
+                        <button type="button" class="cancel-button px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                            Batal
+                        </button>
+                        <button type="button" class="confirm-button px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                            Ya, Hapus
+                        </button>
+                    </div>
+                `;
+                
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+                
+                // Handle cancel button
+                modal.querySelector('.cancel-button').addEventListener('click', function() {
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.remove(), 300);
+                });
+                
+                // Handle confirm button
+                modal.querySelector('.confirm-button').addEventListener('click', function() {
+                    // Show loading state
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menghapus...';
+                    this.disabled = true;
+                    document.getElementById(`delete-form-${subjectId}`).submit();
+                });
+                
+                // Close on outside click
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.add('opacity-0');
+                        setTimeout(() => overlay.remove(), 300);
+                    }
+                });
+            });
+        }
+    });
+</script>
+@endpush

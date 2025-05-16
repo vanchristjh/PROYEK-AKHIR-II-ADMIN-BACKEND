@@ -4,74 +4,98 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Models\ActivityLog;
 
 class ProfileController extends Controller
 {
     /**
      * Display the user's profile.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function show()
     {
         $user = Auth::user();
-        return view('admin.profile.show', compact('user'));
+        $recentActivities = ActivityLog::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('admin.profile.show', compact('user', 'recentActivities'));
     }
 
     /**
-     * Show the form for editing the user's profile.
-     *
-     * @return \Illuminate\Http\Response
+     * Show the form for editing the profile.
      */
     public function edit()
     {
-        $user = Auth::user();
+        $user = auth()->user();
         return view('admin.profile.edit', compact('user'));
     }
 
     /**
      * Update the user's profile.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function update(Request $request)
     {
-        $user = Auth::user();
+        $user = auth()->user();
         
-        $validated = $request->validate([
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'string', 'min:8'],
-            'avatar' => ['nullable', 'image', 'max:1024'], // 1MB max size
+            'avatar' => ['nullable', 'image', 'max:2048'], // 2MB Max
+            'id_number' => ['nullable', 'string', 'max:50'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'bio' => ['nullable', 'string', 'max:1000'],
+            'current_password' => ['nullable', 'required_with:password', function ($attribute, $value, $fail) use ($user) {
+                if (!Hash::check($value, $user->password)) {
+                    $fail('The current password is incorrect.');
+                }
+            }],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
+        
+        // Update basic profile info
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->id_number = $request->id_number;
+        $user->phone = $request->phone;
+        $user->address = $request->address;
+        $user->bio = $request->bio;
         
         // Handle avatar upload
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if it exists
-            if ($user->avatar) {
+            // Delete old avatar if exists
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }
             
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
-            $validated['avatar'] = $avatarPath;
+            $user->avatar = $request->file('avatar')->store('avatars', 'public');
         }
         
-        // Only update password if provided
-        if (empty($validated['password'])) {
-            unset($validated['password']);
-        } else {
-            $validated['password'] = Hash::make($validated['password']);
+        // Update password if provided
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+            
+            // Log activity
+            ActivityLog::log(
+                'password_changed',
+                'Password berhasil diperbarui'
+            );
         }
         
-        $user->update($validated);
+        $user->save();
+        
+        // Log activity
+        ActivityLog::log(
+            'profile_updated',
+            'Profil berhasil diperbarui'
+        );
         
         return redirect()->route('admin.profile.show')
-            ->with('success', 'Profil berhasil diperbarui!');
+            ->with('success', 'Profil berhasil diperbarui.');
     }
 }

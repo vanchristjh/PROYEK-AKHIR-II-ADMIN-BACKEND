@@ -3,38 +3,41 @@
 namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Assignment;
 use App\Models\Submission;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class SubmissionController extends Controller
 {
     /**
-     * Display a listing of the student's submissions.
+     * Display a listing of the submissions.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
-        $user = auth()->user();
-        
-        $submissions = Submission::where('student_id', $user->student->id)
-                                ->with(['assignment', 'assignment.subject'])
-                                ->latest('submitted_at')
-                                ->get();
-        
+        $submissions = Submission::where('student_id', auth()->id())
+            ->with(['assignment.subject', 'assignment.teacher'])
+            ->latest('submitted_at')
+            ->paginate(10);
+
         return view('siswa.submissions.index', compact('submissions'));
     }
 
     /**
      * Display the specified submission.
+     *
+     * @param  int  $id
+     * @return \Illuminate\View\View
      */
-    public function show(Submission $submission)
+    public function show($id)
     {
-        // Authorization: only the student who created the submission can view it
-        $student = auth()->user()->student;
-        
-        if (!$student || $submission->student_id !== $student->id) {
+        $submission = Submission::findOrFail($id);
+
+        if ($submission->student_id !== auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -42,169 +45,251 @@ class SubmissionController extends Controller
     }
 
     /**
-     * Store a newly created submission.
-     */
-    public function store(Request $request, Assignment $assignment)
-    {
-        // Authorization: only students who are in the assignment's classroom can submit
-        $student = auth()->user()->student;
-        
-        if (!$student || !$assignment->classroom->students->contains($student->id)) {
-            return redirect()->route('siswa.assignments.show', $assignment)
-                ->with('error', 'Anda tidak memiliki akses untuk mengumpulkan tugas ini.');
-        }
-
-        // Check if the assignment deadline has passed
-        if ($assignment->deadline < now()) {
-            return redirect()->route('siswa.assignments.show', $assignment)
-                ->with('error', 'Deadline pengumpulan tugas telah berakhir.');
-        }
-
-        // Check if student has already submitted
-        $existingSubmission = Submission::where('assignment_id', $assignment->id)
-            ->where('student_id', $student->id)
-            ->first();
-            
-        if ($existingSubmission) {
-            return redirect()->route('siswa.assignments.show', $assignment)
-                ->with('error', 'Anda sudah mengumpulkan tugas ini. Silakan edit pengumpulan yang ada.');
-        }
-
-        // Validate input
-        $validatedData = $request->validate([
-            'file' => 'required|file|max:2048', // 2MB max
-            'notes' => 'nullable|string|max:500'
-        ]);
-
-        // Store file
-        $path = $request->file('file')->store('submissions');
-
-        // Create submission
-        Submission::create([
-            'assignment_id' => $assignment->id,
-            'student_id' => $student->id,
-            'file_path' => $path,
-            'notes' => $validatedData['notes'],
-            'submitted_at' => now()
-        ]);
-
-        return redirect()->route('siswa.assignments.show', $assignment)
-            ->with('success', 'Tugas berhasil dikumpulkan.');
-    }
-
-    /**
-     * Update an existing submission
-     */
-    public function update(Request $request, Submission $submission)
-    {
-        // Authorization: only the student who created the submission can update it
-        $student = auth()->user()->student;
-        
-        if (!$student || $submission->student_id !== $student->id) {
-            return redirect()->route('siswa.assignments.show', $submission->assignment_id)
-                ->with('error', 'Anda tidak memiliki akses untuk mengubah pengumpulan ini.');
-        }
-
-        // Check if the submission's assignment deadline has passed
-        if ($submission->assignment->deadline < now()) {
-            return redirect()->route('siswa.assignments.show', $submission->assignment_id)
-                ->with('error', 'Deadline pengumpulan tugas telah berakhir.');
-        }
-
-        // Check if submission is already graded
-        if ($submission->score !== null) {
-            return redirect()->route('siswa.assignments.show', $submission->assignment_id)
-                ->with('error', 'Tugas yang sudah dinilai tidak dapat diubah.');
-        }
-
-        // Validate input
-        $validatedData = $request->validate([
-            'file' => 'nullable|file|max:2048', // 2MB max
-            'notes' => 'nullable|string|max:500'
-        ]);
-
-        // Update submission
-        if ($request->hasFile('file')) {
-            // Delete old file
-            if ($submission->file_path) {
-                Storage::delete($submission->file_path);
-            }
-            
-            // Store new file
-            $path = $request->file('file')->store('submissions');
-            $submission->file_path = $path;
-        }
-
-        $submission->notes = $validatedData['notes'];
-        $submission->submitted_at = now();
-        $submission->save();
-
-        return redirect()->route('siswa.assignments.show', $submission->assignment_id)
-            ->with('success', 'Pengumpulan tugas berhasil diperbarui.');
-    }
-
-    /**
-     * Delete a submission
-     */
-    public function destroy(Submission $submission)
-    {
-        // Authorization: only the student who created the submission can delete it
-        $student = auth()->user()->student;
-        
-        if (!$student || $submission->student_id !== $student->id) {
-            return redirect()->route('siswa.assignments.show', $submission->assignment_id)
-                ->with('error', 'Anda tidak memiliki akses untuk menghapus pengumpulan ini.');
-        }
-
-        // Check if the submission's assignment deadline has passed
-        if ($submission->assignment->deadline < now()) {
-            return redirect()->route('siswa.assignments.show', $submission->assignment_id)
-                ->with('error', 'Deadline pengumpulan tugas telah berakhir.');
-        }
-
-        // Check if submission is already graded
-        if ($submission->score !== null) {
-            return redirect()->route('siswa.assignments.show', $submission->assignment_id)
-                ->with('error', 'Tugas yang sudah dinilai tidak dapat dihapus.');
-        }
-
-        // Delete file
-        if ($submission->file_path) {
-            Storage::delete($submission->file_path);
-        }
-
-        // Delete submission
-        $submission->delete();
-
-        return redirect()->route('siswa.assignments.show', $submission->assignment_id)
-            ->with('success', 'Pengumpulan tugas berhasil dihapus.');
-    }
-
-    /**
-     * Download the submission file.
+     * Store a new submission.
      *
-     * @param  \App\Models\Submission  $submission
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function download(Submission $submission)
+    public function store(Request $request)
     {
-        // Authorization: only the student who created the submission can download it
-        $student = auth()->user()->student;
-        
-        if (!$student || $submission->student_id !== $student->id) {
-            return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk mengunduh file ini.');
+        $request->validate([
+            'file' => 'required|file|max:102400', // 100MB max
+            'assignment_id' => 'required|exists:assignments,id'
+        ]);
+
+        $assignment = Assignment::findOrFail($request->assignment_id);
+        if (Carbon::now() > $assignment->deadline) {
+            return redirect()->back()->with('error', 'Tidak dapat mengumpulkan tugas yang telah melewati deadline.');
         }
-        
-        // Check if file exists
-        $filePath = $submission->file_path;
-        if (!$filePath || !Storage::exists($filePath)) {
-            return redirect()->back()->with('error', 'File tidak ditemukan atau telah dihapus.');
+
+        $existingSubmission = Submission::where('assignment_id', $request->assignment_id)
+            ->where('student_id', Auth::id())
+            ->first();
+
+        if ($existingSubmission) {
+            return redirect()->back()->with('error', 'Anda sudah mengumpulkan tugas ini. Silakan edit pengumpulan yang ada.');
         }
-        
-        try {
-            return Storage::download($filePath, basename($filePath));
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengunduh file.');
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $filePath = $file->store('submissions/' . $assignment->id, 'public');
+
+            $fileSize = $this->formatFileSize($file->getSize());
+            $fileExtension = $file->getClientOriginalExtension();
+
+            $submission = new Submission();
+            $submission->assignment_id = $request->assignment_id;
+            $submission->student_id = Auth::id();
+            $submission->file_path = $filePath;
+            $submission->file_name = $file->getClientOriginalName();
+            $submission->file_type = $file->getMimeType();
+            $submission->file_size = $fileSize;
+            $submission->file_icon = $this->getFileIconClass($fileExtension);
+            $submission->file_color = $this->getFileColorClass($fileExtension);
+            $submission->submitted_at = Carbon::now();
+            $submission->save();
+
+            return redirect()->back()->with('success', 'Tugas berhasil dikumpulkan.');
+        }
+
+        return redirect()->back()->with('error', 'Gagal mengunggah file.');
+    }
+
+    /**
+     * Update an existing submission.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'file' => 'required|file|max:102400', // 100MB max
+        ]);
+
+        $submission = Submission::findOrFail($id);
+
+        if ($submission->student_id != Auth::id()) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengedit pengumpulan ini.');
+        }
+
+        $assignment = $submission->assignment;
+        if (Carbon::now() > $assignment->deadline) {
+            return redirect()->back()->with('error', 'Tidak dapat mengedit pengumpulan untuk tugas yang telah melewati deadline.');
+        }
+
+        if ($submission->score !== null) {
+            return redirect()->back()->with('error', 'Tidak dapat mengedit pengumpulan yang sudah dinilai.');
+        }
+
+        if ($request->hasFile('file')) {
+            if ($submission->file_path && Storage::disk('public')->exists($submission->file_path)) {
+                Storage::disk('public')->delete($submission->file_path);
+            }
+
+            $file = $request->file('file');
+            $filePath = $file->store('submissions/' . $submission->assignment_id, 'public');
+
+            $fileSize = $this->formatFileSize($file->getSize());
+            $fileExtension = $file->getClientOriginalExtension();
+
+            $submission->file_path = $filePath;
+            $submission->file_name = $file->getClientOriginalName();
+            $submission->file_type = $file->getMimeType();
+            $submission->file_size = $fileSize;
+            $submission->file_icon = $this->getFileIconClass($fileExtension);
+            $submission->file_color = $this->getFileColorClass($fileExtension);
+            $submission->updated_at = Carbon::now();
+            $submission->save();
+
+            return redirect()->back()->with('success', 'Pengumpulan tugas berhasil diperbarui.');
+        }
+
+        return redirect()->back()->with('error', 'Gagal mengunggah file.');
+    }
+
+    /**
+     * Remove a submission.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        $submission = Submission::findOrFail($id);
+
+        if ($submission->student_id != Auth::id()) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menghapus pengumpulan ini.');
+        }
+
+        $assignment = $submission->assignment;
+        if (Carbon::now() > $assignment->deadline) {
+            return redirect()->back()->with('error', 'Tidak dapat menghapus pengumpulan untuk tugas yang telah melewati deadline.');
+        }
+
+        if ($submission->score !== null) {
+            return redirect()->back()->with('error', 'Tidak dapat menghapus pengumpulan yang sudah dinilai.');
+        }
+
+        if ($submission->file_path && Storage::disk('public')->exists($submission->file_path)) {
+            Storage::disk('public')->delete($submission->file_path);
+        }
+
+        $submission->delete();
+
+        return redirect()->back()->with('success', 'Pengumpulan tugas berhasil dihapus.');
+    }
+
+    /**
+     * Download submission file.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function download($id)
+    {
+        $submission = Submission::findOrFail($id);
+
+        $user = Auth::user();
+        $isStudent = $user->role === 'student';
+        $isTeacher = $user->role === 'teacher';
+
+        if (($isStudent && $submission->student_id != $user->id) &&
+            !($isTeacher && $submission->assignment->subject->teachers->contains($user->id))) {
+            return abort(403, 'Anda tidak memiliki akses untuk mengunduh file ini.');
+        }
+
+        if ($submission->file_path && Storage::disk('public')->exists($submission->file_path)) {
+            return Storage::disk('public')->download(
+                $submission->file_path,
+                $submission->file_name ?? basename($submission->file_path)
+            );
+        }
+
+        return redirect()->back()->with('error', 'File tidak ditemukan.');
+    }
+
+    /**
+     * Format file size for display.
+     *
+     * @param  int  $size
+     * @return string
+     */
+    private function formatFileSize($size)
+    {
+        if ($size < 1024) {
+            return $size . ' B';
+        } elseif ($size < 1048576) {
+            return round($size / 1024, 2) . ' KB';
+        } else {
+            return round($size / 1048576, 2) . ' MB';
+        }
+    }
+
+    /**
+     * Get appropriate icon class based on file extension.
+     *
+     * @param  string  $extension
+     * @return string
+     */
+    private function getFileIconClass($extension)
+    {
+        switch (strtolower($extension)) {
+            case 'pdf':
+                return 'fa-file-pdf';
+            case 'doc':
+            case 'docx':
+                return 'fa-file-word';
+            case 'xls':
+            case 'xlsx':
+                return 'fa-file-excel';
+            case 'ppt':
+            case 'pptx':
+                return 'fa-file-powerpoint';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+                return 'fa-file-image';
+            case 'zip':
+            case 'rar':
+                return 'fa-file-archive';
+            default:
+                return 'fa-file';
+        }
+    }
+
+    /**
+     * Get appropriate color class based on file extension.
+     *
+     * @param  string  $extension
+     * @return string
+     */
+    private function getFileColorClass($extension)
+    {
+        switch (strtolower($extension)) {
+            case 'pdf':
+                return 'bg-red-500';
+            case 'doc':
+            case 'docx':
+                return 'bg-blue-500';
+            case 'xls':
+            case 'xlsx':
+                return 'bg-green-500';
+            case 'ppt':
+            case 'pptx':
+                return 'bg-orange-500';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+                return 'bg-purple-500';
+            case 'zip':
+            case 'rar':
+                return 'bg-yellow-500';
+            default:
+                return 'bg-gray-500';
         }
     }
 }

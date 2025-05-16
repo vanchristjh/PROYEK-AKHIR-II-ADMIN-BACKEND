@@ -9,6 +9,8 @@ use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class SiswaAssignmentController extends Controller
 {
@@ -58,7 +60,28 @@ class SiswaAssignmentController extends Controller
                 });
         }
         
-        $assignments = $query->latest()->paginate(10);
+        $assignmentsCollection = $query->latest()->get(); // Use get() to retrieve all data
+        
+        // Get current page from request
+        $page = $request->get('page', 1);
+        
+        // Define how many items per page
+        $perPage = 10;
+        
+        // Slice the collection to get the items for the current page
+        $items = $assignmentsCollection->slice(($page - 1) * $perPage, $perPage)->values();
+        
+        // Create a paginator instance
+        $assignments = new LengthAwarePaginator(
+            $items,
+            $assignmentsCollection->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
         
         // Get subjects for filter dropdown
         $subjects = Subject::whereHas('classrooms', function($query) use ($classroomId) {

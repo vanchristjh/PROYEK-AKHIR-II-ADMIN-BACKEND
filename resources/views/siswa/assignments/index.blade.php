@@ -31,7 +31,7 @@
         </a>
     </li>
     <li>
-        <a href="{{ route('siswa.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
+        <a href="{{ route('siswa.material.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-blue-700/50 transition-all duration-200">
                 <i class="fas fa-book text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
             </div>
@@ -225,11 +225,9 @@
     </div>
     
     <!-- Pagination -->
-    @if(isset($assignments) && $assignments->hasPages())
-        <div class="flex justify-center">
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                {{ $assignments->withQueryString()->links() }}
-            </nav>
+    @if(method_exists($assignments, 'hasPages') && $assignments->hasPages())
+        <div class="pagination-container">
+            {{ $assignments->links() }}
         </div>
     @endif
 @endsection

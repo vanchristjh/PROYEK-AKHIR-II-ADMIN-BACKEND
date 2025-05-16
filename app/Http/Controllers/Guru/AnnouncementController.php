@@ -5,27 +5,50 @@ namespace App\Http\Controllers\Guru;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AnnouncementController extends Controller
 {
     /**
-     * Display a listing of announcements for teachers
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $announcements = Announcement::with('author')
-            ->visibleToRole('guru')
-            ->active()
-            ->latest('publish_date')
-            ->paginate(10);
-        
+        $query = Announcement::with('author');
+
+        // Filter by importance
+        if ($request->has('importance')) {
+            if ($request->importance == 'important') {
+                $query->where('is_important', true);
+            } elseif ($request->importance == 'regular') {
+                $query->where('is_important', false);
+            }
+        }
+
+        // Filter by search term
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('content', 'like', '%' . $request->search . '%');
+        }
+
+        // Teachers should see all announcements for teachers and all audiences
+        $query->where(function ($q) {
+            $q->where('audience', 'all')
+              ->orWhere('audience', 'teachers');
+        });
+
+        $announcements = $query->latest('publish_date')->paginate(10);
+
         return view('guru.announcements.index', compact('announcements'));
     }
 
     /**
-     * Show form to create a new announcement (for teachers)
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
      */
     public function create()
     {
@@ -33,136 +56,158 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * Store a newly created announcement (for teachers)
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'is_important' => 'sometimes|boolean',
             'audience' => 'required|in:all,teachers,students',
-            'attachment' => 'nullable|file|max:10240', // 10MB max
-            'publish_date' => 'nullable|date',
+            'is_important' => 'sometimes|boolean',
+            'publish_date' => 'required|date',
+            'attachment' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif'
         ]);
+
+        // Teachers cannot create announcements for administrators
+        if ($validatedData['audience'] == 'administrators') {
+            $validatedData['audience'] = 'teachers';
+        }
+
+        $validatedData['author_id'] = Auth::id();
+        $validatedData['is_important'] = $request->has('is_important'); // Convert checkbox to boolean
         
-        // Handle attachment upload
+        // Handle file upload
         if ($request->hasFile('attachment')) {
-            // Store the file and keep only one attachment field
-            $attachmentPath = $request->file('attachment')->store('announcements', 'public');
-            $validated['attachment'] = $attachmentPath; // Use the existing column name
-            
-            // Remove the attachment_path field to prevent errors
-            if (isset($validated['attachment_path'])) {
-                unset($validated['attachment_path']);
-            }
+            $validatedData['attachment'] = $request->file('attachment')
+                ->store('announcements', 'public');
         }
-        
-        // Set publish date to now if not provided
-        if (empty($validated['publish_date'])) {
-            $validated['publish_date'] = now();
-        }
-        
-        // Set is_important to false if not checked
-        $validated['is_important'] = isset($validated['is_important']) ? true : false;
-        
-        // Set the author as current user
-        $validated['author_id'] = Auth::id();
-        
-        Announcement::create($validated);
-        
+
+        Announcement::create($validatedData);
+
         return redirect()->route('guru.announcements.index')
             ->with('success', 'Pengumuman berhasil dibuat.');
     }
 
     /**
-     * Show details of an announcement
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function show(Announcement $announcement)
     {
-        // Check if this announcement is visible to teachers
-        if ($announcement->audience !== 'all' && $announcement->audience !== 'teachers') {
-            abort(403, 'Anda tidak memiliki akses ke pengumuman ini.');
-        }
-        
         return view('guru.announcements.show', compact('announcement'));
     }
-    
+
     /**
-     * Show form to edit an announcement (only author can edit)
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function edit(Announcement $announcement)
     {
-        // Only the author can edit their announcements
-        if ($announcement->author_id != Auth::id()) {
-            abort(403, 'Anda tidak dapat mengedit pengumuman ini.');
+        // Teachers can only edit their own announcements
+        if ($announcement->author_id !== Auth::id()) {
+            return redirect()->route('guru.announcements.index')
+                ->with('error', 'Anda tidak diizinkan untuk mengedit pengumuman ini.');
         }
-        
+
         return view('guru.announcements.edit', compact('announcement'));
     }
 
     /**
-     * Update the specified announcement (only author can update)
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Announcement $announcement)
     {
-        // Only the author can update their announcements
-        if ($announcement->author_id != Auth::id()) {
-            abort(403, 'Anda tidak dapat mengedit pengumuman ini.');
+        // Teachers can only update their own announcements
+        if ($announcement->author_id !== Auth::id()) {
+            return redirect()->route('guru.announcements.index')
+                ->with('error', 'Anda tidak diizinkan untuk mengubah pengumuman ini.');
         }
-        
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'content' => ['required', 'string'],
-            'audience' => ['required', 'string', 'in:all,teachers,students'],
-            'publish_date' => ['nullable', 'date'],
-            'expiry_date' => ['nullable', 'date', 'after_or_equal:publish_date'],
-            'attachment' => ['nullable', 'file', 'max:10240'], // 10MB max
-            'is_important' => ['sometimes', 'boolean'],
+
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'audience' => 'required|in:all,teachers,students',
+            'is_important' => 'sometimes|boolean',
+            'publish_date' => 'required|date',
+            'attachment' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif',
+            'remove_attachment' => 'sometimes|boolean'
         ]);
-        
-        // Handle attachment upload
+
+        // Set is_important to false if not provided
+        $validatedData['is_important'] = $request->has('is_important');
+
+        // Handle file upload
         if ($request->hasFile('attachment')) {
             // Delete old attachment if exists
-            if ($announcement->attachment_path) {
-                Storage::disk('public')->delete($announcement->attachment_path);
+            if ($announcement->attachment && Storage::disk('public')->exists($announcement->attachment)) {
+                Storage::disk('public')->delete($announcement->attachment);
             }
-            
-            $attachmentPath = $request->file('attachment')->store('announcements', 'public');
-            $validated['attachment_path'] = $attachmentPath;
+            $validatedData['attachment'] = $request->file('attachment')
+                ->store('announcements', 'public');
+        } elseif ($request->has('remove_attachment') && $announcement->attachment) {
+            // Remove attachment if requested
+            Storage::disk('public')->delete($announcement->attachment);
+            $validatedData['attachment'] = null;
+        } else {
+            // Keep the existing attachment
+            unset($validatedData['attachment']);
         }
-        
-        // Set is_important to false if not checked
-        $validated['is_important'] = isset($validated['is_important']) ? true : false;
-        
-        $announcement->update($validated);
-        
+
+        $announcement->update($validatedData);
+
         return redirect()->route('guru.announcements.index')
-            ->with('success', 'Pengumuman berhasil diperbarui!');
+            ->with('success', 'Pengumuman berhasil diperbarui.');
     }
 
     /**
-     * Download the announcement attachment
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Announcement $announcement)
+    {
+        // Teachers can only delete their own announcements
+        if ($announcement->author_id !== Auth::id()) {
+            return redirect()->route('guru.announcements.index')
+                ->with('error', 'Anda tidak diizinkan untuk menghapus pengumuman ini.');
+        }
+
+        // Delete attachment if exists
+        if ($announcement->attachment && Storage::disk('public')->exists($announcement->attachment)) {
+            Storage::disk('public')->delete($announcement->attachment);
+        }
+
+        $announcement->delete();
+
+        return redirect()->route('guru.announcements.index')
+            ->with('success', 'Pengumuman berhasil dihapus.');
+    }
+
+    /**
+     * Download the announcement attachment.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function download(Announcement $announcement)
     {
-        // Check if user has access to this announcement
-        if ($announcement->audience !== 'all' && $announcement->audience !== 'teachers' && auth()->id() !== $announcement->author_id) {
-            abort(403, 'Anda tidak memiliki akses ke pengumuman ini.');
-        }
-        
-        // Check if attachment exists
         if (!$announcement->attachment || !Storage::disk('public')->exists($announcement->attachment)) {
-            return back()->with('error', 'File tidak ditemukan.');
+            abort(404, 'File tidak ditemukan.');
         }
-        
-        // Get the file path
-        $path = storage_path('app/public/' . $announcement->attachment);
-        
-        // Get the original file name
-        $filename = basename($announcement->attachment);
-        
-        // Return the file as a download
-        return response()->download($path, $filename);
+
+        return Storage::disk('public')->download($announcement->attachment, $announcement->getAttachmentName());
     }
 }

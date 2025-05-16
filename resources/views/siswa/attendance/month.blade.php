@@ -12,7 +12,7 @@
         </a>
     </li>
     <li>
-        <a href="{{ route('siswa.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
+        <a href="{{ route('siswa.material.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
             <i class="fas fa-book text-lg w-6 text-indigo-300"></i>
             <span class="ml-3">Materi Pelajaran</span>
         </a>

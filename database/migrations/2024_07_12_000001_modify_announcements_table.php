@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-class ModifyAnnouncementsTable extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -96,4 +95,4 @@ class ModifyAnnouncementsTable extends Migration
 
         return count($foreignKeys) > 0;
     }
-}
+};

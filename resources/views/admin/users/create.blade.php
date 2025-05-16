@@ -35,310 +35,333 @@
             <span class="ml-3">Pengumuman</span>
         </a>
     </li>
-    <li>
-        <a href="{{ route('admin.settings.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
-            <i class="fas fa-cog text-lg w-6 text-indigo-300"></i>
-            <span class="ml-3">Pengaturan</span>
-        </a>
-    </li>
 @endsection
 
 @section('content')
-    <!-- Header with animation -->
-    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 mb-6 text-white relative overflow-hidden animate-fade-in">
-        <div class="absolute -right-10 -top-10 opacity-10">
-            <i class="fas fa-user-plus text-9xl"></i>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
+        <div class="mb-6 pb-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold text-gray-800">Tambah Pengguna Baru</h2>
+                <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
         </div>
-        <div class="relative z-10">
-            <h2 class="text-2xl font-bold mb-2">Tambah Pengguna Baru</h2>
-            <p class="text-blue-100">Buat akun baru untuk administrator, guru, atau siswa.</p>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100/50 transform transition hover:shadow-md">
-        <div class="p-6">
-            <form action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data" class="animate-fade-in">
-                @csrf
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group mb-5">
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-user text-gray-400"></i>
-                            </div>
-                            <input type="text" name="name" id="name" value="{{ old('name') }}" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-shadow duration-300 form-control" required>
-                        </div>
-                        @error('name')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+
+        @if ($errors->any())
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md shadow-sm">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
                     </div>
-                    
-                    <div class="form-group mb-5">
-                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-at text-gray-400"></i>
-                            </div>
-                            <input type="text" name="username" id="username" value="{{ old('username') }}" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-shadow duration-300 form-control" required>
-                        </div>
-                        @error('username')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <div class="form-group mb-5">
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-envelope text-gray-400"></i>
-                            </div>
-                            <input type="email" name="email" id="email" value="{{ old('email') }}" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-shadow duration-300 form-control" required>
-                        </div>
-                        @error('email')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <div class="form-group mb-5">
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-lock text-gray-400"></i>
-                            </div>
-                            <input type="password" name="password" id="password" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-shadow duration-300 form-control" required>
-                        </div>
-                        @error('password')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <div class="form-group mb-5">
-                        <label for="role_id" class="block text-sm font-medium text-gray-700 mb-1">Peran</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-user-tag text-gray-400"></i>
-                            </div>
-                            <select name="role_id" id="role_id" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-shadow duration-300 form-control" required>
-                                <option value="">Pilih Peran</option>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @error('role_id')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <div class="form-group mb-5" id="classroom-container" style="display: none;">
-                        <label for="classroom_id" class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-school text-gray-400"></i>
-                            </div>
-                            <select name="classroom_id" id="classroom_id" 
-                                class="pl-10 w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-shadow duration-300 form-control">
-                                <option value="">Pilih Kelas</option>
-                                @foreach($classrooms as $classroom)
-                                    <option value="{{ $classroom->id }}" {{ old('classroom_id') == $classroom->id ? 'selected' : '' }}>{{ $classroom->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @error('classroom_id')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <div class="form-group mb-5">
-                        <label for="avatar" class="block text-sm font-medium text-gray-700 mb-1">Avatar</label>
-                        <div class="mt-1 relative">
-                            <div class="flex items-center">
-                                <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mr-4 avatar-preview">
-                                    <i class="fas fa-user text-gray-400 text-3xl" id="avatar-icon"></i>
-                                    <img id="avatar-preview" class="w-full h-full object-cover rounded-full hidden">
-                                </div>
-                                <div class="flex-1">
-                                    <input type="file" name="avatar" id="avatar" accept="image/*" 
-                                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-shadow duration-300 file:mr-4 file:py-2 file:px-4
-                                        file:rounded-full file:border-0 file:text-sm file:font-semibold
-                                        file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                                    <p class="text-xs text-gray-500 mt-1">Max 1MB. Format: jpg, png, gif</p>
-                                </div>
-                            </div>
-                        </div>
-                        @error('avatar')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800">Ada beberapa kesalahan pada inputan Anda:</p>
+                        <ul class="mt-2 text-sm list-disc list-inside text-red-700">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                 </div>
-                
-                <div class="border-t border-gray-200 mt-8 pt-5">
-                    <div class="flex justify-end">
-                        <a href="{{ route('admin.users.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-300 btn-glass">
-                            <i class="fas fa-times mr-2"></i> Batal
-                        </a>
-                        <button type="submit" class="ml-3 px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 animate-pulse">
-                            <i class="fas fa-save mr-2"></i> Simpan Pengguna
-                        </button>
+            </div>
+        @endif
+
+        <form action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Basic Information -->
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4 pb-2 border-b border-gray-200">Informasi Dasar</h3>
+                    <div class="space-y-5">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nama Lengkap <span class="text-red-600">*</span>
+                            </label>
+                            <input type="text" name="name" id="name" value="{{ old('name') }}" required
+                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-200">
+                        </div>
+                        
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+                                Username <span class="text-red-600">*</span>
+                            </label>
+                            <input type="text" name="username" id="username" value="{{ old('username') }}" required
+                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-200">
+                            <p class="text-xs text-gray-500 mt-1 italic">Username harus unik dan tidak mengandung spasi</p>
+                        </div>
+                        
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                                Email <span class="text-red-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input type="email" name="email" id="email" value="{{ old('email') }}" required
+                                    class="w-full pl-10 rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-200">
+                            </div>
+                        </div>                        <div>
+                            <label for="id_number" class="block text-sm font-medium text-gray-700 mb-1">
+                                <span id="id_number_label">NIP/NIS</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-id-card text-gray-400"></i>
+                                </div>
+                                <input type="text" name="id_number" id="id_number" value="{{ old('id_number') }}"
+                                    class="w-full pl-10 rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-200">
+                                <p class="text-xs text-gray-500 mt-1 italic">
+                                    <span id="id_number_help">Nomor identitas pengguna (opsional)</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="role_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Role <span class="text-red-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user-tag text-gray-400"></i>
+                                </div>
+                                <select name="role_id" id="role_id" required
+                                        class="w-full pl-10 rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-200">
+                                    <option value="">Pilih Role</option>
+                                    @foreach($roles ?? [] as $role)
+                                        <option value="{{ $role->id }}" {{ old('role_id', request('role') == strtolower($role->name) ? $role->id : '') == $role->id ? 'selected' : '' }}>
+                                            {{ $role->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </form>
-        </div>
+
+                <!-- Additional Information -->
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4 pb-2 border-b border-gray-200">Informasi Tambahan</h3>
+                    <div class="space-y-5">
+                        <div>
+                            <label for="avatar" class="block text-sm font-medium text-gray-700 mb-2">
+                                Avatar (Opsional)
+                            </label>
+                            <div class="mt-2">
+                                <label for="avatar" class="cursor-pointer bg-white px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 inline-flex items-center">
+                                    <i class="fas fa-upload mr-2 text-gray-500"></i>
+                                    <span>Pilih File</span>
+                                    <input type="file" name="avatar" id="avatar" class="hidden">
+                                </label>
+                                <span class="text-xs ml-2 file-name"></span>
+                            </div>
+                            <div class="flex items-center space-x-1 mt-2">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                                <span class="text-xs text-gray-500">Format file: JPG, PNG. Max: 2MB</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                                Password <span class="text-red-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" name="password" id="password" required
+                                    class="w-full pl-10 rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-200">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
+                                Konfirmasi Password <span class="text-red-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" name="password_confirmation" id="password_confirmation" required
+                                    class="w-full pl-10 rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-200">
+                            </div>
+                        </div>
+
+                        <div id="student_fields" style="display: none;">
+                            <label for="classroom_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Kelas
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-school text-gray-400"></i>
+                                </div>
+                                <select name="classroom_id" id="classroom_id"
+                                        class="w-full pl-10 rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-200">
+                                    <option value="">Tidak ada kelas</option>
+                                    @foreach($classrooms ?? [] as $classroom)
+                                        <option value="{{ $classroom->id }}" {{ old('classroom_id') == $classroom->id ? 'selected' : '' }}>
+                                            {{ $classroom->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="teacher_fields" style="display: none;">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Mata Pelajaran yang Diajar
+                            </label>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200 max-h-52 overflow-y-auto">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    @forelse($subjects ?? [] as $subject)
+                                        <div class="flex items-center p-2 hover:bg-gray-50 rounded-md">
+                                            <input type="checkbox" name="subjects[]" id="subject_{{ $subject->id }}" value="{{ $subject->id }}"
+                                                {{ (old('subjects') && in_array($subject->id, old('subjects'))) ? 'checked' : '' }}
+                                                class="rounded border-gray-300 text-blue-600 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                            <label for="subject_{{ $subject->id }}" class="ml-2 text-sm text-gray-700 cursor-pointer">{{ $subject->name }}</label>
+                                        </div>
+                                    @empty
+                                        <p class="text-sm text-gray-500 py-2">Tidak ada mata pelajaran yang tersedia</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-8 border-t border-gray-200 pt-5">
+                <a href="{{ route('admin.users.index') }}" 
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 mr-3 hover:bg-gray-50 transition-all duration-300 flex items-center">
+                    <i class="fas fa-times mr-2"></i> Batal
+                </a>
+                <button type="submit" 
+                        class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 flex items-center shadow-md">
+                    <i class="fas fa-save mr-2"></i> Simpan Pengguna
+                </button>
+            </div>
+        </form>
     </div>
+
+    <script>
+        // Display file name when selected
+        document.getElementById('avatar').addEventListener('change', function(e) {
+            const fileName = e.target.files[0].name;
+            document.querySelector('.file-name').textContent = fileName;
+        });
+    </script>
 @endsection
-
-@push('styles')
-<style>
-    .animate-fade-in {
-        animation: fade-in 0.6s ease-in-out;
-    }
-    
-    @keyframes fade-in {
-        0% {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .form-group:focus-within label {
-        color: #3b82f6;
-    }
-    
-    .form-group:focus-within i {
-        color: #3b82f6;
-    }
-
-    .avatar-preview {
-        transition: all 0.3s ease-in-out;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        border: 3px solid rgba(59, 130, 246, 0.1);
-    }
-
-    .btn-glass {
-        background-color: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-glass:hover {
-        background-color: rgba(255, 255, 255, 0.25);
-        border-color: rgba(255, 255, 255, 0.3);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-
-    /* Enhanced Form Styling */
-    input.form-control, select.form-control {
-        transition: all 0.3s ease;
-    }
-    
-    input.form-control:focus, select.form-control:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
-        transform: translateY(-2px);
-    }
-</style>
-@endpush
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const roleSelect = document.getElementById('role_id');
-        const classroomContainer = document.getElementById('classroom-container');
-        const avatarInput = document.getElementById('avatar');
-        const avatarPreview = document.getElementById('avatar-preview');
-        const avatarIcon = document.getElementById('avatar-icon');
+        const studentFields = document.getElementById('student_fields');
+        const teacherFields = document.getElementById('teacher_fields');
+        const idNumberLabel = document.getElementById('id_number_label');
+        const nameInput = document.getElementById('name');
+        const usernameInput = document.getElementById('username');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const form = document.querySelector('form');
         
-        // Show/hide classroom field based on role selection (3 = siswa)
-        function toggleClassroomField() {
-            if (roleSelect.value == '3') {
-                classroomContainer.style.display = 'block';
-                classroomContainer.classList.add('animate-fade-in');
+        // Initial check
+        updateFieldsVisibility(roleSelect.value);
+        
+        // Handle role change
+        roleSelect.addEventListener('change', function() {
+            updateFieldsVisibility(this.value);
+        });
+          function updateFieldsVisibility(roleId) {
+            // Hide all role-specific fields
+            studentFields.style.display = 'none';
+            teacherFields.style.display = 'none';
+            
+            // Get the help text element if it exists
+            const idNumberHelp = document.getElementById('id_number_help');
+            
+            // Show fields based on selected role
+            // Assuming role_id: 1 = admin, 2 = guru, 3 = siswa
+            if (roleId == '3') { // Siswa
+                studentFields.style.display = 'block';
+                idNumberLabel.textContent = 'NIS';
+                if (idNumberHelp) idNumberHelp.textContent = 'Nomor Induk Siswa';
+            } else if (roleId == '2') { // Guru
+                teacherFields.style.display = 'block';
+                idNumberLabel.textContent = 'NIP';
+                if (idNumberHelp) idNumberHelp.textContent = 'Nomor Induk Pegawai';
+            } else if (roleId == '1') { // Admin
+                idNumberLabel.textContent = 'ID Pengguna';
+                if (idNumberHelp) idNumberHelp.textContent = 'ID Pengguna Admin (opsional)';
             } else {
-                classroomContainer.style.display = 'none';
-                classroomContainer.classList.remove('animate-fade-in');
+                idNumberLabel.textContent = 'NIP/NIS';
+                if (idNumberHelp) idNumberHelp.textContent = 'Nomor identitas pengguna (opsional)';
             }
         }
-        
-        roleSelect.addEventListener('change', toggleClassroomField);
-        
-        // Avatar preview with enhanced effects
-        avatarInput.addEventListener('change', function(e) {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    avatarPreview.src = e.target.result;
-                    avatarPreview.classList.remove('hidden');
-                    avatarIcon.classList.add('hidden');
+
+        // Generate username suggestion from name
+        nameInput.addEventListener('blur', function() {
+            if (!usernameInput.value) {
+                // Create a username from the name: lowercase, no spaces, no special chars
+                let suggestedUsername = this.value.toLowerCase()
+                                            .replace(/\s+/g, '')
+                                            .replace(/[^a-z0-9]/g, '');
+                
+                usernameInput.value = suggestedUsername;
+            }
+        });
+
+        // Form submission handling with loading state
+        form.addEventListener('submit', function() {
+            // Validate required fields
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('border-red-500');
                     
-                    // Add a highlight effect
-                    avatarPreview.classList.add('highlight');
-                    setTimeout(() => {
-                        avatarPreview.classList.remove('highlight');
-                    }, 700);
+                    // Add error message if not exists
+                    let errorMsg = field.nextElementSibling;
+                    if (!errorMsg || !errorMsg.classList.contains('error-message')) {
+                        errorMsg = document.createElement('p');
+                        errorMsg.classList.add('error-message', 'text-xs', 'text-red-500', 'mt-1');
+                        errorMsg.textContent = 'Bidang ini wajib diisi';
+                        field.parentNode.insertBefore(errorMsg, field.nextSibling);
+                    }
+                } else {
+                    field.classList.remove('border-red-500');
+                    
+                    // Remove error message if exists
+                    const errorMsg = field.nextElementSibling;
+                    if (errorMsg && errorMsg.classList.contains('error-message')) {
+                        errorMsg.remove();
+                    }
                 }
-                reader.readAsDataURL(this.files[0]);
+            });
+
+            if (isValid) {
+                // Show loading state on button
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
+                submitBtn.disabled = true;
+            } else {
+                event.preventDefault();
             }
         });
-        
-        // Initial check on page load
-        toggleClassroomField();
-        
-        // Animate form groups when focused with enhanced highlight
-        document.querySelectorAll('.form-group input, .form-group select').forEach(element => {
-            element.addEventListener('focus', function() {
-                const formGroup = this.closest('.form-group');
-                formGroup.classList.add('focused');
-                formGroup.style.transition = 'all 0.3s ease';
-                formGroup.style.transform = 'translateY(-2px)';
-            });
-            
-            element.addEventListener('blur', function() {
-                const formGroup = this.closest('.form-group');
-                formGroup.classList.remove('focused');
-                formGroup.style.transform = '';
+
+        // Remove red border on input when user types
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('input', function() {
+                this.classList.remove('border-red-500');
+                
+                // Remove error message if exists
+                const errorMsg = this.nextElementSibling;
+                if (errorMsg && errorMsg.classList.contains('error-message')) {
+                    errorMsg.remove();
+                }
             });
         });
-
-        // Add pulse animation to submit button
-        const submitButton = document.querySelector('button[type="submit"]');
-        submitButton.addEventListener('mouseover', function() {
-            this.classList.add('animate-pulse');
-        });
-        submitButton.addEventListener('mouseout', function() {
-            this.classList.remove('animate-pulse');
-        });
-
-        // Enhance header animation
-        const header = document.querySelector('.bg-gradient-to-r');
-        if (header) {
-            header.classList.add('animate-gradient-x');
-            
-            // Create floating particles effect in header
-            for (let i = 0; i < 5; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'absolute rounded-full bg-white/10';
-                particle.style.width = (Math.random() * 20 + 5) + 'px';
-                particle.style.height = particle.style.width;
-                particle.style.left = (Math.random() * 100) + '%';
-                particle.style.top = (Math.random() * 100) + '%';
-                particle.style.animation = `float ${Math.random() * 3 + 2}s infinite ease-in-out alternate`;
-                header.appendChild(particle);
-            }
-        }
     });
 </script>
 @endpush

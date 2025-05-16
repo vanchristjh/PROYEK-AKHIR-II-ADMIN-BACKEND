@@ -10,68 +10,89 @@ use Illuminate\Support\Facades\Storage;
 class AnnouncementController extends Controller
 {
     /**
-     * Display a listing of the announcements for students.
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Get only published announcements visible to students
-        $announcements = Announcement::where('publish_date', '<=', now())
-            ->where(function($query) {
-                $query->where('audience', 'all')
-                      ->orWhere('audience', 'students');
-            })
-            ->orderBy('is_important', 'desc')
-            ->orderBy('publish_date', 'desc')
-            ->paginate(10);
-            
-        return view('siswa.announcements.index', compact('announcements'));
+        $query = Announcement::with('author')
+                             ->published()
+                             ->notExpired()
+                             ->forAudience(['all', 'students']);
+
+        // Filter by importance
+        if ($request->has('importance')) {
+            if ($request->importance == 'important') {
+                $query->where('is_important', true);
+            } elseif ($request->importance == 'regular') {
+                $query->where('is_important', false);
+            }
+        }
+
+        // Filter by search term
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('content', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $announcements = $query->latest('publish_date')->paginate(10);
+        $importantCount = Announcement::where('is_important', true)
+                              ->published()
+                              ->notExpired()
+                              ->forAudience(['all', 'students'])
+                              ->count();
+
+        return view('siswa.announcements.index', compact('announcements', 'importantCount'));
     }
-    
+
     /**
-     * Display the specified announcement.
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function show(Announcement $announcement)
     {
-        // Check if student has access to this announcement
-        if (!($announcement->audience === 'all' || $announcement->audience === 'students')) {
-            abort(403, 'Anda tidak memiliki akses untuk melihat pengumuman ini.');
+        // Check if the announcement is visible to students
+        if ($announcement->audience !== 'all' && $announcement->audience !== 'students') {
+            abort(403, 'Anda tidak diizinkan untuk melihat pengumuman ini.');
         }
-        
-        // Check if announcement is published
-        if ($announcement->publish_date > now()) {
-            abort(403, 'Pengumuman ini belum dipublikasikan.');
+
+        // Check if the announcement is published and not expired
+        if ($announcement->publish_date > now() || 
+            ($announcement->expiry_date && $announcement->expiry_date < now())) {
+            abort(404, 'Pengumuman tidak ditemukan.');
         }
-        
-        return view('siswa.announcements.show', compact('announcement'));
+
+        return view('shared.announcements.show', compact('announcement'));
     }
-    
+
     /**
-     * Download the announcement attachment
+     * Download the announcement attachment.
+     *
+     * @param  \App\Models\Announcement  $announcement
+     * @return \Illuminate\Http\Response
      */
     public function download(Announcement $announcement)
     {
-        // Check if student has access to this announcement
-        if (!($announcement->audience === 'all' || $announcement->audience === 'students')) {
-            abort(403, 'Anda tidak memiliki akses untuk mengunduh lampiran pengumuman ini.');
+        // Check if the announcement is visible to students
+        if ($announcement->audience !== 'all' && $announcement->audience !== 'students') {
+            abort(403, 'Anda tidak diizinkan untuk mengakses file ini.');
         }
-        
-        // Check if announcement is published
-        if ($announcement->publish_date > now()) {
-            abort(403, 'Pengumuman ini belum dipublikasikan.');
+
+        // Check if the announcement is published and not expired
+        if ($announcement->publish_date > now() || 
+            ($announcement->expiry_date && $announcement->expiry_date < now())) {
+            abort(404, 'File tidak ditemukan.');
         }
-        
-        // Check if attachment exists
+
         if (!$announcement->attachment || !Storage::disk('public')->exists($announcement->attachment)) {
-            return back()->with('error', 'File tidak ditemukan.');
+            abort(404, 'File tidak ditemukan.');
         }
-        
-        // Get the file path
-        $path = storage_path('app/public/' . $announcement->attachment);
-        
-        // Get the original file name
-        $filename = basename($announcement->attachment);
-        
-        // Return the file as a download
-        return response()->download($path, $filename);
+
+        return Storage::disk('public')->download($announcement->attachment, $announcement->getAttachmentName());
     }
 }

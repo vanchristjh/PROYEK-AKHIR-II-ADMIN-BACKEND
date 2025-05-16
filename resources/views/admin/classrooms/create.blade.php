@@ -105,12 +105,22 @@
                             </div>
                             <select name="homeroom_teacher_id" id="homeroom_teacher_id" 
                                 class="pl-10 w-full rounded-lg border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50 transition-shadow duration-300" required>
-                                <option value="">Pilih Guru</option>
+                                <option value="">Pilih Guru Wali Kelas</option>
                                 @foreach($teachers as $teacher)
-                                    <option value="{{ $teacher->id }}" {{ old('homeroom_teacher_id') == $teacher->id ? 'selected' : '' }}>{{ $teacher->name }}</option>
+                                    <option value="{{ $teacher->id }}" {{ old('homeroom_teacher_id') == $teacher->id ? 'selected' : '' }}>
+                                        {{ $teacher->name }} {{ !empty($teacher->nip) ? '(' . $teacher->nip . ')' : '' }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
+                        <p class="text-xs text-gray-500 mt-1">Pilih guru yang akan menjadi wali kelas</p>
+                        
+                        @if($teachers->isEmpty())
+                            <div class="mt-2 text-yellow-600 text-xs flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Tidak ada guru tersedia. <a href="{{ route('admin.users.create') }}" class="ml-1 text-purple-600 hover:underline">Tambah guru baru</a>
+                            </div>
+                        @endif
                         @error('homeroom_teacher_id')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -131,6 +141,7 @@
                         @enderror
                     </div>
                     
+                    <!-- Remove or comment out the room_number field since it doesn't exist in the database
                     <div class="form-group mb-5">
                         <label for="room_number" class="block text-sm font-medium text-gray-700 mb-1">Nomor Ruangan</label>
                         <div class="mt-1 relative rounded-md shadow-sm">
@@ -145,6 +156,7 @@
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>
+                    -->
                     
                     <div class="form-group md:col-span-2 mt-4">
                         <div class="flex items-center mb-4">
@@ -242,6 +254,23 @@
                 this.closest('.form-group').classList.remove('focused');
             });
         });
+
+        // Teacher select enhancement
+        const teacherSelect = document.getElementById('homeroom_teacher_id');
+        if (teacherSelect) {
+            // Add placeholder text styling
+            if (teacherSelect.value === '') {
+                teacherSelect.classList.add('text-gray-400');
+            }
+            
+            teacherSelect.addEventListener('change', function() {
+                if (this.value === '') {
+                    this.classList.add('text-gray-400');
+                } else {
+                    this.classList.remove('text-gray-400');
+                }
+            });
+        }
     });
 </script>
 @endpush

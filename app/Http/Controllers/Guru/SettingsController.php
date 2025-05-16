@@ -12,7 +12,8 @@ class SettingsController extends Controller
      */
     public function index()
     {
-        //
+        $user = auth()->user();
+        return view('guru.settings.index', compact('user'));
     }
 
     /**
@@ -50,9 +51,37 @@ class SettingsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request)
     {
-        //
+        $user = auth()->user();
+        
+        // Get current preferences or initialize empty array
+        $preferences = is_array($user->preferences) ? $user->preferences : [];
+        
+        // Update preferences based on form data
+        $preferences['email_notifications'] = $request->has('email_notifications');
+        $preferences['assignment_reminders'] = $request->has('assignment_reminders');
+        $preferences['new_submissions'] = $request->has('new_submissions');
+        
+        // Additional preferences if they were submitted
+        if ($request->has('theme')) {
+            $preferences['theme'] = $request->theme;
+        }
+        
+        // Save preferences to user
+        $user->preferences = $preferences;
+        $user->save();
+        
+        return redirect()->back()->with('success', 'Pengaturan berhasil disimpan');
+    }
+
+    /**
+     * Display privacy settings page.
+     */
+    public function privacy()
+    {
+        $user = auth()->user();
+        return view('guru.settings.privacy', compact('user'));
     }
 
     /**

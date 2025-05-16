@@ -3,150 +3,148 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
 use App\Models\User;
-use App\Models\Classroom;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
     /**
-     * Display a listing of users
+     * Display a listing of the users.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
-        $roleFilter = $request->input('role');
-        
-        $query = User::with('role');
-        
-        if ($roleFilter) {
-            $query->whereHas('role', function ($q) use ($roleFilter) {
-                $q->where('slug', $roleFilter);
-            });
-        }
-        
-        $users = $query->latest()->paginate(10);
-        $roles = Role::all();
-        
-        return view('admin.users.index', compact('users', 'roles', 'roleFilter'));
+        $users = User::with('roles')->paginate(15);
+        return view('admin.users.index', compact('users'));
     }
 
     /**
-     * Show the form for creating a new user
+     * Show the form for creating a new user.
+     *
+     * @return \Illuminate\Http\Response
      */
     public function create()
     {
         $roles = Role::all();
-        $classrooms = Classroom::all();
-        
-        return view('admin.users.create', compact('roles', 'classrooms'));
+        return view('admin.users.create', compact('roles'));
     }
 
     /**
-     * Store a newly created user
+     * Store a newly created user in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:roles,id'],
-            'avatar' => ['nullable', 'image', 'max:1024'],
-            'classroom_id' => ['nullable', 'exists:classrooms,id'],
         ]);
-        
-        // Handle avatar upload
-        if ($request->hasFile('avatar')) {
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
-            $validated['avatar'] = $avatarPath;
+
+        if ($validator->fails()) {
+            return redirect()
+                ->route('admin.users.create')
+                ->withErrors($validator)
+                ->withInput();
         }
-        
-        $validated['password'] = Hash::make($validated['password']);
-        
-        // Only assign classroom_id if role is student
-        if ($validated['role_id'] != 3) { // 3 = siswa
-            $validated['classroom_id'] = null;
-        }
-        
-        User::create($validated);
-        
-        return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully!');
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        $user->roles()->attach($request->role_id);
+
+        return redirect()->route('admin.users')->with('success', 'User created successfully.');
     }
 
     /**
-     * Show the form for editing a user
+     * Display the specified user.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function show(User $user)
+    {
+        return view('admin.users.show', compact('user'));
+    }
+
+    /**
+     * Show the form for editing the specified user.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
      */
     public function edit(User $user)
     {
         $roles = Role::all();
-        $classrooms = Classroom::all();
-        
-        return view('admin.users.edit', compact('user', 'roles', 'classrooms'));
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
     /**
-     * Update the specified user
+     * Update the specified user in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'string', 'min:8'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'role_id' => ['required', 'exists:roles,id'],
-            'avatar' => ['nullable', 'image', 'max:1024'],
-            'classroom_id' => ['nullable', 'exists:classrooms,id'],
         ]);
-        
-        // Handle avatar upload
-        if ($request->hasFile('avatar')) {
-            // Delete old avatar if it exists
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
-            
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
-            $validated['avatar'] = $avatarPath;
+
+        if ($validator->fails()) {
+            return redirect()
+                ->route('admin.users.edit', $user)
+                ->withErrors($validator)
+                ->withInput();
         }
-        
-        // Only update password if provided
-        if (empty($validated['password'])) {
-            unset($validated['password']);
-        } else {
-            $validated['password'] = Hash::make($validated['password']);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
+
+        // Update password if provided
+        if ($request->filled('password')) {
+            $user->update([
+                'password' => Hash::make($request->password),
+            ]);
         }
-        
-        // Only assign classroom_id if role is student
-        if ($validated['role_id'] != 3) { // 3 = siswa
-            $validated['classroom_id'] = null;
-        }
-        
-        $user->update($validated);
-        
-        return redirect()->route('admin.users.index')
-            ->with('success', 'User updated successfully!');
+
+        // Sync roles
+        $user->roles()->sync([$request->role_id]);
+
+        return redirect()->route('admin.users')->with('success', 'User updated successfully.');
     }
 
     /**
-     * Remove the specified user
+     * Remove the specified user from storage.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
      */
     public function destroy(User $user)
     {
-        // Delete avatar if it exists
-        if ($user->avatar) {
-            Storage::disk('public')->delete($user->avatar);
+        // Prevent self-deletion
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.users')->with('error', 'You cannot delete your own account.');
         }
-        
+
+        $user->roles()->detach();
         $user->delete();
-        
-        return redirect()->route('admin.users.index')
-            ->with('success', 'User deleted successfully!');
+
+        return redirect()->route('admin.users')->with('success', 'User deleted successfully.');
     }
 }

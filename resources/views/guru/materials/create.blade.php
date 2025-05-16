@@ -103,10 +103,16 @@
                     <div class="form-group mb-5">
                         <label for="classroom_id" class="block text-sm font-medium text-gray-700 mb-1">Kelas (Pilih satu atau lebih)</label>
                         <div class="mt-1 bg-white rounded-lg border border-gray-300 px-3 py-2 focus-within:ring focus-within:ring-blue-200 focus-within:ring-opacity-50 focus-within:border-blue-500">
+                            <div class="flex justify-end mb-2">
+                                <button type="button" id="select-all-classrooms" class="text-xs text-blue-600 hover:text-blue-800">
+                                    Pilih Semua
+                                </button>
+                            </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                 @foreach($classrooms as $classroom)
                                     <div class="form-check">
-                                        <input type="checkbox" name="classroom_id[]" value="{{ $classroom->id }}" id="classroom-{{ $classroom->id }}" class="form-check-input">
+                                        <input type="checkbox" name="classroom_id[]" value="{{ $classroom->id }}" id="classroom-{{ $classroom->id }}" class="form-check-input"
+                                            {{ in_array($classroom->id, old('classroom_id', [])) ? 'checked' : '' }}>
                                         <label for="classroom-{{ $classroom->id }}" class="form-check-label">{{ $classroom->name }}</label>
                                     </div>
                                 @endforeach
@@ -130,6 +136,7 @@
                                     <p class="text-xs text-gray-500 mt-1">Maksimal 20MB. Format: pdf, doc, docx, xls, xlsx, ppt, pptx, jpg, png, mp4, zip</p>
                                 </div>
                             </div>
+                            <div id="file-preview" class="mt-2"></div>
                         </div>
                         @error('material_file')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -305,6 +312,16 @@
                     } else {
                         clearError();
                     }
+                    
+                    // Validate file format
+                    const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'mp4', 'zip'];
+                    const fileExt = fileName.split('.').pop().toLowerCase();
+                    
+                    if (!allowedExtensions.includes(fileExt)) {
+                        showError('Format file tidak didukung. Format yang diizinkan: pdf, doc, docx, xls, xlsx, ppt, pptx, jpg, png, mp4, zip');
+                    } else {
+                        clearError();
+                    }
                 }
             });
         }
@@ -343,12 +360,20 @@
                 }
                 
                 // Material file validation
-                if (!materialFileInput || !materialFileInput.files || materialFileInput.files.length === 0) {
-                    showError('Pilih file materi untuk diunggah');
-                    hasError = true;
-                } else if (materialFileInput.files[0].size > 20 * 1024 * 1024) { // 20MB
-                    showError('File terlalu besar. Ukuran maksimal adalah 20MB.');
-                    hasError = true;
+                if (materialFileInput && materialFileInput.files && materialFileInput.files.length > 0) {
+                    if (materialFileInput.files[0].size > 20 * 1024 * 1024) { // 20MB
+                        showError('File terlalu besar. Ukuran maksimal adalah 20MB.');
+                        hasError = true;
+                    }
+                    
+                    const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'mp4', 'zip'];
+                    const fileName = materialFileInput.files[0].name;
+                    const fileExt = fileName.split('.').pop().toLowerCase();
+                    
+                    if (!allowedExtensions.includes(fileExt)) {
+                        showError('Format file tidak didukung. Format yang diizinkan: pdf, doc, docx, xls, xlsx, ppt, pptx, jpg, png, mp4, zip');
+                        hasError = true;
+                    }
                 }
                 
                 if (hasError) {

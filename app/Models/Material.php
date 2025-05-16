@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class Material extends Model
 {
@@ -13,23 +14,20 @@ class Material extends Model
     protected $fillable = [
         'title',
         'description',
+        'file_path',
         'subject_id',
         'teacher_id',
-        'file_path',
         'publish_date',
+        'is_active'
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
     protected $casts = [
         'publish_date' => 'datetime',
+        'is_active' => 'boolean',
     ];
 
     /**
-     * Get the subject that owns the material.
+     * Get the subject that the material belongs to.
      */
     public function subject()
     {
@@ -45,24 +43,22 @@ class Material extends Model
     }
 
     /**
-     * The classrooms that have access to this material.
+     * Check if the material is new (less than 7 days old).
      */
-    public function classrooms()
+    public function isNew()
     {
-        return $this->belongsToMany(Classroom::class, 'classroom_material');
+        return $this->publish_date->diffInDays(Carbon::now()) < 7;
     }
 
     /**
-     * Get the file type based on file extension
-     *
-     * @return string
+     * Get file type based on file extension.
      */
     public function getFileType()
     {
         if (empty($this->file_path)) {
-            return 'Unknown Format';
+            return 'Unknown File';
         }
-        
+
         $extension = pathinfo($this->file_path, PATHINFO_EXTENSION);
         
         switch (strtolower($extension)) {
@@ -81,19 +77,19 @@ class Material extends Model
             case 'jpeg':
             case 'png':
             case 'gif':
-                return 'Image';
+                return 'Image File';
             case 'mp4':
             case 'avi':
             case 'mov':
-                return 'Video';
+                return 'Video File';
             case 'mp3':
             case 'wav':
-                return 'Audio';
+                return 'Audio File';
             case 'zip':
             case 'rar':
-                return 'Archive';
+                return 'Compressed Archive';
             default:
-                return 'Document';
+                return 'File';
         }
     }
 
@@ -214,16 +210,6 @@ class Material extends Model
             default:
                 return 'text-gray-600';
         }
-    }
-
-    /**
-     * Check if the material is new (published within the last 3 days)
-     *
-     * @return bool
-     */
-    public function isNew()
-    {
-        return $this->publish_date->diffInDays(now()) <= 3;
     }
 
     /**

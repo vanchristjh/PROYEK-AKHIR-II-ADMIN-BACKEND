@@ -121,3 +121,20 @@ Route::middleware('auth:sanctum')->group(function () {
         // ...
     });
 });
+
+// Test route for subject classrooms
+Route::get('/subjects/{subject}/classrooms', function ($subjectId) {
+    // Get the subject
+    $subject = App\Models\Subject::find($subjectId);
+    
+    // Check if subject exists
+    if (!$subject) {
+        return response()->json(['error' => 'Subject not found'], 404);
+    }
+    
+    // Get classrooms for this subject
+    $classrooms = $subject->classrooms ?? [];
+    
+    // Return classrooms as JSON
+    return response()->json($classrooms);
+});

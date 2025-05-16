@@ -24,14 +24,11 @@ class CreateAnnouncementsTable extends Migration
             $table->foreignId('author_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
-    }
-
-    /**
+    }    /**
      * Reverse the migrations.
      *
      * @return void
-     */
-    public function down()
+     */    public function down()
     {
         Schema::dropIfExists('announcements');
     }

@@ -18,7 +18,8 @@ class GuruDashboardController extends Controller
      * Display the guru dashboard.
      *
      * @return \Illuminate\Http\Response
-     */    public function index()
+     */    
+    public function index()
     {
         $guru = Auth::user();
         
@@ -47,14 +48,14 @@ class GuruDashboardController extends Controller
         
         // These counts are based on user ID, not teacher ID
         $assignmentsCount = Assignment::where('teacher_id', $guru->id)
-            ->where('deadline', '>=', now())
+            ->where('due_date', '>=', now())
             ->count();
         
         $materialsCount = Material::where('teacher_id', $guru->id)->count();
         
         // Active assignments count
         $assignmentsCount = Assignment::where('teacher_id', $guru->id)
-            ->where('deadline', '>=', now())
+            ->where('due_date', '>=', now())
             ->count();
         
         // Materials count

@@ -24,7 +24,7 @@
         </a>
     </li>
     <li>
-        <a href="{{ route('siswa.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
+        <a href="{{ route('siswa.material.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
             <i class="fas fa-book text-lg w-6 text-indigo-300"></i>
             <span class="ml-3">Materi Pelajaran</span>
         </a>
@@ -196,85 +196,52 @@
             
             <!-- Submission Section -->
             <div class="border-t border-gray-200 pt-8 mt-8">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $isSubmitted ? 'Pengumpulan Tugas Anda' : 'Kumpulkan Tugas Anda' }}</h3>
-                
                 @if($isSubmitted)
                     <div class="bg-white border border-gray-200 rounded-md p-5">
                         <div class="flex items-start">
-                            <div class="flex-shrink-0">
-                                <div class="p-2 bg-{{ $isGraded ? 'green' : 'blue' }}-100 text-{{ $isGraded ? 'green' : 'blue' }}-600 rounded-md">
-                                    <i class="fas fa-{{ $isGraded ? 'clipboard-check' : 'file-alt' }} text-lg"></i>
-                                </div>
+                            <div class="flex-shrink-0 h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center text-green-500">
+                                <i class="fas fa-check-circle text-2xl"></i>
                             </div>
                             <div class="ml-4 flex-1">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h4 class="text-gray-800 font-medium">File yang Anda kumpulkan</h4>
-                                        <p class="text-sm text-gray-500">
-                                            Dikumpulkan pada {{ $submission->submitted_at->format('d M Y, H:i') }}
-                                            @if($submission->submitted_at != $submission->created_at)
-                                                (Diperbarui)
-                                            @endif
-                                        </p>
+                                <h4 class="text-lg font-medium text-gray-900">Tugas Sudah Dikumpulkan</h4>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Dikumpulkan pada {{ $submission->created_at->format('d M Y, H:i') }}
+                                </p>
+                                <div class="flex items-center mt-3 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center {{ $submission->file_color ?? 'bg-gray-200' }}">
+                                        <i class="fas {{ $submission->file_icon ?? 'fa-file' }} text-white"></i>
                                     </div>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $isGraded ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
-                                        {{ $isGraded ? 'Sudah Dinilai' : 'Menunggu Penilaian' }}
-                                    </span>
-                                </div>
-                                
-                                <div class="flex items-center bg-gray-50 border border-gray-200 p-3 rounded-md mb-4">
-                                    <i class="fas fa-file-alt text-gray-500 mr-3"></i>
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium text-gray-700">{{ Str::afterLast($submission->submission_file, '/') }}</p>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium text-gray-900">{{ basename($submission->file_path) }}</p>
+                                        <p class="text-xs text-gray-500">{{ $submission->file_size ?? 'Unknown size' }}</p>
                                     </div>
-                                    <a href="{{ Storage::url($submission->submission_file) }}" target="_blank" class="text-blue-600 hover:text-blue-800 mr-2">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </a>
-                                    <a href="{{ Storage::url($submission->submission_file) }}" download class="text-green-600 hover:text-green-800">
-                                        <i class="fas fa-download"></i>
+                                    <a href="{{ route('siswa.submissions.download', $submission->id) }}" class="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg text-sm transition-colors">
+                                        <i class="fas fa-download mr-1"></i> Unduh
                                     </a>
                                 </div>
-                                
-                                @if($submission->notes)
-                                    <div class="mb-4">
-                                        <h5 class="text-sm font-medium text-gray-700 mb-1">Catatan:</h5>
-                                        <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-md border border-gray-200">
-                                            {{ $submission->notes }}
-                                        </p>
-                                    </div>
-                                @endif
                                 
                                 @if($isGraded)
-                                    <div>
-                                        <h5 class="text-sm font-medium text-gray-700 mb-1">Penilaian:</h5>
-                                        <div class="bg-green-50 p-3 rounded-md border border-green-200">
-                                            <div class="flex justify-between items-center mb-2">
-                                                <span class="font-medium text-gray-700">Nilai:</span>
-                                                <span class="font-bold text-lg text-green-600">{{ $submission->score }}</span>
+                                    <div class="mt-3 p-3 bg-yellow-50 border border-yellow-100 rounded-lg">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-600">
+                                                <i class="fas fa-star text-lg"></i>
                                             </div>
-                                            @if($submission->feedback)
-                                                <div class="mt-2">
-                                                    <h6 class="text-sm font-medium text-gray-700 mb-1">Feedback:</h6>
-                                                    <p class="text-sm text-gray-600">{{ $submission->feedback }}</p>
-                                                </div>
-                                            @endif
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium text-gray-900">Nilai: {{ $submission->score }}</p>
+                                                <p class="text-xs text-gray-500">Dinilai pada {{ $submission->graded_at->format('d M Y, H:i') }}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 @endif
                                 
                                 @if(!$isExpired && !$isGraded)
                                     <div class="mt-4 flex space-x-3">
-                                        <button type="button" id="show-edit-form" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
-                                            <i class="fas fa-edit mr-1"></i> Edit Pengumpulan
+                                        <button id="editSubmissionBtn" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
+                                            <i class="fas fa-edit mr-1"></i> Edit
                                         </button>
-                                        
-                                        <form action="{{ route('siswa.submissions.destroy', $submission->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengumpulan tugas ini?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors">
-                                                <i class="fas fa-trash-alt mr-1"></i> Hapus
-                                            </button>
-                                        </form>
+                                        <button id="deleteSubmissionBtn" class="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors">
+                                            <i class="fas fa-trash-alt mr-1"></i> Hapus
+                                        </button>
                                     </div>
                                 @endif
                             </div>
@@ -291,83 +258,88 @@
                                 @method('PUT')
                                 <div class="mb-4">
                                     <label for="file" class="block text-sm font-medium text-gray-700 mb-1">File Tugas</label>
-                                    <div class="bg-blue-50 p-3 rounded-lg mb-3 border border-blue-100">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-info-circle text-blue-500 mr-2"></i>
-                                            <p class="text-xs text-blue-700">Perhatian: Ukuran file maksimal <strong>2MB</strong>. Untuk file yang lebih besar, silahkan kompres file atau unggah ke Google Drive/cloud storage dan masukkan link sharing-nya di catatan.</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <input type="file" name="file" id="edit-file" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                    </div>
-                                    <p class="mt-1 text-xs text-gray-500">Format file: PDF, Word, Excel, PowerPoint. Maksimal 2MB.</p>
-                                    <p class="mt-2 text-xs text-gray-500">File saat ini: <strong>{{ Str::afterLast($submission->submission_file, '/') }}</strong></p>
+                                    <input type="file" name="file" id="edit-file" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" required>
+                                    <p class="text-xs text-gray-500 mt-1">Format: PDF, DOCX, XLSX, ZIP, JPG, PNG (Max: 100MB)</p>
                                 </div>
                                 
-                                <div class="mb-4">
-                                    <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Catatan (Opsional)</label>
-                                    <textarea name="notes" id="edit-notes" rows="3" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">{{ $submission->notes }}</textarea>
-                                    <p class="mt-1 text-xs text-gray-500">Tambahkan catatan jika diperlukan (maksimal 500 karakter)</p>
-                                </div>
-                                
-                                <div class="flex justify-end space-x-3">
-                                    <button type="button" id="cancel-edit" class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition-colors">
+                                <div class="flex justify-end space-x-2 mt-4">
+                                    <button type="button" id="cancelEdit" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
                                         Batal
                                     </button>
-                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
-                                        <i class="fas fa-paper-plane mr-1"></i> Perbarui Pengumpulan
+                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                        Perbarui
                                     </button>
                                 </div>
                             </form>
                         </div>
-                    @endif
-                    
-                @else
-                    <!-- Submit Form -->
-                    @if(!$isExpired)
-                        <form action="{{ route('siswa.submissions.store', $assignment->id) }}" method="POST" enctype="multipart/form-data" class="bg-white border border-gray-200 rounded-md p-5">
-                            @csrf
-                            <div class="mb-4">
-                                <label for="file" class="block text-sm font-medium text-gray-700 mb-1">File Tugas <span class="text-red-500">*</span></label>
-                                <div class="bg-blue-50 p-3 rounded-lg mb-3 border border-blue-100">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
-                                        <p class="text-xs text-blue-700">Perhatian: Ukuran file maksimal <strong>2MB</strong>. Untuk file yang lebih besar, silahkan kompres file atau unggah ke Google Drive/cloud storage dan masukkan link sharing-nya di catatan.</p>
+                        
+                        <!-- Delete Confirmation Modal -->
+                        <div id="delete-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-modal="true" role="dialog">
+                            <div class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="modal-backdrop"></div>
+                                <span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
+                                <div class="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+                                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                        <div class="sm:flex sm:items-start">
+                                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                            </div>
+                                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                                <h3 class="text-lg font-medium leading-6 text-gray-900">Hapus Pengumpulan Tugas</h3>
+                                                <div class="mt-2">
+                                                    <p class="text-sm text-gray-500">
+                                                        Apakah Anda yakin ingin menghapus pengumpulan tugas ini? Tindakan ini tidak dapat dibatalkan.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                        <form action="{{ route('siswa.submissions.destroy', $submission->id) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                                                Hapus
+                                            </button>
+                                        </form>
+                                        <button type="button" id="cancel-delete" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                            Batal
+                                        </button>
                                     </div>
                                 </div>
-                                <input type="file" name="file" id="file" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
-                                @error('file')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                                <p class="mt-1 text-xs text-gray-500">Format file: PDF, Word, Excel, PowerPoint. Maksimal 2MB.</p>
                             </div>
-                            
-                            <div class="mb-4">
-                                <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Catatan (Opsional)</label>
-                                <textarea name="notes" id="notes" rows="3" class="py-2 px-3 block w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">{{ old('notes') }}</textarea>
-                                @error('notes')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                                <p class="mt-1 text-xs text-gray-500">Tambahkan catatan jika diperlukan (maksimal 500 karakter)</p>
-                            </div>
-                            
-                            <div class="flex justify-end">
-                                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 transition-colors">
-                                    <i class="fas fa-paper-plane mr-1"></i> Kumpulkan Tugas
-                                </button>
-                            </div>
-                        </form>
-                    @else
-                        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                        </div>
+                    @endif
+                @else
+                    <!-- If no submission yet and not expired, show submission form -->
+                    @if(!$isExpired)
+                        <div class="bg-white border border-gray-200 rounded-md p-5 mb-6">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-500">
+                                    <i class="fas fa-upload text-2xl"></i>
                                 </div>
-                                <div class="ml-3">
-                                    <p class="text-sm text-red-700">
-                                        Deadline pengumpulan tugas ini telah berakhir pada <strong>{{ $assignment->deadline->format('d M Y, H:i') }}</strong>. 
-                                        Anda tidak dapat mengumpulkan tugas ini lagi.
+                                <div class="ml-4 flex-1">
+                                    <h4 class="text-lg font-medium text-gray-900">Kumpulkan Tugas</h4>
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        Silakan unggah file tugas Anda sebelum deadline.
                                     </p>
+                                    
+                                    <form action="{{ route('siswa.submissions.store') }}" method="POST" enctype="multipart/form-data" class="mt-4">
+                                        @csrf
+                                        <input type="hidden" name="assignment_id" value="{{ $assignment->id }}">
+                                        
+                                        <div class="mb-4">
+                                            <label for="file" class="block text-sm font-medium text-gray-700 mb-1">File Tugas</label>
+                                            <input type="file" name="file" id="file" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" required>
+                                            <p class="text-xs text-gray-500 mt-1">Format: PDF, DOCX, XLSX, ZIP, JPG, PNG (Max: 100MB)</p>
+                                        </div>
+                                        
+                                        <div class="flex justify-end">
+                                            <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white font-medium rounded-lg shadow-sm hover:from-green-700 hover:to-green-800 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-all">
+                                                <i class="fas fa-paper-plane mr-2"></i> Kirim Tugas
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -377,94 +349,88 @@
         </div>
     </div>
 </div>
-@endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const showEditFormBtn = document.getElementById('show-edit-form');
-        const editSubmissionForm = document.getElementById('edit-submission-form');
-        const cancelEditBtn = document.getElementById('cancel-edit');
-        const fileInputs = document.querySelectorAll('input[type="file"]');
-        const submitForms = document.querySelectorAll('form[enctype="multipart/form-data"]');
+        // Edit submission functionality
+        const editBtn = document.getElementById('editSubmissionBtn');
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const editForm = document.getElementById('edit-submission-form');
         
-        // File size validation constants
-        const MAX_FILE_SIZE = 2; // 2MB limit
-        const ALLOWED_FILE_TYPES = [
-            'application/pdf', 
-            'application/msword', 
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel', 
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-powerpoint', 
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'application/zip', 
-            'application/x-zip-compressed', 
-            'image/jpeg', 
-            'image/png', 
-            'image/gif', 
-            'text/plain'
-        ];
-        
-        // Edit form toggle functionality
-        if(showEditFormBtn && editSubmissionForm) {
-            showEditFormBtn.addEventListener('click', function() {
-                editSubmissionForm.classList.remove('hidden');
-                showEditFormBtn.classList.add('hidden');
+        if(editBtn) {
+            editBtn.addEventListener('click', function() {
+                editForm.classList.remove('hidden');
             });
         }
         
-        if(cancelEditBtn && editSubmissionForm && showEditFormBtn) {
+        if(cancelEditBtn) {
             cancelEditBtn.addEventListener('click', function() {
-                editSubmissionForm.classList.add('hidden');
-                showEditFormBtn.classList.remove('hidden');
+                editForm.classList.add('hidden');
             });
         }
         
-        // File validation for all file inputs
-        fileInputs.forEach(input => {
-            input.addEventListener('change', function() {
-                validateFile(this);
-            });
-        });
+        // Delete confirmation modal
+        const deleteBtn = document.getElementById('deleteSubmissionBtn');
+        const deleteModal = document.getElementById('delete-modal');
+        const cancelDeleteBtn = document.getElementById('cancel-delete');
+        const modalBackdrop = document.getElementById('modal-backdrop');
         
-        // Form submission validation
-        submitForms.forEach(form => {
-            form.addEventListener('submit', function(event) {
-                const fileInput = this.querySelector('input[type="file"]');
-                if (fileInput && fileInput.files.length > 0) {
-                    if (!validateFile(fileInput)) {
-                        event.preventDefault();
-                        return false;
-                    }
-                }
+        if(deleteBtn) {
+            deleteBtn.addEventListener('click', function() {
+                deleteModal.classList.remove('hidden');
             });
-        });
+        }
         
-        // File validation function
-        function validateFile(fileInput) {
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
-                
-                // Check file size
-                if (fileSize > MAX_FILE_SIZE) {
-                    alert(`File terlalu besar (${fileSize}MB). Ukuran maksimal yang diizinkan adalah ${MAX_FILE_SIZE}MB. Silahkan kompres file atau gunakan layanan seperti Google Drive untuk berbagi file yang lebih besar.`);
-                    fileInput.value = ''; // Clear the file input
+        if(cancelDeleteBtn) {
+            cancelDeleteBtn.addEventListener('click', function() {
+                deleteModal.classList.add('hidden');
+            });
+        }
+        
+        if(modalBackdrop) {
+            modalBackdrop.addEventListener('click', function() {
+                deleteModal.classList.add('hidden');
+            });
+        }
+
+        // File validation for both forms
+        const fileInput = document.getElementById('file');
+        const editFileInput = document.getElementById('edit-file');
+        
+        function validateFile(input) {
+            if(input && input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileSize = Math.round((file.size / 1024 / 1024) * 100) / 100; // MB
+                if(fileSize > 100) {
+                    alert(`File terlalu besar (${fileSize}MB). Ukuran maksimal yang diizinkan adalah 100MB.`);
+                    input.value = '';
                     return false;
                 }
                 
-                // Optional: Check file type
-                // const fileType = file.type;
-                // if (!ALLOWED_FILE_TYPES.includes(fileType)) {
-                //     alert(`Jenis file tidak diperbolehkan. Gunakan format PDF, Word, Excel, PowerPoint, atau ZIP.`);
-                //     fileInput.value = ''; // Clear the file input
-                //     return false;
-                // }
+                const allowedTypes = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'zip'];
+                const fileExt = file.name.split('.').pop().toLowerCase();
                 
+                if(!allowedTypes.includes(fileExt)) {
+                    alert(`Jenis file "${fileExt}" tidak diizinkan. Gunakan format yang diizinkan.`);
+                    input.value = '';
+                    return false;
+                }
                 return true;
             }
-            return true;
+            return false;
+        }
+        
+        if(fileInput) {
+            fileInput.addEventListener('change', function() {
+                validateFile(this);
+            });
+        }
+        
+        if(editFileInput) {
+            editFileInput.addEventListener('change', function() {
+                validateFile(this);
+            });
         }
     });
 </script>
@@ -483,3 +449,4 @@
     }
 </style>
 @endpush
+@endsection

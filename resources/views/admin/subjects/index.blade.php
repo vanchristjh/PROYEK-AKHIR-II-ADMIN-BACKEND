@@ -1,8 +1,8 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Kelola Mata Pelajaran')
+@section('title', 'Manajemen Mata Pelajaran')
 
-@section('header', 'Kelola Mata Pelajaran')
+@section('header', 'Manajemen Mata Pelajaran')
 
 @section('navigation')
     <li>
@@ -29,135 +29,124 @@
             <span class="ml-3">Kelas</span>
         </a>
     </li>
+    <li>
+        <a href="{{ route('admin.announcements.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-3 text-indigo-100 hover:text-white transition-all duration-200">
+            <i class="fas fa-bullhorn text-lg w-6 text-indigo-300"></i>
+            <span class="ml-3">Pengumuman</span>
+        </a>
+    </li>
 @endsection
 
 @section('content')
-    <!-- Header with stats -->
-    <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 mb-6 text-white relative overflow-hidden animate-fade-in">
-        <div class="absolute -right-10 -top-10 opacity-10">
-            <i class="fas fa-book text-9xl"></i>
-        </div>
-        <div class="relative">
-            <h2 class="text-2xl font-bold mb-2">Mata Pelajaran</h2>
-            <p class="text-amber-100 mb-4">Kelola semua mata pelajaran di SMAN 1 Girsip</p>
-            <div class="flex items-center space-x-2 mb-4">
-                <div class="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg">
-                    <i class="fas fa-book text-xl"></i>
-                </div>
-                <div class="text-lg">Total: {{ $subjects->total() }} Mata Pelajaran</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Search and action buttons -->
     <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Daftar Mata Pelajaran</h3>
-            <a href="{{ route('admin.subjects.create') }}" class="flex items-center justify-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                <i class="fas fa-plus mr-2"></i>
-                Tambah Mata Pelajaran
+        <!-- Success/Error messages -->
+        @if(session('success'))
+            <div class="mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+            </div>
+        @endif
+        
+        @if(session('error'))
+            <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>{{ session('error') }}</span>
+                </div>
+            </div>
+        @endif
+
+        <div class="flex justify-between mb-4">
+            <h2 class="text-xl font-medium">Daftar Mata Pelajaran</h2>
+            <a href="{{ route('admin.subjects.create') }}" class="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-all">
+                <i class="fas fa-plus mr-2"></i>Tambah Mata Pelajaran
             </a>
         </div>
 
-        <!-- Search form -->
-        <form action="{{ route('admin.subjects.index') }}" method="GET" class="mb-6">
-            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                <div class="flex-1">
-                    <div class="relative">
-                        <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 transition-all duration-200" placeholder="Cari mata pelajaran...">
-                        <div class="absolute left-3 top-2.5 text-gray-400">
-                            <i class="fas fa-search"></i>
-                        </div>
-                    </div>
+        <!-- Filter and Search Form -->
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+            <form action="{{ route('admin.subjects.index') }}" method="GET" class="flex flex-wrap gap-4">
+                <div class="flex-grow min-w-[200px]">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau kode..." 
+                        class="w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50">
                 </div>
-                <div class="flex space-x-2">
-                    <button type="submit" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors duration-200">
-                        <i class="fas fa-search mr-2"></i>
-                        Cari
-                    </button>
-                    @if(request()->has('search') && !empty(request('search')))
-                        <a href="{{ route('admin.subjects.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
-                            <i class="fas fa-times mr-2"></i>
-                            Reset
-                        </a>
-                    @endif
-                </div>
-            </div>
-        </form>
+                <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                    <i class="fas fa-search mr-2"></i>Cari
+                </button>
+                @if(request()->anyFilled(['search']))
+                    <a href="{{ route('admin.subjects.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-times mr-2"></i>Reset
+                    </a>
+                @endif
+            </form>
+        </div>
 
-        <!-- Flash messages -->
-        @if(session('success'))
-            <div class="bg-green-100 border-l-4 border-green-600 text-green-700 p-4 mb-6 rounded-md">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm">{{ session('success') }}</p>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-100 border-l-4 border-red-600 text-red-700 p-4 mb-6 rounded-md">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm">{{ session('error') }}</p>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        <!-- Subjects table -->
         <div class="overflow-x-auto bg-white rounded-lg">
             <table class="min-w-full">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Mata Pelajaran</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guru Pengajar</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    @forelse ($subjects as $subject)
+                    @forelse ($subjects ?? [] as $subject)
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-amber-600">{{ $subject->code }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{{ $subject->name }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{{ $subject->description }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-medium text-sm">
+                                    {{ $subject->code }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ $subject->name }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                {{ $subject->description ? \Illuminate\Support\Str::limit($subject->description, 50) : '-' }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                @if($subject->teachers && $subject->teachers->count() > 0)
+                                    <span class="px-2.5 py-0.5 rounded-md bg-green-100 text-green-800 font-medium text-xs">
+                                        {{ $subject->teachers->count() }} guru
+                                    </span>
+                                @else
+                                    <span class="text-xs text-gray-500">Belum ada pengajar</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex space-x-2 justify-end">
-                                    <a href="{{ route('admin.subjects.show', $subject->id) }}" class="px-3 py-1 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors">
+                                    <a href="{{ route('admin.subjects.show', $subject->id) }}" class="px-3 py-1 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors" title="Lihat Detail">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.subjects.edit', $subject->id) }}" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                    <a href="{{ route('admin.subjects.edit', $subject->id) }}" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('admin.subjects.destroy', $subject->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata pelajaran ini?');">
+                                    <button type="button" class="delete-button px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors" title="Hapus"
+                                        data-subject-id="{{ $subject->id }}" 
+                                        data-subject-name="{{ $subject->name }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <form id="delete-form-{{ $subject->id }}" action="{{ route('admin.subjects.destroy', $subject->id) }}" method="POST" class="hidden">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-10 text-center">
+                            <td colspan="5" class="px-6 py-10 text-center">
                                 <div class="flex flex-col items-center">
                                     <div class="h-16 w-16 bg-amber-100 text-amber-400 rounded-full flex items-center justify-center mb-3">
                                         <i class="fas fa-book text-2xl"></i>
                                     </div>
-                                    <p class="text-gray-500 font-medium">Belum ada mata pelajaran</p>
-                                    <p class="text-gray-400 mt-1">Silakan tambahkan mata pelajaran baru</p>
-                                    <a href="{{ route('admin.subjects.create') }}" class="mt-3 text-amber-600 hover:text-amber-800 font-medium text-sm inline-flex items-center">
-                                        <i class="fas fa-plus mr-1"></i> Tambah Mata Pelajaran
+                                    <p class="text-gray-500 mb-3">Belum ada mata pelajaran yang tersedia</p>
+                                    <a href="{{ route('admin.subjects.create') }}" class="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
+                                        <i class="fas fa-plus mr-2"></i>Tambah Mata Pelajaran
                                     </a>
                                 </div>
                             </td>
@@ -166,10 +155,81 @@
                 </tbody>
             </table>
         </div>
-
+        
         <!-- Pagination -->
-        <div class="mt-4">
-            {{ $subjects->links() }}
-        </div>
+        @if(isset($subjects) && method_exists($subjects, 'links'))
+            <div class="mt-4">
+                {{ $subjects->links() }}
+            </div>
+        @endif
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete confirmation with improved UX
+        const deleteButtons = document.querySelectorAll('.delete-button');
+        
+        if (deleteButtons.length > 0) {
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const subjectId = this.dataset.subjectId;
+                    const subjectName = this.dataset.subjectName;
+                    
+                    // Create modal overlay
+                    const overlay = document.createElement('div');
+                    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+                    
+                    // Create confirmation modal
+                    const modal = document.createElement('div');
+                    modal.className = 'bg-white rounded-lg shadow-xl p-6 max-w-md mx-4 animate-fade-in';
+                    modal.innerHTML = `
+                        <div class="text-center mb-4">
+                            <div class="h-16 w-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-exclamation-triangle text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">Konfirmasi Penghapusan</h3>
+                            <p class="text-gray-600">Apakah Anda yakin ingin menghapus mata pelajaran <span class="font-medium">"${subjectName}"</span>?</p>
+                            <p class="text-sm text-red-600 mt-2">Tindakan ini akan menghapus semua data terkait dan tidak dapat dibatalkan.</p>
+                        </div>
+                        <div class="flex justify-center space-x-3">
+                            <button type="button" class="cancel-button px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                                Batal
+                            </button>
+                            <button type="button" class="confirm-button px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                Ya, Hapus
+                            </button>
+                        </div>
+                    `;
+                    
+                    overlay.appendChild(modal);
+                    document.body.appendChild(overlay);
+                    
+                    // Handle cancel button
+                    modal.querySelector('.cancel-button').addEventListener('click', function() {
+                        overlay.classList.add('opacity-0');
+                        setTimeout(() => overlay.remove(), 300);
+                    });
+                    
+                    // Handle confirm button
+                    modal.querySelector('.confirm-button').addEventListener('click', function() {
+                        // Show loading state
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menghapus...';
+                        this.disabled = true;
+                        document.getElementById(`delete-form-${subjectId}`).submit();
+                    });
+                    
+                    // Close on outside click
+                    overlay.addEventListener('click', function(e) {
+                        if (e.target === overlay) {
+                            overlay.classList.add('opacity-0');
+                            setTimeout(() => overlay.remove(), 300);
+                        }
+                    });
+                });
+            });
+        }
+    });
+</script>
+@endpush

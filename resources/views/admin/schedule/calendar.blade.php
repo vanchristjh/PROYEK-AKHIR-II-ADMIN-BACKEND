@@ -2,459 +2,535 @@
 
 @section('title', 'Kalender Jadwal')
 
-@section('header', 'Kalender Jadwal')
+@section('header', 'Kalender Jadwal Pelajaran')
 
 @section('navigation')
     @include('admin.partials.sidebar')
 @endsection
 
 @section('content')
-    <!-- Header with animation -->
-    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg p-6 mb-6 text-white relative overflow-hidden animate-fade-in">
-        <div class="absolute -right-10 -top-10 opacity-10">
-            <i class="fas fa-calendar-week text-9xl"></i>
-        </div>
-        <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
-        <div class="relative z-10">
-            <h2 class="text-2xl font-bold mb-2">Kalender Jadwal</h2>
-            <p class="text-blue-100">Tampilan visual jadwal mingguan</p>
-        </div>
-    </div>
-
     <div class="mb-6">
-        <a href="{{ route('admin.schedule.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
-            <i class="fas fa-chevron-left mr-2 text-sm"></i>
-            <span>Kembali ke Daftar Jadwal</span>
+        <a href="{{ route('admin.schedule.index') }}" class="text-blue-600 hover:text-blue-800 flex items-center text-sm transition-colors duration-200">
+            <i class="fas fa-arrow-left mr-2"></i> Kembali ke Daftar Jadwal
         </a>
     </div>
-
-    <!-- Filters -->
-    <div class="bg-white rounded-xl shadow-sm mb-6 overflow-hidden border border-gray-100">
-        <div class="px-5 py-4 bg-gray-50 border-b border-gray-100">
-            <div class="flex items-center">
-                <i class="fas fa-filter text-gray-500 mr-2"></i>
-                <h3 class="font-medium text-gray-700">Filter Kalender</h3>
-            </div>
+    
+    <!-- Classroom Selector -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 mb-8 hover:shadow-lg transition-shadow duration-300">
+        <div class="p-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-school mr-2 text-blue-700"></i>
+                Pilih Kelas
+            </h3>
         </div>
+        
         <div class="p-5">
-            <form id="calendarFilterForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="filter_classroom" class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                    <select name="classroom" id="filter_classroom" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                        <option value="">Pilih Kelas</option>
+            <form action="{{ route('admin.schedule.calendar') }}" method="GET" class="flex flex-wrap items-center gap-4">
+                <div class="flex-grow">
+                    <select name="classroom_id" id="classroom_id" class="form-select rounded-lg border-gray-300 w-full focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all">
+                        <option value="">-- Pilih Kelas --</option>
                         @foreach($classrooms as $classroom)
-                            <option value="{{ $classroom->id }}" {{ request('classroom') == $classroom->id ? 'selected' : '' }}>{{ $classroom->name }}</option>
+                            <option value="{{ $classroom->id }}" {{ request('classroom_id') == $classroom->id ? 'selected' : '' }}>
+                                {{ $classroom->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
-
-                <div>
-                    <label for="filter_teacher" class="block text-sm font-medium text-gray-700 mb-1">Guru</label>
-                    <select name="teacher" id="filter_teacher" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                        <option value="">Pilih Guru</option>
-                        @foreach($teachers as $teacher)
-                            <option value="{{ $teacher->id }}" {{ request('teacher') == $teacher->id ? 'selected' : '' }}>{{ $teacher->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="md:col-span-2 flex items-center">
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">
-                        <i class="fas fa-search mr-2"></i> Filter
-                    </button>
-                    <button type="button" id="resetFilterBtn" class="ml-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:bg-gray-600">
-                        <i class="fas fa-times mr-2"></i> Reset
-                    </button>
-                </div>
+                <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center shadow-sm hover:shadow font-medium">
+                    <i class="fas fa-calendar-alt mr-2"></i> Tampilkan Jadwal
+                </button>
             </form>
         </div>
     </div>
-
-    <!-- Weekly Calendar View -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">        <div class="px-5 py-4 bg-gray-50 border-b border-gray-100">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                <div class="flex items-center mb-2 sm:mb-0">
-                    <i class="fas fa-calendar-alt text-gray-500 mr-2"></i>
-                    <h3 class="font-medium text-gray-700">Kalender Jadwal Mingguan</h3>
+    
+    @if($selectedClassroom)
+        <!-- Schedule Calendar -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+            <div class="p-5 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-calendar-week text-indigo-600 mr-2"></i>
+                        Jadwal Kelas {{ $selectedClassroom->name }}
+                    </h3>
+                    <a href="{{ route('admin.schedule.create') }}?classroom_id={{ $selectedClassroom->id }}" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-sm hover:shadow flex items-center font-medium">
+                        <i class="fas fa-plus mr-2"></i> Tambah Jadwal
+                    </a>
                 </div>
-                <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                    <div id="calendarInfo" class="text-sm text-gray-500">
-                        <!-- Will be populated dynamically -->
+            </div>
+            
+            <div class="p-5">
+                @if(count($schedules) > 0)
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                            <thead>
+                                <tr class="bg-gradient-to-r from-gray-100 to-gray-50">
+                                    <th class="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 border-r">
+                                        <div class="flex items-center">
+                                            <i class="far fa-clock mr-1 text-gray-500"></i> Waktu
+                                        </div>
+                                    </th>
+                                    @foreach(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as $index => $day)
+                                        <th class="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 {{ $index < 5 ? 'border-r' : '' }}">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-calendar-day mr-1 text-blue-500"></i> {{ $day }}
+                                            </div>
+                                        </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $timeSlots = [];
+                                    foreach ($schedules as $day => $daySchedules) {
+                                        foreach ($daySchedules as $schedule) {
+                                            $timeSlots[$schedule->start_time . '-' . $schedule->end_time] = true;
+                                        }
+                                    }
+                                    ksort($timeSlots);
+                                @endphp
+                                
+                                @foreach (array_keys($timeSlots) as $index => $timeSlot)
+                                    @php
+                                        list($start, $end) = explode('-', $timeSlot);
+                                        $displayTime = substr($start, 0, 5) . ' - ' . substr($end, 0, 5);
+                                    @endphp
+                                    <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }} hover:bg-gray-100 transition-colors duration-150">
+                                        <td class="py-3 px-4 border-b border-r border-gray-200 text-xs font-medium text-gray-800">
+                                            <div class="flex items-center">
+                                                <i class="far fa-clock mr-1.5 text-indigo-500"></i>
+                                                {{ $displayTime }}
+                                            </div>
+                                        </td>
+                                        
+                                        @foreach(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as $index => $day)
+                                            <td class="py-3 px-4 border-b {{ $index < 5 ? 'border-r' : '' }} border-gray-200">
+                                                @if(isset($schedules[$day]))
+                                                    @php
+                                                        $found = false;
+                                                        foreach($schedules[$day] as $schedule) {
+                                                            if($schedule->start_time . '-' . $schedule->end_time == $timeSlot) {
+                                                                $found = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    
+                                                    @if($found)
+                                                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 text-xs shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5">
+                                                            <div class="font-medium text-blue-800 flex items-center">
+                                                                <i class="fas fa-book-reader mr-1.5 text-indigo-600"></i>
+                                                                {{ $schedule->subject->name ?? 'N/A' }}
+                                                            </div>
+                                                            <div class="text-blue-600 mt-1.5 flex items-center">
+                                                                <i class="fas fa-user-tie mr-1 text-blue-500"></i>
+                                                                {{ $schedule->teacher->name ?? 'N/A' }}
+                                                            </div>
+                                                            <div class="flex justify-between items-center mt-3 pt-2 border-t border-blue-100">
+                                                                <a href="{{ route('admin.schedule.show', $schedule) }}" 
+                                                                   class="text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-md transition-colors duration-200"
+                                                                   title="Lihat Detail">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </a>
+                                                                <div class="flex space-x-2">
+                                                                    <a href="{{ route('admin.schedule.edit', $schedule) }}" 
+                                                                       class="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-1.5 rounded-md transition-colors duration-200"
+                                                                       title="Edit Jadwal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </a>
+                                                                    <form action="{{ route('admin.schedule.destroy', $schedule) }}" method="POST" class="inline-block delete-form">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button type="submit" 
+                                                                                class="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors duration-200"
+                                                                                title="Hapus Jadwal">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="flex space-x-2">
-                        <button id="printCalendarBtn" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center">
-                            <i class="fas fa-print mr-1.5"></i> Print
-                        </button>
-                        <button id="exportPdfBtn" class="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors flex items-center">
-                            <i class="fas fa-file-pdf mr-1.5"></i> Export PDF
-                        </button>
+                    
+                    <div class="mt-6 text-sm bg-blue-50 border border-blue-100 rounded-lg p-3 text-gray-600 flex items-start">
+                        <i class="fas fa-info-circle mr-2 text-blue-500 mt-0.5"></i>
+                        <p>Klik ikon mata untuk melihat detail, ikon pensil untuk mengedit, dan ikon sampah untuk menghapus jadwal.</p>
+                    </div>
+                @else
+                    <div class="text-center py-12 bg-gray-50 rounded-lg">
+                        <i class="fas fa-calendar-times text-gray-400 text-5xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-600 mb-1">Belum ada jadwal untuk kelas ini</h3>
+                        <p class="text-gray-400 mb-5">Silahkan tambahkan jadwal terlebih dahulu</p>
+                        <a href="{{ route('admin.schedule.create') }}?classroom_id={{ $selectedClassroom->id }}" class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm hover:shadow transition-all duration-300">
+                            <i class="fas fa-plus mr-2"></i> Tambah Jadwal
+                        </a>
+                    </div>
+                @endif
+            </div>
+            
+            @if(count($schedules) > 0)
+                <div class="p-5 bg-gray-50 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3">
+                    <div class="text-sm text-gray-600 flex items-center">
+                        <i class="fas fa-clipboard-list text-blue-500 mr-2"></i>
+                        <p>Total jadwal: <span class="font-medium">{{ $schedules->flatten()->count() }}</span></p>
+                    </div>
+                    <div>
+                        <a href="{{ route('admin.schedule.export', ['classroom_id' => $selectedClassroom->id]) }}" 
+                           class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center inline-flex shadow-sm hover:shadow font-medium">
+                            <i class="fas fa-file-export mr-2"></i> Export Jadwal
+                        </a>
                     </div>
                 </div>
+            @endif
+        </div>
+    @else
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 p-10 text-center hover:shadow-lg transition-shadow duration-300">
+            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-5 shadow-inner">
+                <i class="fas fa-calendar-alt text-blue-500 text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-medium text-gray-700 mb-3">Pilih Kelas Untuk Melihat Jadwal</h3>
+            <p class="text-gray-500 mb-4 max-w-md mx-auto">Silahkan pilih kelas terlebih dahulu pada form di atas untuk menampilkan jadwal pelajaran</p>
+        </div>
+    @endif
+    
+    <!-- Schedule Info Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+            <div class="p-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
+                <h3 class="text-md font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-book-open mr-2 text-blue-600"></i>
+                    Informasi Mata Pelajaran
+                </h3>
+            </div>
+            <div class="p-5">
+                @if($selectedClassroom)
+                    @php
+                        $subjectCount = $schedules->flatten()->pluck('subject_id')->unique()->count();
+                        $subjects = $schedules->flatten()->pluck('subject.name', 'subject_id')->unique();
+                    @endphp
+                    
+                    <p class="text-sm text-gray-600 mb-4 flex items-center">
+                        <i class="fas fa-info-circle mr-1.5 text-blue-500"></i>
+                        Kelas {{ $selectedClassroom->name }} memiliki {{ $subjectCount }} mata pelajaran
+                    </p>
+                    
+                    @if($subjectCount > 0)
+                        <div class="space-y-2.5">
+                            @foreach($subjects as $subjectId => $subjectName)
+                                <div class="text-sm bg-gray-50 p-2.5 rounded-md border-l-3 border-blue-400 hover:bg-blue-50 transition-colors duration-200">
+                                    {{ $subjectName }}
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                @else
+                    <div class="text-sm text-gray-500 text-center py-8 flex flex-col items-center">
+                        <i class="fas fa-books text-gray-300 text-3xl mb-2"></i>
+                        Pilih kelas untuk melihat informasi mata pelajaran
+                    </div>
+                @endif
             </div>
         </div>
         
-        <div class="p-4">
-            <div class="grid grid-cols-6 gap-2 calendar-header mb-2">
-                <div class="text-center font-semibold bg-gray-100 py-2 rounded-md">Jam</div>
-                <div class="text-center font-semibold bg-blue-100 py-2 rounded-md">Senin</div>
-                <div class="text-center font-semibold bg-indigo-100 py-2 rounded-md">Selasa</div>
-                <div class="text-center font-semibold bg-purple-100 py-2 rounded-md">Rabu</div>
-                <div class="text-center font-semibold bg-pink-100 py-2 rounded-md">Kamis</div>
-                <div class="text-center font-semibold bg-red-100 py-2 rounded-md">Jumat</div>
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+            <div class="p-5 border-b border-gray-200 bg-gradient-to-r from-green-50 to-green-100">
+                <h3 class="text-md font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-chalkboard-teacher mr-2 text-green-600"></i>
+                    Informasi Guru
+                </h3>
             </div>
-            
-            <div id="calendarContainer" class="relative min-h-[600px]">
-                <div class="absolute inset-0 w-full h-full grid grid-cols-6 gap-2">
-                    <!-- Time column -->
-                    <div class="time-column">
-                        @foreach($timeSlots as $slot)
-                            <div class="time-slot h-24 border-b border-gray-100 relative text-xs text-gray-500 pl-1">
-                                {{ $slot }}
-                            </div>
-                        @endforeach
-                    </div>
+            <div class="p-5">
+                @if($selectedClassroom)
+                    @php
+                        $teacherCount = $schedules->flatten()->pluck('teacher_id')->unique()->count();
+                        $teachers = $schedules->flatten()->pluck('teacher.name', 'teacher_id')->unique();
+                    @endphp
                     
-                    <!-- Day columns -->
-                    @for($day = 1; $day <= 5; $day++)
-                        <div class="day-column day-{{ $day }} relative border-l border-gray-100">
-                            @foreach($timeSlots as $index => $slot)
-                                <div class="time-slot h-24 border-b border-gray-100"></div>
+                    <p class="text-sm text-gray-600 mb-4 flex items-center">
+                        <i class="fas fa-info-circle mr-1.5 text-green-500"></i>
+                        Kelas {{ $selectedClassroom->name }} diajar oleh {{ $teacherCount }} guru
+                    </p>
+                    
+                    @if($teacherCount > 0)
+                        <div class="space-y-2.5">
+                            @foreach($teachers as $teacherId => $teacherName)
+                                <div class="text-sm bg-gray-50 p-2.5 rounded-md border-l-3 border-green-400 hover:bg-green-50 transition-colors duration-200">
+                                    {{ $teacherName }}
+                                </div>
                             @endforeach
                         </div>
-                    @endfor
-                </div>
-                
-                <div id="scheduleEvents" class="absolute inset-0">
-                    <!-- Schedule events will be populated here dynamically -->
-                </div>
+                    @endif
+                @else
+                    <div class="text-sm text-gray-500 text-center py-8 flex flex-col items-center">
+                        <i class="fas fa-user-tie text-gray-300 text-3xl mb-2"></i>
+                        Pilih kelas untuk melihat informasi guru
+                    </div>
+                @endif
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+            <div class="p-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-purple-100">
+                <h3 class="text-md font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-clock mr-2 text-purple-600"></i>
+                    Ringkasan Jadwal
+                </h3>
+            </div>
+            <div class="p-5">
+                @if($selectedClassroom)
+                    @php
+                        $dayCount = $schedules->count();
+                        $totalHours = 0;
+                        
+                        foreach ($schedules as $day => $daySchedules) {
+                            foreach ($daySchedules as $schedule) {
+                                $start = \Carbon\Carbon::parse($schedule->start_time);
+                                $end = \Carbon\Carbon::parse($schedule->end_time);
+                                $totalHours += $end->diffInMinutes($start) / 60;
+                            }
+                        }
+                    @endphp
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center text-sm p-2.5 bg-gray-50 rounded-lg hover:bg-purple-50 transition-colors duration-200">
+                            <span class="text-gray-600 flex items-center"><i class="fas fa-calendar-week text-purple-500 mr-2"></i> Total Hari:</span>
+                            <span class="font-medium text-gray-800 bg-white py-1 px-2.5 rounded-md shadow-sm">{{ $dayCount }} hari</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center text-sm p-2.5 bg-gray-50 rounded-lg hover:bg-purple-50 transition-colors duration-200">
+                            <span class="text-gray-600 flex items-center"><i class="fas fa-calendar-check text-purple-500 mr-2"></i> Total Jadwal:</span>
+                            <span class="font-medium text-gray-800 bg-white py-1 px-2.5 rounded-md shadow-sm">{{ $schedules->flatten()->count() }} sesi</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center text-sm p-2.5 bg-gray-50 rounded-lg hover:bg-purple-50 transition-colors duration-200">
+                            <span class="text-gray-600 flex items-center"><i class="fas fa-clock text-purple-500 mr-2"></i> Total Jam:</span>
+                            <span class="font-medium text-gray-800 bg-white py-1 px-2.5 rounded-md shadow-sm">{{ number_format($totalHours, 1) }} jam</span>
+                        </div>
+                    </div>
+                @else
+                    <div class="text-sm text-gray-500 text-center py-8 flex flex-col items-center">
+                        <i class="fas fa-chart-pie text-gray-300 text-3xl mb-2"></i>
+                        Pilih kelas untuk melihat ringkasan jadwal
+                    </div>
+                @endif
             </div>
         </div>
     </div>
 @endsection
 
-@push('styles')
+@push('scripts')
+<script>
+    // Confirm delete
+    document.querySelectorAll('.delete-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Extract schedule information
+            const scheduleCard = this.closest('.bg-gradient-to-br');
+            const subjectEl = scheduleCard.querySelector('.font-medium');
+            const teacherEl = scheduleCard.querySelector('.text-blue-600');
+            
+            const subject = subjectEl ? subjectEl.textContent.trim() : 'N/A';
+            const teacher = teacherEl ? teacherEl.textContent.trim() : 'N/A';
+            const classroom = "{{ $selectedClassroom ? $selectedClassroom->name : 'N/A' }}";
+            
+            const confirmation = confirm(
+                `Apakah Anda yakin ingin menghapus jadwal ini?\n\n` +
+                `Mata Pelajaran: ${subject}\n` +
+                `Guru: ${teacher}\n` +
+                `Kelas: ${classroom}\n\n` +
+                `Tindakan ini tidak dapat dibatalkan.`
+            );
+            
+            if (confirmation) {
+                // Show loading state
+                const deleteBtn = this.querySelector('button');
+                if (deleteBtn) {
+                    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    deleteBtn.disabled = true;
+                }
+                
+                // Visual feedback
+                scheduleCard.style.opacity = "0.5";
+                scheduleCard.style.transition = "all 0.3s";
+                scheduleCard.style.transform = "scale(0.95)";
+                
+                // Create a fade-out animation
+                const fadeOut = scheduleCard.animate(
+                    [
+                        { opacity: 0.5, transform: 'scale(0.95)' },
+                        { opacity: 0, transform: 'scale(0.9)' }
+                    ],
+                    {
+                        duration: 500,
+                        fill: 'forwards',
+                        easing: 'ease-out'
+                    }
+                );
+                
+                // Show notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center';
+                notification.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menghapus jadwal...';
+                document.body.appendChild(notification);
+                
+                // Handle submission
+                try {
+                    this.submit();
+                } catch (error) {
+                    console.error('Error during delete:', error);
+                    fadeOut.cancel();
+                    scheduleCard.style.opacity = "1";
+                    scheduleCard.style.transform = "scale(1)";
+                    
+                    if (deleteBtn) {
+                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                        deleteBtn.disabled = false;
+                    }
+                    
+                    notification.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i> Gagal menghapus jadwal';
+                    notification.className = 'fixed top-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center';
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                }
+            }
+        });
+    });
+    
+    // Auto-submit form when select changes
+    document.getElementById('classroom_id')?.addEventListener('change', function() {
+        if (this.value) {
+            // Show loading indicator
+            const submitBtn = this.form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Memuat...';
+                submitBtn.disabled = true;
+            }
+            
+            // Add loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'fixed inset-0 bg-white bg-opacity-70 flex items-center justify-center z-40';
+            loadingOverlay.innerHTML = `
+                <div class="bg-white p-5 rounded-lg shadow-lg text-center">
+                    <i class="fas fa-spinner fa-spin text-blue-600 text-3xl mb-2"></i>
+                    <p class="text-gray-700">Memuat jadwal kelas...</p>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+            
+            this.form.submit();
+        }
+    });
+    
+    // Add highlight effect for just-added schedules
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if there's a new schedule flag in URL or session storage
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasNewSchedule = urlParams.get('new_schedule') || sessionStorage.getItem('newScheduleAdded');
+        
+        if (hasNewSchedule) {
+            const scheduleCards = document.querySelectorAll('.bg-gradient-to-br');
+            // Highlight the newest card (assuming it's the last one)
+            if (scheduleCards.length > 0) {
+                const lastCard = scheduleCards[scheduleCards.length - 1];
+                lastCard.classList.add('animate-pulse');
+                lastCard.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.5)';
+                
+                // Remove highlight after 3 seconds
+                setTimeout(() => {
+                    lastCard.classList.remove('animate-pulse');
+                    lastCard.style.boxShadow = '';
+                    // Add a nice transition out
+                    lastCard.style.transition = 'all 0.5s ease-out';
+                }, 3000);
+            }
+            
+            // Clear the flag
+            sessionStorage.removeItem('newScheduleAdded');
+        }
+        
+        // Handle overlapping schedules - highlighting conflicts
+        const checkForConflicts = () => {
+            const timeSlots = document.querySelectorAll('tr');
+            
+            timeSlots.forEach(row => {
+                const cells = row.querySelectorAll('td:not(:first-child)');
+                
+                cells.forEach(cell => {
+                    // Check if cell has more than one schedule
+                    const scheduleCards = cell.querySelectorAll('.bg-gradient-to-br');
+                    
+                    if (scheduleCards.length > 1) {
+                        // Mark conflicts
+                        scheduleCards.forEach(card => {
+                            card.classList.remove('bg-gradient-to-br', 'from-blue-50', 'to-indigo-50', 'border-blue-200');
+                            card.classList.add('bg-gradient-to-br', 'from-red-50', 'to-red-100', 'border-red-300');
+                            
+                            // Add conflict indicator if not already present
+                            if (!card.querySelector('.conflict-indicator')) {
+                                const indicator = document.createElement('div');
+                                indicator.className = 'text-xs text-red-700 mt-2 pt-1.5 border-t border-red-200 conflict-indicator flex items-center';
+                                indicator.innerHTML = '<i class="fas fa-exclamation-triangle mr-1.5"></i> Konflik jadwal';
+                                card.appendChild(indicator);
+                            }
+                        });
+                    }
+                });
+            });
+        };
+        
+        // Run conflict check
+        setTimeout(checkForConflicts, 500);
+    });
+</script>
+
+<!-- Add custom CSS for additional styling -->
 <style>
-    .animate-fade-in {
-        animation: fade-in 0.6s ease-in-out;
+    .border-l-3 {
+        border-left-width: 3px;
     }
     
-    @keyframes fade-in {
-        0% {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    /* Add some smooth transitions */
+    .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 300ms;
     }
     
-    .calendar-event {
-        position: absolute;
-        border-radius: 0.375rem;
-        padding: 0.5rem;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: column;
+    /* Custom animation for table hover */
+    tr:hover td {
+        background-color: rgba(243, 244, 246, 0.5);
+    }
+    
+    /* Day column highlight on hover */
+    th:hover {
+        background-color: rgba(219, 234, 254, 0.3);
+    }
+    
+    /* Delete button animation */
+    .delete-form button {
         transition: all 0.2s;
     }
     
-    .calendar-event:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        z-index: 10;
+    .delete-form button:hover {
+        transform: scale(1.1);
     }
     
-    .event-title {
-        font-weight: 600;
-        font-size: 0.75rem;
-        line-height: 1rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .event-details {
-        font-size: 0.7rem;
-        opacity: 0.8;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    /* Visual feedback for actions */
+    @keyframes fadeInOut {
+        0% { opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { opacity: 0; }
     }
 </style>
-@endpush
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const calendarContainer = document.getElementById('calendarContainer');
-        const scheduleEvents = document.getElementById('scheduleEvents');
-        const calendarInfo = document.getElementById('calendarInfo');
-        const filterForm = document.getElementById('calendarFilterForm');
-        const resetBtn = document.getElementById('resetFilterBtn');
-        const printBtn = document.getElementById('printCalendarBtn');
-        const exportPdfBtn = document.getElementById('exportPdfBtn');
-        
-        // Store filter values
-        let classroomId = '{{ request('classroom') }}';
-        let teacherId = '{{ request('teacher') }}';
-        
-        // Initial load of schedules
-        loadSchedules();
-        
-        // Handle filter form submission
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            classroomId = document.getElementById('filter_classroom').value;
-            teacherId = document.getElementById('filter_teacher').value;
-            loadSchedules();
-        });
-        
-        // Reset filters
-        resetBtn.addEventListener('click', function() {
-            document.getElementById('filter_classroom').value = '';
-            document.getElementById('filter_teacher').value = '';
-            classroomId = '';
-            teacherId = '';
-            loadSchedules();
-        });
-        
-        // Handle print button click
-        printBtn.addEventListener('click', function() {
-            printCalendar();
-        });
-        
-        // Handle export button click
-        exportPdfBtn.addEventListener('click', function() {
-            exportToPdf();
-        });
-        
-        function loadSchedules() {
-            // Clear existing events
-            scheduleEvents.innerHTML = '';
-            
-            // Set calendar info
-            let infoText = 'Jadwal ';
-            if (classroomId) {
-                const classroomName = document.querySelector(`#filter_classroom option[value="${classroomId}"]`).textContent;
-                infoText += `Kelas ${classroomName}`;
-            } else if (teacherId) {
-                const teacherName = document.querySelector(`#filter_teacher option[value="${teacherId}"]`).textContent;
-                infoText += `Guru ${teacherName}`;
-            } else {
-                infoText = 'Semua Jadwal';
-            }
-            calendarInfo.textContent = infoText;
-            
-            // Fetch schedules
-            fetch(`/admin/schedule/calendar-data?classroom=${classroomId || ''}&teacher=${teacherId || ''}`)
-                .then(response => response.json())
-                .then(data => {
-                    renderSchedules(data.schedules);
-                })
-                .catch(error => {
-                    console.error('Error loading schedules:', error);
-                });
-        }
-        
-        function renderSchedules(schedules) {
-            // Generate schedule events
-            schedules.forEach(schedule => {
-                if (schedule.day > 5) return; // Only show Monday to Friday
-                
-                const startTime = new Date(`2000-01-01T${schedule.start_time}`);
-                const endTime = new Date(`2000-01-01T${schedule.end_time}`);
-                
-                // Calculate position
-                const startHour = startTime.getHours();
-                const startMinute = startTime.getMinutes();
-                const durationMinutes = (endTime - startTime) / (1000 * 60);
-                
-                const minutesSinceMidnight = startHour * 60 + startMinute;
-                const topPosition = (minutesSinceMidnight - 7 * 60) / (12 * 60) * 100; // 7 AM to 7 PM = 12 hours
-                const heightPercentage = durationMinutes / (12 * 60) * 100;
-                
-                // Create event element
-                const eventElement = document.createElement('div');
-                eventElement.className = `calendar-event event-subject-${schedule.subject_id}`;
-                eventElement.style.top = `${topPosition}%`;
-                eventElement.style.height = `${heightPercentage}%`;
-                eventElement.style.left = `${(schedule.day / 6) * 100}%`;
-                eventElement.style.width = 'calc(16.666% - 8px)';
-                
-                // Set background color based on subject
-                const hue = (schedule.subject_id * 37) % 360; // Use prime number to distribute colors
-                eventElement.style.backgroundColor = `hsl(${hue}, 85%, 90%)`;
-                eventElement.style.borderLeft = `4px solid hsl(${hue}, 85%, 50%)`;
-                
-                // Add event content
-                eventElement.innerHTML = `
-                    <div class="event-title" style="color: hsl(${hue}, 85%, 30%);">${schedule.subject.name}</div>
-                    <div class="event-details">${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}</div>
-                    <div class="event-details">${schedule.teacher.name}</div>
-                    <div class="event-details">${schedule.classroom.name}</div>
-                    <div class="event-details">${schedule.room || '-'}</div>
-                `;
-                
-                // Add click handler to navigate to edit page
-                eventElement.style.cursor = 'pointer';
-                eventElement.addEventListener('click', function() {
-                    window.location.href = `/admin/schedule/${schedule.id}/edit`;
-                });
-                
-                // Add event to calendar
-                scheduleEvents.appendChild(eventElement);
-            });
-        }
-          function formatTime(timeStr) {
-            const parts = timeStr.split(':');
-            return `${parts[0]}:${parts[1]}`;
-        }
-        
-        // Print calendar function
-        function printCalendar() {
-            // Save current page state
-            const originalContent = document.body.innerHTML;
-            const infoText = calendarInfo.textContent;
-            
-            // Create print-friendly version
-            let printContent = `
-                <div style="padding: 20px; font-family: Arial, sans-serif;">
-                    <h1 style="text-align: center; margin-bottom: 20px;">Jadwal Sekolah - SMAN 1</h1>
-                    <h2 style="text-align: center; margin-bottom: 30px;">${infoText}</h2>
-                    <div style="margin-bottom: 30px;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr>
-                                    <th style="border: 1px solid #ccc; padding: 8px; background-color: #f3f4f6;">Jam</th>
-                                    <th style="border: 1px solid #ccc; padding: 8px; background-color: #dbeafe;">Senin</th>
-                                    <th style="border: 1px solid #ccc; padding: 8px; background-color: #e0e7ff;">Selasa</th>
-                                    <th style="border: 1px solid #ccc; padding: 8px; background-color: #ede9fe;">Rabu</th>
-                                    <th style="border: 1px solid #ccc; padding: 8px; background-color: #fce7f3;">Kamis</th>
-                                    <th style="border: 1px solid #ccc; padding: 8px; background-color: #fee2e2;">Jumat</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-            `;
-            
-            // Get schedules for printing
-            let fetchUrl = `/admin/schedule/calendar-data?`;
-            if (classroomId) fetchUrl += `classroom=${classroomId}&`;
-            if (teacherId) fetchUrl += `teacher=${teacherId}&`;
-            
-            fetch(fetchUrl)
-                .then(response => response.json())
-                .then(data => {
-                    const schedules = data.schedules;
-                    const timeSlots = [];
-                    
-                    // Generate time slots from 7 AM to 7 PM
-                    for (let hour = 7; hour <= 19; hour++) {
-                        timeSlots.push(hour < 10 ? `0${hour}:00` : `${hour}:00`);
-                    }
-                    
-                    // Generate schedule table rows
-                    timeSlots.forEach(timeSlot => {
-                        printContent += `<tr>`;
-                        printContent += `<td style="border: 1px solid #ccc; padding: 8px;">${timeSlot}</td>`;
-                        
-                        // For each day of the week (1-5, Monday to Friday)
-                        for (let day = 1; day <= 5; day++) {
-                            let cellContent = '';
-                            
-                            // Find schedules for this day and time slot
-                            const daySchedules = schedules.filter(s => {
-                                if (s.day != day) return false;
-                                
-                                const slotTime = new Date(`2000-01-01T${timeSlot}`);
-                                const startTime = new Date(`2000-01-01T${s.start_time}`);
-                                const endTime = new Date(`2000-01-01T${s.end_time}`);
-                                
-                                // Check if this time slot falls within the schedule time
-                                return slotTime >= startTime && slotTime < endTime;
-                            });
-                            
-                            // Add schedule info to the cell
-                            if (daySchedules.length > 0) {
-                                daySchedules.forEach(s => {
-                                    cellContent += `
-                                        <div style="font-size: 12px; margin-bottom: 4px;">
-                                            <strong>${s.subject.name}</strong><br>
-                                            ${formatTime(s.start_time)} - ${formatTime(s.end_time)}<br>
-                                            ${s.teacher.name}<br>
-                                            ${s.classroom.name}
-                                        </div>
-                                    `;
-                                });
-                            }
-                            
-                            printContent += `<td style="border: 1px solid #ccc; padding: 8px;">${cellContent}</td>`;
-                        }
-                        
-                        printContent += `</tr>`;
-                    });
-                    
-                    printContent += `
-                            </tbody>
-                        </table>
-                    </div>
-                    <div style="text-align: center; font-size: 12px; margin-top: 20px;">
-                        <p>© SMAN 1 - Jadwal dicetak pada ${new Date().toLocaleString()}</p>
-                    </div>
-                </div>
-                `;
-                
-                // Replace page content with print version
-                document.body.innerHTML = printContent;
-                
-                // Print
-                window.print();
-                
-                // Restore original content
-                document.body.innerHTML = originalContent;
-                
-                // Reload scripts and events
-                loadSchedules();
-                
-                // Reattach event listeners
-                document.getElementById('calendarFilterForm').addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    classroomId = document.getElementById('filter_classroom').value;
-                    teacherId = document.getElementById('filter_teacher').value;
-                    loadSchedules();
-                });
-                
-                document.getElementById('resetFilterBtn').addEventListener('click', function() {
-                    document.getElementById('filter_classroom').value = '';
-                    document.getElementById('filter_teacher').value = '';
-                    classroomId = '';
-                    teacherId = '';
-                    loadSchedules();
-                });
-                
-                document.getElementById('printCalendarBtn').addEventListener('click', function() {
-                    printCalendar();
-                });
-                
-                document.getElementById('exportPdfBtn').addEventListener('click', function() {
-                    exportToPdf();
-                });
-            })
-            .catch(error => {
-                console.error('Error loading schedules for print:', error);
-            });
-        }
-        
-        // Export to PDF function
-        function exportToPdf() {
-            // Since client-side PDF generation is complex, we'll use a simple approach:
-            // Just show a message that in a real application this would generate a PDF
-            alert('Di aplikasi produksi, fungsi ini akan mengekspor jadwal ke PDF. Silakan gunakan fitur print untuk saat ini.');
-            
-            // In a real application, you would use a library like jsPDF, 
-            // or make a backend request to generate the PDF server-side
-        }
-    });
-</script>
 @endpush

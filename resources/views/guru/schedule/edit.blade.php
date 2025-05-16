@@ -153,6 +153,7 @@
                         @error('end_time')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
+                        <p id="time-error" class="text-red-500 text-xs mt-1 hidden">Waktu selesai harus setelah waktu mulai</p>
                     </div>
                 </div>
                 
@@ -204,6 +205,7 @@
         // Check for time conflicts when selecting start/end times
         const startTimeInput = document.getElementById('start_time');
         const endTimeInput = document.getElementById('end_time');
+        const form = document.querySelector('form');
         
         function validateTimes() {
             const startTime = startTimeInput.value;
@@ -211,13 +213,31 @@
             
             if (startTime && endTime && startTime >= endTime) {
                 endTimeInput.setCustomValidity('Waktu selesai harus setelah waktu mulai');
+                document.getElementById('time-error').classList.remove('hidden');
+                return false;
             } else {
                 endTimeInput.setCustomValidity('');
+                document.getElementById('time-error').classList.add('hidden');
+                return true;
             }
         }
         
         startTimeInput.addEventListener('change', validateTimes);
         endTimeInput.addEventListener('change', validateTimes);
+        
+        // Validate form before submission
+        form.addEventListener('submit', function(e) {
+            if (!validateTimes()) {
+                e.preventDefault();
+                alert('Waktu selesai harus setelah waktu mulai');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Memproses...';
+            submitBtn.disabled = true;
+        });
         
         // Run validation on page load
         validateTimes();

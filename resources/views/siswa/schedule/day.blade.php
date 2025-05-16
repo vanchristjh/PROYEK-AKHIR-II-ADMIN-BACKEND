@@ -5,55 +5,7 @@
 @section('header', 'Jadwal Hari ' . $dayName)
 
 @section('navigation')
-    <li>
-        <a href="{{ route('siswa.dashboard') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-indigo-700 transition-all duration-200">
-                <i class="fas fa-tachometer-alt text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Dashboard</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.schedule.index') }}" class="sidebar-item sidebar-active flex items-center rounded-lg px-4 py-2.5 group relative text-white">
-            <div class="p-1.5 rounded-lg bg-blue-800 transition-all duration-200">
-                <i class="fas fa-calendar-alt text-lg w-5 h-5 flex items-center justify-center text-white"></i>
-            </div>
-            <span class="ml-3">Jadwal Pelajaran</span>
-            <span class="absolute inset-y-0 left-0 w-1 bg-blue-400 rounded-tr-md rounded-br-md"></span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.assignments.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-blue-700/50 transition-all duration-200">
-                <i class="fas fa-tasks text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Tugas</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-blue-700/50 transition-all duration-200">
-                <i class="fas fa-book text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Materi Pelajaran</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.grades.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-blue-700/50 transition-all duration-200">
-                <i class="fas fa-star text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Nilai</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.announcements.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-red-700/50 transition-all duration-200">
-                <i class="fas fa-bullhorn text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Pengumuman</span>
-        </a>
-    </li>
+    @include('siswa.partials.sidebar')
 @endsection
 
 @section('content')
@@ -114,20 +66,27 @@
                                             $currentTime = date('H:i:s');
                                             $isCurrentClass = $currentTime >= $schedule->start_time && $currentTime <= $schedule->end_time;
                                         }
+                                        $isNewSchedule = $schedule->created_at && $schedule->created_at->gt(now()->subDays(3));
                                     @endphp
-                                    <tr class="{{ $isCurrentClass ? 'bg-green-50' : 'hover:bg-gray-50' }} transition-colors duration-200">
+                                    <tr class="{{ $isCurrentClass ? 'bg-green-50' : ($isNewSchedule ? 'bg-blue-50' : 'hover:bg-gray-50') }} transition-colors duration-200">
                                         <td class="px-6 py-4">
                                             <div class="flex items-center">
-                                                <div class="flex-shrink-0 h-8 w-8 rounded-full {{ $isCurrentClass ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600' }} flex items-center justify-center">
-                                                    <i class="{{ $isCurrentClass ? 'fas fa-play-circle' : 'fas fa-clock' }}"></i>
+                                                <div class="flex-shrink-0 h-8 w-8 rounded-full {{ 
+                                                    $isCurrentClass ? 'bg-green-100 text-green-600' : 
+                                                    ($isNewSchedule ? 'bg-blue-100 text-blue-600' : 'bg-blue-100 text-blue-600') 
+                                                }} flex items-center justify-center">
+                                                    <i class="{{ 
+                                                        $isCurrentClass ? 'fas fa-play-circle' : 
+                                                        ($isNewSchedule ? 'fas fa-plus-circle' : 'fas fa-clock') 
+                                                    }}"></i>
                                                 </div>
                                                 <div class="ml-4">
                                                     <div class="text-sm font-medium text-gray-900">
-                                                        {{ date('H:i', strtotime($schedule->start_time)) }} - {{ date('H:i', strtotime($schedule->end_time)) }}
+                                                        {{ substr($schedule->start_time, 0, 5) }} - {{ substr($schedule->end_time, 0, 5) }}
                                                     </div>
-                                                    <div class="text-xs text-gray-500">
-                                                        {{ $isCurrentClass ? 'Sedang berlangsung' : '' }}
-                                                    </div>
+                                                    @if($isCurrentClass)
+                                                        <div class="text-xs text-green-600 font-medium">Sedang Berlangsung</div>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </td>
@@ -136,12 +95,10 @@
                                             <div class="text-xs text-gray-500">{{ $schedule->subject->code ?? '' }}</div>
                                         </td>
                                         <td class="px-6 py-4">
-                                            <div class="text-sm text-gray-900">{{ $schedule->teacher->name }}</div>
+                                            <div class="text-sm text-gray-900">{{ $schedule->teacher->name ?? 'N/A' }}</div>
                                         </td>
                                         <td class="px-6 py-4">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $schedule->room ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                                {{ $schedule->room ?? 'Belum ditentukan' }}
-                                            </span>
+                                            <div class="text-sm text-gray-900">{{ $schedule->room ?? 'N/A' }}</div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -160,61 +117,64 @@
                                 <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
                                     <i class="fas fa-book"></i>
                                 </div>
-                                <div class="ml-3">
-                                    <p class="text-sm font-medium text-gray-500">Jumlah Mata Pelajaran</p>
-                                    <p class="text-lg font-medium text-gray-900">{{ count($schedules) }}</p>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Total Mata Pelajaran</p>
+                                    <p class="text-lg font-semibold text-gray-800">{{ count($schedules) }}</p>
                                 </div>
                             </div>
                             
                             <div class="flex items-start">
-                                <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
                                     <i class="fas fa-clock"></i>
                                 </div>
-                                <div class="ml-3">
-                                    <p class="text-sm font-medium text-gray-500">Mulai - Selesai</p>
-                                    <p class="text-lg font-medium text-gray-900">
-                                        @if(count($schedules) > 0)
-                                            {{ date('H:i', strtotime($schedules->first()->start_time)) }} - 
-                                            {{ date('H:i', strtotime($schedules->last()->end_time)) }}
-                                        @else
-                                            -
-                                        @endif
-                                    </p>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Total Jam Pelajaran</p>
+                                    @php
+                                        $totalMinutes = 0;
+                                        foreach ($schedules as $schedule) {
+                                            $start = \Carbon\Carbon::parse($schedule->start_time);
+                                            $end = \Carbon\Carbon::parse($schedule->end_time);
+                                            $totalMinutes += $end->diffInMinutes($start);
+                                        }
+                                        $hours = floor($totalMinutes / 60);
+                                        $minutes = $totalMinutes % 60;
+                                    @endphp
+                                    <p class="text-lg font-semibold text-gray-800">{{ $hours }} jam {{ $minutes > 0 ? $minutes . ' menit' : '' }}</p>
                                 </div>
                             </div>
                             
-                            <div class="flex items-start">
-                                <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                                    <i class="fas fa-user-tie"></i>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm font-medium text-gray-500">Guru</p>
-                                    <div class="text-gray-900">
-                                        @foreach($schedules as $schedule)
-                                            <p class="text-sm">{{ $schedule->teacher->name }} <span class="text-xs text-gray-500">({{ $schedule->subject->name }})</span></p>
-                                        @endforeach
-                                    </div>
+                            <div class="border-t border-gray-200 pt-4 mt-4">
+                                <h4 class="text-sm font-medium text-gray-600 mb-2">Guru yang Mengajar:</h4>
+                                <div class="space-y-2">
+                                    @php
+                                        $teachers = $schedules->pluck('teacher')->unique('id')->filter();
+                                    @endphp
+                                    
+                                    @foreach($teachers as $teacher)
+                                        <div class="flex items-center p-2 bg-white rounded-lg border border-gray-100">
+                                            <div class="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                <i class="fas fa-user-tie"></i>
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium text-gray-800">{{ $teacher->name }}</p>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="mt-6 pt-4 border-t border-gray-200">
-                            <button onclick="window.print()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700 transition-colors flex items-center justify-center">
-                                <i class="fas fa-print mr-2"></i> Cetak Jadwal
-                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         @else
-            <div class="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                <div class="mx-auto w-16 h-16 mb-4 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
-                    <i class="fas fa-calendar-times text-2xl"></i>
+            <div class="text-center py-10">
+                <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-calendar-times text-gray-400 text-2xl"></i>
                 </div>
-                <h3 class="text-lg font-medium text-gray-800 mb-2">Tidak Ada Jadwal</h3>
-                <p class="text-gray-500 max-w-md mx-auto mb-6">Tidak ada jadwal pelajaran yang ditetapkan untuk hari {{ $dayName }}.</p>
-                <a href="{{ route('siswa.schedule.index') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700">
-                    <i class="fas fa-arrow-left mr-2"></i> Kembali ke Jadwal Mingguan
+                <h3 class="text-lg font-medium text-gray-500 mb-2">Tidak ada jadwal untuk hari {{ $dayName }}</h3>
+                <p class="text-gray-400 mb-6">Kembali ke jadwal mingguan untuk melihat hari lainnya</p>
+                <a href="{{ route('siswa.schedule.index') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 rounded-md text-white text-sm">
+                    <i class="fas fa-calendar-alt mr-2"></i> Lihat Jadwal Mingguan
                 </a>
             </div>
         @endif
@@ -228,31 +188,72 @@
     }
     
     @keyframes fadeIn {
-        0% { opacity: 0; transform: translateY(10px); }
+        0% { opacity: 0; transform: translateY(-10px); }
         100% { opacity: 1; transform: translateY(0); }
     }
     
-    @media print {
-        header, .sidebar, footer, .no-print, button {
-            display: none !important;
-        }
-        
-        body {
-            background-color: white;
-        }
-        
-        main {
-            margin: 0;
-            padding: 0;
-        }
-        
-        .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
-            box-shadow: none !important;
-        }
-        
-        .rounded-xl, .rounded-lg {
-            border-radius: 0 !important;
-        }
+    /* Additional highlight for current class */
+    .bg-green-50 {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .bg-green-50::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background-color: #10B981;
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update current class highlight
+        function updateCurrentClass() {
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                               now.getMinutes().toString().padStart(2, '0') + ':' + 
+                               now.getSeconds().toString().padStart(2, '0');
+                               
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(function(row) {
+                const timeCell = row.querySelector('td:first-child');
+                if (timeCell) {
+                    const timeText = timeCell.textContent.trim();
+                    const timeParts = timeText.split(' - ');
+                    if (timeParts.length === 2) {
+                        const startTime = timeParts[0] + ':00';
+                        const endTime = timeParts[1] + ':00';
+                        
+                        if (currentTime >= startTime && currentTime <= endTime) {
+                            row.classList.add('bg-green-50');
+                            const statusDiv = timeCell.querySelector('.text-xs');
+                            if (!statusDiv) {
+                                const newStatusDiv = document.createElement('div');
+                                newStatusDiv.className = 'text-xs text-green-600 font-medium';
+                                newStatusDiv.textContent = 'Sedang Berlangsung';
+                                timeCell.querySelector('.ml-4').appendChild(newStatusDiv);
+                            }
+                        } else {
+                            row.classList.remove('bg-green-50');
+                            const statusDiv = timeCell.querySelector('.text-xs.text-green-600');
+                            if (statusDiv) {
+                                statusDiv.remove();
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initial update and then every minute
+        updateCurrentClass();
+        setInterval(updateCurrentClass, 60000);
+    });
+</script>
 @endpush

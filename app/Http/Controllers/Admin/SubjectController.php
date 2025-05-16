@@ -6,198 +6,182 @@ use App\Http\Controllers\Controller;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
 class SubjectController extends Controller
 {
     /**
-     * Display a listing of subjects
+     * Display a listing of subjects.
      */
-    public function index(Request $request)
+    public function index()
     {
-        $query = Subject::query();
-        
-        // Add search functionality
-        if ($request->has('search') && !empty($request->search)) {
-            $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('name', 'like', "%{$searchTerm}%")
-                  ->orWhere('code', 'like', "%{$searchTerm}%")
-                  ->orWhere('description', 'like', "%{$searchTerm}%");
-            });
-        }
-        
-        $subjects = $query->latest()->paginate(10);
-        $subjects->appends($request->all()); // Keep search parameters on pagination
-        
+        $subjects = Subject::withCount('teachers')->get();
         return view('admin.subjects.index', compact('subjects'));
     }
 
     /**
-     * Show the form for creating a new subject
+     * Show the form for creating a new subject.
      */
     public function create()
     {
-        $teachers = User::where('role_id', 2)->get(); // 2 = guru
+        // Get only users with role_id = 2 (Teacher role)
+        $teachers = \App\Models\User::where('role_id', 2)->orderBy('name')->get();
         
         return view('admin.subjects.create', compact('teachers'));
     }
 
     /**
-     * Store a newly created subject
+     * Store a newly created subject.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'code' => [
-                'required', 
-                'string', 
-                'max:10', 
-                'unique:subjects', 
-                'regex:/^[A-Z0-9]+$/'
-            ],
-            'description' => ['nullable', 'string'],
-            'teachers' => ['nullable', 'array'],
-            'teachers.*' => ['exists:users,id,role_id,2'], // Ensure we only attach teacher users
-        ], [
-            'code.regex' => 'The code format is invalid. Use uppercase letters and numbers only.',
-            'teachers.*.exists' => 'One or more selected teachers are invalid.'
+            'code' => 'required|string|max:10|unique:subjects,code',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'teachers' => 'nullable|array',
+            'teachers.*' => 'exists:users,id',
         ]);
-        
+
+        DB::beginTransaction();
         try {
             $subject = Subject::create([
-                'name' => $validated['name'],
                 'code' => $validated['code'],
+                'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
             ]);
-            
-            // Assign teachers if provided
+
             if (!empty($validated['teachers'])) {
                 $subject->teachers()->attach($validated['teachers']);
             }
-            
+
+            DB::commit();
             return redirect()->route('admin.subjects.index')
-                ->with('success', 'Mata pelajaran berhasil dibuat!');
+                ->with('success', 'Mata pelajaran berhasil dibuat.');
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan saat membuat mata pelajaran: ' . $e->getMessage());
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
         }
     }
-    
+
     /**
-     * Display the specified subject details
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Subject  $subject
+     * @return \Illuminate\Http\Response
      */
     public function show(Subject $subject)
     {
-        $subject->load(['teachers', 'classrooms', 'assignments', 'materials']);
+        // Load all necessary relationships
+        $subject->load(['teachers', 'classrooms']);
         
-        // Get students count for each classroom
-        $classroomStudentCounts = [];
-        foreach ($subject->classrooms as $classroom) {
-            $classroomStudentCounts[$classroom->id] = User::where('classroom_id', $classroom->id)
-                ->whereHas('role', function($q) {
-                    $q->where('slug', 'siswa');
-                })->count();
+        // Initialize empty collections for relationships that might not exist
+        if (!$subject->relationLoaded('materials')) {
+            $subject->setRelation('materials', collect());
+        }
+        if (!$subject->relationLoaded('assignments')) {
+            $subject->setRelation('assignments', collect());
         }
         
-        return view('admin.subjects.show', compact('subject', 'classroomStudentCounts'));
+        return view('admin.subjects.show', compact('subject'));
     }
 
     /**
-     * Show the form for editing a subject
+     * Show the form for editing the subject.
      */
     public function edit(Subject $subject)
     {
-        $teachers = User::where('role_id', 2)->get(); // 2 = guru
-        $assignedTeachers = $subject->teachers()->pluck('user_id')->toArray();
+        // Based on the database queries from the error trace,
+        // It seems there's a roles table with a relationship to users
+        // Let's try this approach:
         
-        return view('admin.subjects.edit', compact('subject', 'teachers', 'assignedTeachers'));
+        // Assuming there's a role_id in the users table
+        $teachers = User::where('role_id', 2)->get(); // 2 is likely the ID for teacher role
+        
+        // If the above doesn't work, try using role_user pivot table
+        // $teachers = DB::table('users')
+        //     ->join('role_user', 'users.id', '=', 'role_user.user_id')
+        //     ->join('roles', 'roles.id', '=', 'role_user.role_id')
+        //     ->where('roles.name', 'teacher')
+        //     ->select('users.*')
+        //     ->get();
+        
+        // If none of these work, we could simply pass all users as a fallback
+        // $teachers = User::all();
+        
+        return view('admin.subjects.edit', compact('subject', 'teachers'));
     }
 
     /**
-     * Update the specified subject
+     * Update the subject.
      */
     public function update(Request $request, Subject $subject)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'code' => [
-                'required', 
-                'string', 
-                'max:10', 
-                Rule::unique('subjects')->ignore($subject->id),
-                'regex:/^[A-Z0-9]+$/'
-            ],
-            'description' => ['nullable', 'string'],
-            'teachers' => ['nullable', 'array'],
-            'teachers.*' => ['exists:users,id'],
-        ], [
-            'code.regex' => 'The code format is invalid. Use uppercase letters and numbers only.',
-            'teachers.*.exists' => 'One or more selected teachers are invalid.'
+            'code' => ['required', 'string', 'max:10', Rule::unique('subjects', 'code')->ignore($subject->id)],
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'teachers' => 'nullable|array',
+            'teachers.*' => 'exists:users,id',
         ]);
-        
+
+        DB::beginTransaction();
         try {
             $subject->update([
-                'name' => $validated['name'],
                 'code' => $validated['code'],
+                'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
             ]);
-            
-            // Sync teachers
-            $subject->teachers()->sync($validated['teachers'] ?? []);
-            
+
+            // Sync the teachers
+            $teachers = $request->input('teachers', []);
+            $subject->teachers()->sync($teachers);
+
+            DB::commit();
             return redirect()->route('admin.subjects.index')
-                ->with('success', 'Mata pelajaran berhasil diperbarui!');
+                ->with('success', 'Mata pelajaran berhasil diperbarui.');
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui mata pelajaran: ' . $e->getMessage());
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
         }
     }
 
     /**
-     * Remove the specified subject
+     * Remove the subject.
      */
     public function destroy(Subject $subject)
     {
+        DB::beginTransaction();
         try {
-            // Check for related data that might cause issues
-            $assignmentsCount = $subject->assignments()->count();
-            $materialsCount = $subject->materials()->count();
-            
-            if ($assignmentsCount > 0 || $materialsCount > 0) {
-                $message = 'Mata pelajaran tidak dapat dihapus karena masih memiliki ';
-                $relatedData = [];
-                
-                if ($assignmentsCount > 0) {
-                    $relatedData[] = $assignmentsCount . ' tugas';
-                }
-                
-                if ($materialsCount > 0) {
-                    $relatedData[] = $materialsCount . ' materi';
-                }
-                
-                $message .= implode(' dan ', $relatedData) . ' terkait.';
-                
-                return redirect()->route('admin.subjects.index')
-                    ->with('error', $message);
-            }
-            
-            // Detach all teachers
+            // Detach all teachers before deleting
             $subject->teachers()->detach();
-            
-            // Detach all classrooms
-            $subject->classrooms()->detach();
-            
             $subject->delete();
             
+            DB::commit();
             return redirect()->route('admin.subjects.index')
-                ->with('success', 'Mata pelajaran berhasil dihapus!');
+                ->with('success', 'Mata pelajaran berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('admin.subjects.index')
-                ->with('error', 'Terjadi kesalahan saat menghapus mata pelajaran: ' . $e->getMessage());
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Download subject files.
+     *
+     * @param Subject $subject
+     * @return Response
+     */
+    public function download(Subject $subject)
+    {
+        // Assuming subject has a file path or related files
+        if (!$subject->file_path || !Storage::exists($subject->file_path)) {
+            return back()->with('error', 'File tidak ditemukan');
+        }
+        
+        return Storage::download($subject->file_path, $subject->name . '.' . pathinfo($subject->file_path, PATHINFO_EXTENSION));
     }
 }

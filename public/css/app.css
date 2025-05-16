@@ -114,3 +114,61 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+
+/* Fix for Font Awesome & Material Icons */
+.fas, .fab, .far, .fal, .fad, .material-icons {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+/* Icon backgrounds for dashboard cards */
+.icon-bg {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+}
+
+.student-card .icon-bg {
+    background-color: rgba(79, 129, 255, 0.15);
+    color: #4F81FF;
+}
+
+.teacher-card .icon-bg {
+    background-color: rgba(72, 223, 157, 0.15);
+    color: #48DF9D;
+}
+
+.class-card .icon-bg {
+    background-color: rgba(161, 97, 255, 0.15);
+    color: #A161FF;
+}
+
+.subject-card .icon-bg {
+    background-color: rgba(255, 175, 56, 0.15);
+    color: #FFAF38;
+}
+
+/* Ensure proper sizing and spacing for icons */
+.fa-2x {
+    font-size: 1.5em !important;
+}
+
+/* Fix for sidebar menu icons */
+.sidebar .menu-section h3 i,
+.sidebar-menu ul li a i {
+    margin-right: 10px;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Ensure proper visibility of icons */
+.btn i {
+    margin-right: 5px;
+}

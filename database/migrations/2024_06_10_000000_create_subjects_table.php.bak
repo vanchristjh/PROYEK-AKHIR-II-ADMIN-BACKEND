@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     * 
+     * @note This migration has been modified to prevent table creation conflicts
+     * @return void
+     */
+    public function up()
+    {
+        // Skip creating this table since it's already created by another migration
+        if (Schema::hasTable('subjects')) {
+            return;
+        }
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        // No-op because the up method does nothing
+        return;
+    }
+};

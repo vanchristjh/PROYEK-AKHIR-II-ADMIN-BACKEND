@@ -53,10 +53,65 @@
                     <a href="{{ route('admin.classrooms.edit', $classroom) }}" class="px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-purple-100 transition-all duration-300 flex items-center shadow-md">
                         <i class="fas fa-edit mr-2"></i> Edit Kelas
                     </a>
+                    <a href="{{ route('admin.classrooms.export', $classroom) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center shadow-md">
+                        <i class="fas fa-file-export mr-2"></i> Export PDF
+                    </a>
                     <a href="{{ route('admin.classrooms.index') }}" class="px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-all duration-300 flex items-center shadow-md">
                         <i class="fas fa-arrow-left mr-2"></i> Kembali
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+        <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-300 flex items-center relative overflow-hidden">
+            <div class="flex-shrink-0 h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 mr-4">
+                <i class="fas fa-user-graduate text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-gray-500 text-sm">Jumlah Siswa</p>
+                <div class="flex items-center">
+                    @php
+                        $studentCount = $classroom->students->count();
+                    @endphp
+                    <span class="text-2xl font-bold text-gray-800">{{ $studentCount }}</span>
+                    <span class="text-sm text-gray-400 ml-2">/ {{ $classroom->capacity }}</span>
+                </div>
+            </div>
+            <div class="absolute bottom-0 right-0 h-20 w-20 opacity-5">
+                <i class="fas fa-user-graduate text-7xl"></i>
+            </div>
+        </div>
+        
+        <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-300 flex items-center relative overflow-hidden">
+            <div class="flex-shrink-0 h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 mr-4">
+                <i class="fas fa-book text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-gray-500 text-sm">Mata Pelajaran</p>
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-gray-800">{{ $classroom->subjects->count() }}</span>
+                </div>
+            </div>
+            <div class="absolute bottom-0 right-0 h-20 w-20 opacity-5">
+                <i class="fas fa-book text-7xl"></i>
+            </div>
+        </div>
+        
+        <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-5 hover:shadow-md transition-all duration-300 flex items-center relative overflow-hidden">
+            <div class="flex-shrink-0 h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center text-green-600 mr-4">
+                <i class="fas fa-clipboard-check text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-gray-500 text-sm">Status Kelas</p>
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-gray-800">{{ $studentCount >= $classroom->capacity ? 'Penuh' : 'Tersedia' }}</span>
+                </div>
+            </div>
+            <div class="absolute bottom-0 right-0 h-20 w-20 opacity-5">
+                <i class="fas fa-clipboard-check text-7xl"></i>
             </div>
         </div>
     </div>
@@ -190,14 +245,24 @@
                             </div>
                             <h3 class="text-lg font-semibold text-gray-800">Siswa</h3>
                         </div>
-                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                            {{ $classroom->students->count() }}/{{ $classroom->capacity }} siswa
-                        </span>
+                        <div class="flex space-x-2">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                {{ $studentCount }}/{{ $classroom->capacity }} siswa
+                            </span>
+                            <a href="{{ route('admin.users.create') }}?role=siswa&classroom_id={{ $classroom->id }}" 
+                               class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full hover:bg-blue-200">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="p-5 max-h-[500px] overflow-y-auto">
-                    @if($classroom->students->isEmpty())
+                    @php
+                        $students = $classroom->students;
+                    @endphp
+                    
+                    @if($students->isEmpty())
                         <div class="text-center py-6">
                             <div class="inline-flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 text-blue-500 mb-4">
                                 <i class="fas fa-user-graduate text-2xl"></i>
@@ -210,7 +275,7 @@
                         </div>
                     @else
                         <div class="space-y-3">
-                            @foreach($classroom->students as $student)
+                            @foreach($students as $student)
                                 <div class="flex items-center justify-between p-2 border border-gray-200 rounded-lg hover:bg-blue-50 transition-all duration-300">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-sm">
@@ -221,11 +286,25 @@
                                             <p class="text-xs text-gray-500">{{ $student->email }}</p>
                                         </div>
                                     </div>
-                                    <a href="{{ route('admin.users.edit', $student) }}" class="text-blue-600 hover:text-blue-900 bg-blue-50/50 hover:bg-blue-100 p-1 px-2 rounded-md transition-colors">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
+                                    <div class="flex space-x-1">
+                                        <a href="{{ route('admin.users.show', $student) }}" class="text-blue-600 hover:text-blue-900 bg-blue-50/50 hover:bg-blue-100 p-1 px-2 rounded-md transition-colors">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.users.edit', $student) }}" class="text-blue-600 hover:text-blue-900 bg-blue-50/50 hover:bg-blue-100 p-1 px-2 rounded-md transition-colors">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" onclick="confirmRemoveStudent('{{ $student->name }}', '{{ route('admin.classrooms.removeStudent', ['classroom' => $classroom->id, 'student' => $student->id]) }}')" 
+                                                class="text-red-600 hover:text-red-900 bg-red-50/50 hover:bg-red-100 p-1 px-2 rounded-md transition-colors">
+                                            <i class="fas fa-user-minus"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             @endforeach
+                        </div>
+                        <div class="mt-4 text-center">
+                            <a href="{{ route('admin.users.create') }}?role=siswa&classroom_id={{ $classroom->id }}" class="inline-flex items-center px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-user-plus mr-2"></i> Tambah Siswa
+                            </a>
                         </div>
                     @endif
                 </div>
@@ -278,6 +357,40 @@
             </form>
         </div>
     </div>
+    
+    <!-- Remove Student Modal -->
+    <div class="fixed inset-0 z-50 flex items-center justify-center hidden" id="removeStudentModal">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" id="studentModalOverlay"></div>
+        <div class="relative bg-white rounded-lg max-w-md w-full mx-auto shadow-xl z-50 overflow-hidden transform transition-all">
+            <div class="bg-white px-6 py-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-user-minus text-yellow-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Keluarkan Siswa</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="student-modal-description">
+                                Apakah Anda yakin ingin mengeluarkan siswa ini dari kelas?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form id="removeStudentForm" method="POST">
+                @csrf
+                @method('DELETE')
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        Keluarkan
+                    </button>
+                    <button type="button" id="cancelRemoveStudent" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -311,7 +424,18 @@
         modal.classList.remove('hidden');
     }
     
+    function confirmRemoveStudent(studentName, removeUrl) {
+        const modal = document.getElementById('removeStudentModal');
+        const modalDescription = document.getElementById('student-modal-description');
+        const removeForm = document.getElementById('removeStudentForm');
+        
+        modalDescription.textContent = `Apakah Anda yakin ingin mengeluarkan siswa "${studentName}" dari kelas ini?`;
+        removeForm.action = removeUrl;
+        modal.classList.remove('hidden');
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
+        // Delete classroom modal handlers
         const modal = document.getElementById('deleteModal');
         const modalOverlay = document.getElementById('modalOverlay');
         const cancelDelete = document.getElementById('cancelDelete');
@@ -323,6 +447,32 @@
         cancelDelete.addEventListener('click', function() {
             modal.classList.add('hidden');
         });
+        
+        // Remove student modal handlers
+        const studentModal = document.getElementById('removeStudentModal');
+        const studentModalOverlay = document.getElementById('studentModalOverlay');
+        const cancelRemoveStudent = document.getElementById('cancelRemoveStudent');
+        
+        studentModalOverlay.addEventListener('click', function() {
+            studentModal.classList.add('hidden');
+        });
+        
+        cancelRemoveStudent.addEventListener('click', function() {
+            studentModal.classList.add('hidden');
+        });
+        
+        // Display flash messages if they exist
+        if (document.querySelector('.flash-message')) {
+            setTimeout(function() {
+                const flashMessages = document.querySelectorAll('.flash-message');
+                flashMessages.forEach(message => {
+                    message.classList.add('opacity-0');
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                });
+            }, 3000);
+        }
     });
 </script>
 @endpush

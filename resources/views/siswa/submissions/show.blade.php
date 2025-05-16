@@ -1,229 +1,167 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Detail Pengumpulan Tugas')
+@section('title', 'Detail Pengumpulan Tugas - URGENT UPDATE')
 
-@section('header', 'Detail Pengumpulan Tugas')
+@section('header', 'Detail Pengumpulan Tugas - URGENT UPDATE')
+
+<!-- DEBUGGING TEST - PLEASE CONFIRM IF THIS APPEARS IN THE UI -->
 
 @section('navigation')
-    <li>
-        <a href="{{ route('siswa.dashboard') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-indigo-700 transition-all duration-200">
-                <i class="fas fa-tachometer-alt text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Dashboard</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.schedule.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-blue-700/50 transition-all duration-200">
-                <i class="fas fa-calendar-alt text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Jadwal Pelajaran</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.assignments.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-blue-700/50 transition-all duration-200">
-                <i class="fas fa-tasks text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Tugas</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.materials.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-green-700/50 transition-all duration-200">
-                <i class="fas fa-book text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Materi</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.submissions.index') }}" class="sidebar-item sidebar-active flex items-center rounded-lg px-4 py-2.5 group relative text-white">
-            <div class="p-1.5 rounded-lg bg-blue-800 transition-all duration-200">
-                <i class="fas fa-file-upload text-lg w-5 h-5 flex items-center justify-center text-white"></i>
-            </div>
-            <span class="ml-3">Pengumpulan Tugas</span>
-            <span class="absolute inset-y-0 left-0 w-1 bg-blue-400 rounded-tr-md rounded-br-md"></span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.grades.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-amber-700/50 transition-all duration-200">
-                <i class="fas fa-star text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Nilai</span>
-        </a>
-    </li>
-    <li>
-        <a href="{{ route('siswa.attendance.index') }}" class="sidebar-item flex items-center rounded-lg px-4 py-2.5 group relative text-indigo-100 hover:text-white transition-all duration-200">
-            <div class="p-1.5 rounded-lg bg-indigo-700/50 group-hover:bg-purple-700/50 transition-all duration-200">
-                <i class="fas fa-clipboard-check text-lg w-5 h-5 flex items-center justify-center text-indigo-300 group-hover:text-white"></i>
-            </div>
-            <span class="ml-3">Kehadiran</span>
-        </a>
-    </li>
 @endsection
 
 @section('content')
-    <!-- Back button -->
-    <div class="mb-4">
-        <a href="{{ route('siswa.submissions.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-lg transition-colors duration-300">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Kembali ke Daftar Pengumpulan
-        </a>
-    </div>
+<div class="mb-6">
+    <a href="{{ route('siswa.assignments.show', $submission->assignment_id) }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition-colors">
+        <i class="fas fa-chevron-left mr-2 text-sm"></i>
+        <span>Kembali ke Detail Tugas</span>
+    </a>
+</div>
 
-    <!-- Header with animation -->
-    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 mb-6 text-white relative overflow-hidden animate-fade-in">
-        <div class="absolute -right-10 -top-10 opacity-10">
-            <i class="fas fa-file-upload text-9xl"></i>
-        </div>
-        <div class="relative z-10">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-2xl font-bold mb-1">{{ $submission->assignment->title }}</h2>
-                    <p class="text-blue-100">Pengumpulan Tugas</p>
-                </div>
-                
-                @if($submission->score !== null)
-                    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm rounded-lg p-3 text-center">
-                        <div class="text-2xl font-bold">{{ $submission->score }}</div>
-                        <div class="text-xs text-blue-100">/ {{ $submission->assignment->max_score }}</div>
-                    </div>
-                @endif
+@if(session('success'))
+    <div class="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded-md">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-check-circle text-green-400"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-green-700">{{ session('success') }}</p>
             </div>
         </div>
     </div>
-    
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Submission details -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100/50 mb-6">
-                <div class="p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
-                        Detail Pengumpulan
-                    </h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500 mb-1">Waktu Pengumpulan</label>
-                            <div class="text-gray-900">
-                                {{ \Carbon\Carbon::parse($submission->submitted_at)->format('d M Y, H:i') }}
-                                @if($submission->submitted_at > $submission->assignment->deadline)
-                                    <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                                        Terlambat
-                                    </span>
-                                @else
-                                    <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                                        Tepat Waktu
-                                    </span>
-                                @endif
-                            </div>
+@endif
+
+@if(session('error'))
+    <div class="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-400"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-red-700">{{ session('error') }}</p>
+            </div>
+        </div>
+    </div>
+@endif
+
+<!-- Assignment and Submission Info Card - UPDATED -->
+    <div class="bg-blue-100 rounded-xl shadow-sm overflow-hidden border border-blue-300 mb-6">
+        <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-white">
+            <div class="flex items-start">
+                <div class="bg-green-100 text-green-600 p-3 rounded-full mr-4">
+                    <i class="fas fa-file-alt text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-1">{{ $submission->assignment->title }}</h2>
+                    <div class="flex items-center gap-4 text-sm text-gray-500">
+                        <div class="flex items-center">
+                            <i class="fas fa-book mr-1"></i>
+                            <span>{{ $submission->assignment->subject->name ?? 'N/A' }}</span>
                         </div>
-                        
-                        @if($submission->file_path)
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">File Tugas</label>
-                                <div class="flex items-center p-3 border border-gray-200 rounded-lg bg-gray-50">
-                                    <div class="mr-3 bg-blue-100 text-blue-600 p-2 rounded-md">
-                                        <i class="fas fa-file-alt text-lg"></i>
-                                    </div>
-                                    <div class="overflow-hidden">
-                                        <div class="text-sm font-medium text-gray-900 truncate">
-                                            {{ basename($submission->file_path) }}
-                                        </div>
-                                        <div class="text-xs text-gray-500">
-                                            Diunggah pada {{ \Carbon\Carbon::parse($submission->created_at)->format('d M Y, H:i') }}
-                                        </div>
-                                    </div>
-                                    <a href="{{ route('siswa.submissions.download', $submission) }}" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-md shadow-sm transition-colors duration-300">
-                                        <i class="fas fa-download mr-1"></i> Unduh
-                                    </a>
-                                </div>
-                            </div>
-                        @endif
-                        
-                        @if($submission->notes)
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">Catatan</label>
-                                <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                                    <p class="text-gray-800 whitespace-pre-line">{{ $submission->notes }}</p>
-                                </div>
-                            </div>
-                        @endif
-                        
-                        @if($submission->score !== null)
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">Nilai</label>
-                                <div class="flex items-center">
-                                    <span class="text-2xl font-bold text-gray-900">{{ $submission->score }}</span>
-                                    <span class="text-gray-500 ml-1">/ {{ $submission->assignment->max_score }}</span>
-                                </div>
-                            </div>
-                            
-                            @if($submission->feedback)
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-500 mb-1">Feedback Guru</label>
-                                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                        <p class="text-gray-800 whitespace-pre-line">{{ $submission->feedback }}</p>
-                                    </div>
-                                </div>
-                            @endif
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">Status Penilaian</label>
-                                <div class="flex items-center">
-                                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                    <span>Dinilai pada {{ \Carbon\Carbon::parse($submission->graded_at)->format('d M Y, H:i') }}</span>
-                                </div>
-                            </div>
-                        @endif
+                        <div class="flex items-center">
+                            <i class="fas fa-user-tie mr-1"></i>
+                            <span>{{ $submission->assignment->teacher->name ?? 'N/A' }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-day mr-1"></i>
+                            <span>Deadline: {{ $submission->assignment->deadline->format('d M Y, H:i') }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Assignment details -->
-        <div>
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100/50 mb-6">
-                <div class="p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-tasks text-green-500 mr-2"></i>
-                        Detail Tugas
-                    </h3>
-                    
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">Mata Pelajaran</label>
-                            <div class="text-sm text-gray-900">{{ $submission->assignment->subject->name }}</div>
-                        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Waktu Pengumpulan</h4>
+                    <p class="text-gray-800">{{ $submission->submitted_at->format('d M Y, H:i') }}</p>
+                    @if($submission->isLate())
+                        <p class="text-red-500 text-xs mt-1">
+                            <i class="fas fa-exclamation-circle mr-1"></i>
+                            Terlambat {{ $submission->submitted_at->diffForHumans($submission->assignment->deadline, ['parts' => 2]) }}
+                        </p>
+                    @else
+                        <p class="text-green-500 text-xs mt-1">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Tepat Waktu
+                        </p>
+                    @endif
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Status</h4>
+                    @if($submission->score !== null)
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Sudah Dinilai
+                        </span>
+                        <p class="mt-2 text-gray-800">
+                            <span class="font-semibold text-green-600">{{ $submission->score }}</span> / {{ $submission->assignment->max_score }}
+                        </p>
+                    @else
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <i class="fas fa-clock mr-1"></i> Belum Dinilai
+                        </span>
+                    @endif
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">File Pengumpulan</h4>
+                <div class="flex items-center justify-between bg-gray-50 p-4 border border-gray-200 rounded-lg">
+                    @php
+                        $fileName = basename($submission->file_path);
+                        $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
+                        $iconClass = 'fas fa-file text-gray-500';
                         
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">Kelas</label>
-                            <div class="text-sm text-gray-900">{{ $submission->assignment->classroom->name }}</div>
+                        if (in_array($fileExtension, ['pdf'])) {
+                            $iconClass = 'fas fa-file-pdf text-red-500';
+                        } elseif (in_array($fileExtension, ['doc', 'docx'])) {
+                            $iconClass = 'fas fa-file-word text-blue-500';
+                        } elseif (in_array($fileExtension, ['xls', 'xlsx'])) {
+                            $iconClass = 'fas fa-file-excel text-green-500';
+                        } elseif (in_array($fileExtension, ['ppt', 'pptx'])) {
+                            $iconClass = 'fas fa-file-powerpoint text-orange-500';
+                        } elseif (in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif'])) {
+                            $iconClass = 'fas fa-file-image text-purple-500';
+                        } elseif (in_array($fileExtension, ['zip', 'rar'])) {
+                            $iconClass = 'fas fa-file-archive text-yellow-500';
+                        }
+                    @endphp
+                    <div class="flex items-center">
+                        <div class="p-2 bg-gray-200 rounded mr-3">
+                            <i class="{{ $iconClass }}"></i>
                         </div>
-                        
                         <div>
-                            <label class="block text-xs font-medium text-gray-500">Deadline</label>
-                            <div class="text-sm text-gray-900">
-                                {{ \Carbon\Carbon::parse($submission->assignment->deadline)->format('d M Y, H:i') }}
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500">Nilai Maksimal</label>
-                            <div class="text-sm text-gray-900">{{ $submission->assignment->max_score }}</div>
-                        </div>
-                        
-                        <div class="pt-2">
-                            <a href="{{ route('siswa.assignments.show', $submission->assignment_id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <i class="fas fa-eye mr-2"></i>
-                                Lihat Detail Tugas
-                            </a>
+                            <p class="text-sm font-medium text-gray-700">{{ $fileName }}</p>
+                            <p class="text-xs text-gray-500">Submitted file</p>
                         </div>
                     </div>
+                    <a href="{{ route('siswa.submissions.download', $submission->id) }}" class="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors">
+                        <i class="fas fa-download mr-1.5"></i> Download
+                    </a>
                 </div>
+            </div>
+
+            @if($submission->feedback)
+                <div class="mb-6">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Feedback dari Guru</h4>
+                    <div class="bg-gray-50 p-4 border border-gray-200 rounded-lg">
+                        <p class="text-gray-800">{{ $submission->feedback }}</p>
+                    </div>
+                </div>
+            @endif
+            
+            <!-- Additional options -->
+            <div class="border-t border-gray-200 pt-6 flex justify-between">
+                <a href="{{ route('siswa.assignments.show', $submission->assignment_id) }}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-arrow-left mr-1.5"></i> Kembali
+                </a>
+                
+                @if(!$submission->assignment->deadline->isPast() || $submission->assignment->allow_late_submission)
+                    <a href="{{ route('siswa.submissions.edit', $submission->id) }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors">
+                        <i class="fas fa-edit mr-1.5"></i> Edit Pengumpulan
+                    </a>
+                @endif
             </div>
         </div>
     </div>
@@ -244,6 +182,17 @@
             opacity: 1;
             transform: translateY(0);
         }
+    }
+    
+    /* Improved input styles */
+    input[type="number"].styled-input {
+        appearance: textfield;
+    }
+    
+    input[type="number"].styled-input::-webkit-outer-spin-button,
+    input[type="number"].styled-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
 </style>
 @endpush

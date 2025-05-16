@@ -93,7 +93,7 @@
                     <p class="card-number floating-element" data-type="completedAssignments">{{ $stats['completedAssignments'] ?? 0 }}</p>
                     <div class="mt-2">
                         <a href="{{ route('siswa.submissions.index') }}" class="text-sm text-green-600 hover:text-green-800 inline-flex items-center group">
-                            <span>Lihat detail</span>
+                            <span>Lihat pengumpulan</span>
                             <i class="fas fa-arrow-right ml-1 text-xs transition-transform group-hover:translate-x-1"></i>
                         </a>
                     </div>

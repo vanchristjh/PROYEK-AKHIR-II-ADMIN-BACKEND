@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class Submission extends Model
 {
@@ -19,10 +18,16 @@ class Submission extends Model
         'assignment_id',
         'student_id',
         'file_path',
-        'submitted_at',
+        'file_name',
+        'file_type',
+        'file_size',
+        'file_icon',
+        'file_color',
         'score',
         'feedback',
-        'notes',
+        'graded_by',
+        'graded_at',
+        'submitted_at',
     ];
 
     /**
@@ -32,6 +37,7 @@ class Submission extends Model
      */
     protected $casts = [
         'submitted_at' => 'datetime',
+        'graded_at' => 'datetime',
     ];
 
     /**
@@ -43,34 +49,28 @@ class Submission extends Model
     }
 
     /**
-     * Get the student that owns the submission.
+     * Get the student who made the submission.
      */
     public function student()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(User::class, 'student_id');
     }
 
     /**
-     * Check if the submission is graded.
+     * Get the teacher who graded the submission.
+     */
+    public function gradedBy()
+    {
+        return $this->belongsTo(User::class, 'graded_by');
+    }
+
+    /**
+     * Check if the submission has been graded.
      *
      * @return bool
      */
     public function isGraded()
     {
         return $this->score !== null;
-    }
-
-    /**
-     * Check if the submission is late.
-     *
-     * @return bool
-     */
-    public function isLate()
-    {
-        if (!$this->submitted_at || !$this->assignment) {
-            return false;
-        }
-        
-        return $this->submitted_at->gt($this->assignment->deadline);
     }
 }
